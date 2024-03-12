@@ -8,8 +8,8 @@ process MULTIQC_SAMPLE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/multiqc:1.20--pyhdfd78af_0' :
-        'biocontainers/multiqc:1.20--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/multiqc:1.20--pyhdfd78af_2' :
+        'biocontainers/multiqc:1.20--pyhdfd78af_2' }"
 
     input:
     path multiqc_config
@@ -35,7 +35,9 @@ process MULTIQC_OVERALL {
     publishDir "${params.outdir}", pattern: "*.html", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
-    container "https://depot.galaxyproject.org/singularity/multiqc:1.20--pyhdfd78af_2"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/multiqc:1.20--pyhdfd78af_2' :
+        'biocontainers/multiqc:1.20--pyhdfd78af_2' }"
 
     input:
     path multiqc_config
