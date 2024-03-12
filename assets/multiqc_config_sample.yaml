@@ -100,7 +100,7 @@ custom_data:
           pass: [{"s_eq": "none"}]
           frameshift: [{"s_ne": "none"}]
           no_data: [{"s_eq": "NA"}]
-        cond_formatting_colours: 
+        cond_formatting_colours:
           - 1:
             frameshift: "#f0ad4e" # Yellow Warn colour
           - 2:
@@ -159,7 +159,7 @@ custom_data:
           missnese: [{"s_contains": "missense"}]
           nonsense: [{"s_contains": "nonsense"}]
           frameshift: [{"s_contains": "frameshift"}]
-        cond_formatting_colours: 
+        cond_formatting_colours:
           - 1:
             missnese: "#080180" # Blue
           - 2:
@@ -199,7 +199,7 @@ custom_data:
           C: [{"s_eq": "C SNP"}]
           Del: [{"s_eq": "Del"}]
           mixed: [{"s_eq": "Mixed"}]
-        cond_formatting_colours: 
+        cond_formatting_colours:
           - 1:
             A: "#05a605" # Green
           - 2:

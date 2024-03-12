@@ -363,13 +363,13 @@ Current limitations include:
             - This allows the database to be downloaded
         - A gff3 file
             - This is used with the reference sequence to build a database
-        - A well annotated NCBI genome matching the reference ID 
+        - A well annotated NCBI genome matching the reference ID
             - This will pull the genbank file and use that to build a database
     - Running SnpEff with singularity sometimes leads to a lock issue which is hopefully fixed
 
 ## Citations
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
- 
+
 > The nf-core framework for community-curated bioinformatics pipelines.
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
