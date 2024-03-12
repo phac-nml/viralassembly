@@ -1,0 +1,413 @@
+---
+title: "NML Sequencing Run Report"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    mathjax: NULL
+params:
+    summary_df: 'overall.qc.csv'
+    run_amplicons: FALSE
+---
+
+<!-- Style updates mostly to make sure the caption boxes are all matching -->
+<style>
+.navbar-brand {
+  font-weight: bold;
+}
+.value-box .caption {
+  font-size: 24px;
+  color: white
+}
+.value-box .value {
+    color: white;
+}
+</style>
+
+```{r, setup, include=FALSE}
+# Load in libraries
+library(flexdashboard)
+library(plotly)
+library(dplyr)
+library(DT)
+library(knitr)
+library(ggplot2)
+library(data.table)
+
+# Set to the jpeg as its smaller
+knitr::opts_chunk$set(dev = 'jpeg')
+```
+
+```{r, global, include=FALSE, echo=FALSE, error=TRUE}
+# Control Substrings
+control_substrings = c("neg", "ntc", "blank")
+
+# Create global variables and functions
+#  Likely move these elsewhere later (like to a functions R file)
+summary_df <- read.table(params$summary_df, header = TRUE, sep = ",")
+
+# Genome completeness colour palette
+get_genome_completeness_color <- function(value) { 
+  # Create the Red to Yellow to Green color palette for 100 values
+  red_to_green_palette <- colorRampPalette(c("#FF0039", "#FF7518", "#3FB618"))(100)
+  
+  # Calculate the index of the color in the palette based on the input value
+  if (value == 0) {
+    value <- value + 0.00001
+  }
+  color_index <- ceiling(value * 100)
+  
+  # Return the corresponding color with alpha 0.7
+  selected_color <- red_to_green_palette[color_index]
+  selected_color <- adjustcolor(selected_color, alpha = 0.7)
+  return(selected_color)
+}
+
+# Horizontal Line function for plotly
+hline <- function(y = 0, color = "black") {
+  list(
+    type = "line",
+    x0 = 0,
+    x1 = 1,
+    xref = "paper",
+    y0 = y,
+    y1 = y,
+    line = list(color = color, dash = "dash")
+  )
+}
+
+# Create a new column based on the qc_pass value for colours
+add_pass_value_int <- function(df, column) {
+  # Split the column values on semicolons
+  split_values <- strsplit(df[[column]], ';')
+
+  # Define which int values go with which statement
+  key_phrases <- c('PASS', 'POTENTIAL_FRAMESHIFTS', 'PARTIAL_GENOME')
+  values <- c(1, 2, 3)
+
+  # Initialize a vector to store the results
+  results <- integer(length(df[[column]]))
+
+  for (i in 1:length(split_values)) {
+    # Check if any key phrase is contained in the split values
+    matching_phrases <- intersect(split_values[[i]], key_phrases)
+    
+    if (length(matching_phrases) > 0) {
+      # If matching phrases are found, assign the corresponding integer value
+      results[i] <- min(values[match(matching_phrases, key_phrases)])
+    } else {
+      results[i] <- 0  # If none of the key phrases are found, assign 0
+    }
+  }
+  
+  # Return results
+  return(results)
+}
+```
+
+Run Summary
+==============================
+
+Row
+------------------------------
+
+### Total Samples
+```{r, echo=FALSE, error=TRUE}
+total_samples <- nrow(summary_df)
+valueBox(total_samples, icon = "")
+```
+
+### Total Passing Samples
+```{r, echo=FALSE, error=TRUE}
+passing_samples <- sum(summary_df[["qc_pass"]] == "PASS", na.rm = FALSE)
+valueBox(passing_samples, icon = "")
+```
+
+### Run Name
+```{r, echo=FALSE, error=TRUE}
+if ("run_name" %in% colnames(summary_df)) {
+  run_name <- summary_df[1, 'run_name']
+} else {
+  run_name <- "NA"
+}
+valueBox(run_name, icon = "")
+```
+
+### Negative Control Status
+```{r, echo=FALSE, error=TRUE}
+# Based on run satus, set colour and icon
+run_status = summary_df[1, 'run_status']
+if ( run_status == 'PASS' ) {
+    sec_icon = ""
+    sec_color = "success"
+} else if ( run_status == 'WARN' ) {
+    sec_icon = ""
+    sec_color = "warning"
+} else {
+    sec_icon = ""
+    sec_color = "danger"
+}
+valueBox(
+  run_status,
+  icon = sec_icon,
+  color = sec_color
+)
+```
+
+Row {dataset-height=250}
+------------------------------
+
+### {-}
+```{r, plot_completeness, echo=FALSE, error=TRUE}
+# All sample genome completeness plot
+df <- select(summary_df, sample, genome_completeness)
+
+# Creat plot, adding in titles and the PASS/WARN hlines (may need to figure out how to label these)
+p <- plot_ly(df, x = ~sample, y=~genome_completeness, type = 'bar', color = ~genome_completeness, colors = "RdYlGn", name="") %>% 
+  layout(
+    title = "Sample Genome Completeness",
+    xaxis = list(title = "Sample Name"),
+    yaxis = list (title = "Genome Completeness", tickformat = '.2%'),
+    shapes = list(hline(0.9), hline(0.5))
+  )
+p
+```
+
+> **Figure 1.** Per Sample Genome Completeness. Comparison of the percentage of bases called in the consensus sequence of each sample.
+> The dashed lines at 50% and 90% show the cut-offs for an incomplete genome and a partial genome respectively.
+
+Row {data-height=500}
+------------------------------
+
+### **Table 1.** All Samples Data Summary
+```{r, data_table, echo=FALSE, error=TRUE}
+# Create an interactive table of all samples with the different qc statuses highlighted
+df <- select(summary_df, sample, mean_sequencing_depth, median_sequencing_depth, num_aligned_reads, total_variants, num_snps, num_deletions, num_deletion_sites, num_insertions, num_insertion_sites, genome_completeness, qc_pass)
+df <- df %>%
+  rename(
+    "Sample" = sample,
+    "Mean Depth" = mean_sequencing_depth,
+    "Median Depth" = median_sequencing_depth,
+    "Total Aligned Reads" = num_aligned_reads,
+    "Variant Count" = total_variants,
+    "# SNPs" = num_snps,
+    "# Del" = num_deletions,
+    "# Del Sites" = num_deletion_sites,
+    "# Ins" = num_insertions,
+    "# Ins Sites" = num_insertion_sites,
+    "Genome Completeness" = genome_completeness,
+    "QC Pass" = qc_pass
+  )
+
+# Add color to table
+df$completeness_int_color <- add_pass_value_int(df, 'QC Pass')
+
+# Using datatable, removing the index row and adding in highlights for the status
+summary_dt <- df %>% 
+  DT::datatable(rownames = FALSE,
+    options = list(
+      scrollX = FALSE,
+      columnDefs = list(
+        list(className = 'dt-left', targets = "_all"),
+        list(visible=FALSE, targets='completeness_int_color')
+    ))) %>%
+    formatStyle('completeness_int_color',
+      target = 'row',
+      backgroundColor = styleEqual(c(1, 2, 3, 0),
+      c('', 'orange', '#FFFF66', '#FF6666')
+    )) %>%
+    formatStyle('Genome Completeness',
+      background = styleColorBar(range(0,1), 'lightblue', angle = -90),
+      backgroundSize = '88% 88%',
+      backgroundRepeat = 'no-repeat',
+      backgroundPosition = 'left'
+  )
+
+summary_dt
+```
+
+<!-- ---------------------------------------------------------- -->
+<!-- Create Individual samples pages with the below code blocks -->
+<!-- ---------------------------------------------------------- -->
+
+```{r, render subpages, include=FALSE, echo=FALSE, error=TRUE}
+# Code block to generate sample subpages - https://somtom.github.io/post/using-dynamically-rendered-r-markdown-childs-for-reports/
+subpages = NULL
+# Set knitr options to allow duplicate labels
+options(knitr.duplicate.label = 'allow')
+# Create temporary environment which we use for knitting subpages.RMD 
+subpage_env <- new.env()
+
+# Create subpages
+for ( samplev in summary_df$sample ) {
+  # Filter data for sample
+  sample_df <- summary_df %>% 
+    filter(sample == samplev)
+  
+  # Assign data to subpage_env
+  assign("sample_df", sample_df, subpage_env)
+  assign("sample", samplev, subpage_env)
+  
+  # Knit sample subpage using the subpage_env and add result to out vector
+  subpages = c(subpages, knitr::knit_child('sampleSubpage.Rmd', envir = subpage_env))
+}
+```
+
+`r paste(knitr::knit_child(text = subpages), collapse = '')`
+
+<!-- ---------------------- -->
+<!-- Back to normal Rmd doc -->
+<!-- ---------------------- -->
+
+Negative Controls
+==============================
+
+Row
+------------------------------
+
+### Total Negative Controls
+```{r, echo=FALSE, error=TRUE}
+total_controls <- sum(sapply(control_substrings, function(pattern) any(grepl(pattern, summary_df$sample, ignore.case = TRUE))))
+valueBox(total_controls, icon = "")
+```
+
+### Negative Control Status
+```{r, echo=FALSE, error=TRUE}
+# Based on run satus, set colour and icon
+run_status = summary_df[1, 'run_status']
+if ( run_status == 'PASS' ) {
+    sec_icon = ""
+    sec_color = "success"
+} else if ( run_status == 'WARN' ) {
+    sec_icon = ""
+    sec_color = "warning"
+} else {
+    sec_icon = ""
+    sec_color = "danger"
+}
+valueBox(
+  run_status,
+  icon = sec_icon,
+  color = sec_color
+)
+```
+
+### Negative Control Info
+```{r, echo=FALSE, error=TRUE}
+control_info <- summary_df[1, 'run_summary']
+sec_color <- "warning"
+if ( is.na(control_info) ) {
+  control_info <- "Meets Requirements"
+  sec_color <- "success"
+}
+valueBox(
+  control_info,
+  color = sec_color,
+  icon = ""
+)
+```
+
+Column {.sidebar}
+------------------------------
+**Negative Control Information**
+
+Negative controls are found through the use of matching the sample name to a list of negative control substrings including: "`r control_substrings`".
+Currently, negative controls will fail if they have a genome completeness >= 0.10 (10% of the bases called).
+
+More checks will be added in the future
+
+Row {data-height=500}
+------------------------------
+
+### **Table 1.** Negative Controls
+```{r, n_table, echo=FALSE, error=TRUE}
+# Have to concat the substrings to grep with
+substring_regex <- paste(control_substrings, collapse = "|")
+df <- select(summary_df, sample, neg_control_info, mean_sequencing_depth, median_sequencing_depth, num_aligned_reads, total_variants, genome_completeness, qc_pass)
+df <- df %>% 
+  filter(
+    grepl(substring_regex, sample, ignore.case = TRUE)
+  ) %>%
+  rename(
+    "Sample" = sample,
+    "Negative Control Info" = neg_control_info,
+    "Mean Depth" = mean_sequencing_depth,
+    "Median Depth" = median_sequencing_depth,
+    "Total Aligned Reads" = num_aligned_reads,
+    "Variant Count" = total_variants,
+    "Genome Completeness" = genome_completeness,
+    "QC Pass" = qc_pass
+  )
+
+# Add color to table
+df$completeness_int_color <- add_pass_value_int(df, 'QC Pass')
+
+# Using datatable, removing the index row and adding in highlights for the status
+summary_dt <- df %>% 
+  DT::datatable(rownames = FALSE,
+    options = list(
+      scrollX = FALSE,
+      columnDefs = list(
+        list(className = 'dt-left', targets = "_all"),
+        list(visible=FALSE, targets='completeness_int_color')
+    ))) %>%
+    formatStyle('completeness_int_color',
+      target = 'row',
+      backgroundColor = styleEqual(c(1, 2, 3, 0),
+      c('', 'orange', '#FFFF66', '#FF6666')
+    )) %>%
+    formatStyle('Genome Completeness',
+      background = styleColorBar(range(0,1), 'lightblue', angle = -90),
+      backgroundSize = '88% 88%',
+      backgroundRepeat = 'no-repeat',
+      backgroundPosition = 'left'
+  )
+
+summary_dt
+```
+
+<!-- ------------------ -->
+<!-- Amplicons if given -->
+<!-- ------------------ -->
+```{r, amplicons, child="sampleAmplicons.Rmd", params=params, eval=params$run_amplicons}
+```
+
+Tool Versions
+==============================
+
+### **Table 1.** Software Versions {data-height=800}
+
+```{r, software_ver, echo=FALSE, error=TRUE}
+# Read the YAML file
+yaml_data <- yaml::read_yaml("software_versions.yml")
+
+# Track to build df
+process <- c()
+softwares <- c()
+versions <- c()
+
+# Loop over the data to build df
+for (key_process in names(yaml_data)) {
+  process_hash <- yaml_data[[key_process]]
+
+  for (software_name in names(process_hash)) {
+    software_version <- process_hash[[software_name]]
+
+    # Add to lists
+    process <- c(process, key_process)
+    softwares <- c(softwares, software_name)
+    versions <- c(versions, software_version)
+  }
+}
+
+# DF
+df <- data.frame("Process Name" = process, "Software" = softwares, "Version" = versions)
+ddt <- df %>% 
+  DT::datatable(rownames = FALSE, class = 'cell-border stripe',
+    options = list(
+      scrollX = FALSE,
+      columnDefs = list(
+        list(className = 'dt-left', targets = "_all")
+  )))
+ddt
+```

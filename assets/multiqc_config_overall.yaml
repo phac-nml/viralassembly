@@ -1,0 +1,190 @@
+# Top of the page info
+title: "Overall Run MultiQC Report"
+subtitle: "Run QC statistics and plots"
+report_comment: >
+  This report contains viral sequencing metrics for all samples ran in the pipeline.
+  Individual sample reports are also available to provide more detailed information on each sample
+
+# Other things
+data_format: "yaml"
+max_table_rows: 10000
+show_analysis_paths: false
+disable_version_detection: true
+
+# General Statistics Table
+skip_generalstats: true
+
+# Modules/tools supported that we only want to grab
+run_modules:
+  - custom_content
+  - samtools
+  - qualimap
+  - bcftools
+  - snpeff
+
+# Order for reports
+module_order:
+  - samtools
+  - qualimap
+  - bcftools
+  - snpeff
+
+report_section_order:
+  software_versions:
+    order: -1000
+
+# Custom data here
+custom_data:
+  # QC CSV
+  qc_csv_table:
+    section_name: "Overall Metrics Table"
+    description: >
+      This table shows the overall quality control metrics for all samples in the run
+    plot_type: "table"
+    pconfig:
+      id: "qc_csv_table"
+      table_title: "Overall QC Table"
+      namespace: "Overall QC Table"
+      col1_header: "Sample"
+      only_defined_headers: True
+      format: "{:,.0f}"
+    headers:
+      sample:
+        scale: False
+      qc_pass:
+        title: "QC Pass"
+        description: "Overall status of the sample"
+        cond_formatting_rules:
+          warn: [{"s_ne": "PASS"}]
+      run_status:
+        title: "Run Status"
+        description: "Overall status of the run taking negative control samples into account"
+        cond_formatting_rules:
+          warn: [{"s_ne": "PASS"}]
+      num_aligned_reads:
+        title: "# Aligned Reads"
+        description: "Number of aligned reads used for variant calling and consensus generation"
+        hidden: False
+      genome_completeness:
+        title: "Genome Completeness"
+        description: "Float value for how many bases in the genome were called with 1.0 being 100%"
+        scale: "RdYlGn"
+        min: 0
+        max: 1
+        format: "{:,.4f}"
+      median_sequencing_depth:
+        title: "Median Depth"
+        description: "Median sequencing depth of the sample"
+      total_variants:
+        title: "Total Variants"
+        description: "Total number of variant sites in the sample"
+        scale: "Greens"
+      num_snps:
+        title: "# SNPs"
+        description: "Number of individual SNPs in the sample"
+        min: 0
+        scale: "PuBu"
+      num_deletions:
+        title: "# Deletions"
+        description: "The total number of deleted bases in the sample"
+        min: 0
+        scale: "Purples"
+      num_deletion_sites:
+        title: "# Deletion Sites"
+        description: "The number of sites in the genome containing a deletion"
+        min: 0
+        scale: "Purples"
+      num_insertions:
+        title: "# Insertions"
+        description: "The total number of inserted bases in the sample"
+        min: 0
+        scale: "Oranges"
+      num_insertion_sites:
+        title: "# Insertion Sites"
+        description: "The number of sites in the genome containing an insertion"
+        min: 0
+        scale: "Oranges"
+      possible_frameshift_variants:
+        title: "Possible Frameshift Variants"
+        description: "Variants detected by SnpEFF as containing a frameshift or if SnpEFF was not run, indels that fail a divisible by 3 check"
+        # Note that the order here must be kept or the no_data will be yellow
+        cond_formatting_rules:
+          pass: [{"s_eq": "none"}]
+          frameshift: [{"s_ne": "none"}]
+          no_data: [{"s_eq": "NA"}]
+        cond_formatting_colours: 
+          - 1:
+            frameshift: "#f0ad4e" # Yellow Warn colour
+          - 2:
+            no_data: "#000000" # Black
+      neg_control_info:
+        title: "Neg Control Status"
+        description: "If the sample is a negative control gives its status as PASS/WARN"
+
+  # Amplicons section
+  amplicon_depth:
+    parent_id: amplicons_qc
+    parent_name: "Amplicon Summary"
+    parent_description: >
+      Custom amplicon plots to show how deep each amplicon is sequenced and how complete each amplicon is
+    id: 'amplicon_depth'
+    file_format: 'tsv'
+    section_name: 'Amplicon Depth Lineplot'
+    description: >
+      Calculated from the primertrimmed sorted bam file using bedtools coverage
+      looking for reads that overlap 85% of the given amplicon region
+    plot_type: 'linegraph'
+    pconfig:
+      id: 'amplicon_depth'
+      title: 'Amplicon Depth'
+      xlab: 'Amplicon ID'
+      ylab: 'Read Depth'
+      logswitch: True
+      logswitch_active: False
+      categories: True
+      ymin: 0
+  amplicon_completeness:
+    parent_id: amplicons_qc
+    file_format: 'csv'
+    section_name: 'Amplicon Completeness'
+    description: >
+      Heatmap showing how complete each amplicon is based on the consensus sequence. 
+      Amplicon completeness is calculated using the number of Ns in the amplicon compared to the amplicon length.
+      A 1.0 means the amplicon is fully sequenced while a 0 means that there were no bases called in the amplicon.
+      Note that as amplicons overlap, a fully dropped amplicon could still have some completeness from its two neighbours
+    id: 'amplicon_completeness'
+    plot_type: 'heatmap'
+    pconfig:
+      id: 'amplicon_completeness'
+      title: 'Amplicon Completeness'
+      xTitle: 'Amplicon ID'
+      xcats_samples: False
+      ycats_samples: True
+      square: False
+      min: 0
+      max: 1
+      colstops: [
+        [0, '#a50026'],
+        [0.1, '#d73027'],
+        [0.2, '#f46d43'],
+        [0.3, '#fdae61'],
+        [0.4, '#fee08b'],
+        [0.5, '#ffffbf'],
+        [0.6, '#d9ef8b'],
+        [0.7, '#a6d96a'],
+        [0.8, '#66bd63'],
+        [0.9, '#1a9850'],
+        [1, '#006837'],
+      ]
+
+# Extensions to clean from names
+# extra_fn_clean_exts:
+
+# Search Pathes
+sp:
+  qc_csv_table:
+    fn: '*.qc.csv'
+  amplicon_depth:
+    fn: '*_ampdepth.tsv'
+  amplicon_completeness:
+    fn: "merged_amplicon_completeness.csv"
