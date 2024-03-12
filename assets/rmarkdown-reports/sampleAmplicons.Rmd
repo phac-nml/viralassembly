@@ -12,7 +12,7 @@ region based on the primer scheme. If there are no N's, the completeness is cons
 to be 100% (1.0 on the heatmap).
 
 Amplicon depth is calculated using bedtools coverage looking for reads in the bam file
-that overlap 85% of the amplicon region. 
+that overlap 85% of the amplicon region.
 
 These plots are most useful for determining if there are any amplicons with consistent
 dropouts or low sequencing depth across the run that can be adjusted for better results

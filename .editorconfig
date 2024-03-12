@@ -37,6 +37,6 @@ indent_style = unset
 indent_style = unset
 
 # ignore Rmd files
-[*.{Rmd}]
+[*.Rmd]
 indent_style = unset
 trim_trailing_whitespace = unset

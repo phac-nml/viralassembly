@@ -47,16 +47,16 @@ control_substrings = c("neg", "ntc", "blank")
 summary_df <- read.table(params$summary_df, header = TRUE, sep = ",")
 
 # Genome completeness colour palette
-get_genome_completeness_color <- function(value) { 
+get_genome_completeness_color <- function(value) {
   # Create the Red to Yellow to Green color palette for 100 values
   red_to_green_palette <- colorRampPalette(c("#FF0039", "#FF7518", "#3FB618"))(100)
-  
+
   # Calculate the index of the color in the palette based on the input value
   if (value == 0) {
     value <- value + 0.00001
   }
   color_index <- ceiling(value * 100)
-  
+
   # Return the corresponding color with alpha 0.7
   selected_color <- red_to_green_palette[color_index]
   selected_color <- adjustcolor(selected_color, alpha = 0.7)
@@ -91,7 +91,7 @@ add_pass_value_int <- function(df, column) {
   for (i in 1:length(split_values)) {
     # Check if any key phrase is contained in the split values
     matching_phrases <- intersect(split_values[[i]], key_phrases)
-    
+
     if (length(matching_phrases) > 0) {
       # If matching phrases are found, assign the corresponding integer value
       results[i] <- min(values[match(matching_phrases, key_phrases)])
@@ -99,7 +99,7 @@ add_pass_value_int <- function(df, column) {
       results[i] <- 0  # If none of the key phrases are found, assign 0
     }
   }
-  
+
   # Return results
   return(results)
 }
@@ -163,7 +163,7 @@ Row {dataset-height=250}
 df <- select(summary_df, sample, genome_completeness)
 
 # Creat plot, adding in titles and the PASS/WARN hlines (may need to figure out how to label these)
-p <- plot_ly(df, x = ~sample, y=~genome_completeness, type = 'bar', color = ~genome_completeness, colors = "RdYlGn", name="") %>% 
+p <- plot_ly(df, x = ~sample, y=~genome_completeness, type = 'bar', color = ~genome_completeness, colors = "RdYlGn", name="") %>%
   layout(
     title = "Sample Genome Completeness",
     xaxis = list(title = "Sample Name"),
@@ -203,7 +203,7 @@ df <- df %>%
 df$completeness_int_color <- add_pass_value_int(df, 'QC Pass')
 
 # Using datatable, removing the index row and adding in highlights for the status
-summary_dt <- df %>% 
+summary_dt <- df %>%
   DT::datatable(rownames = FALSE,
     options = list(
       scrollX = FALSE,
@@ -235,19 +235,19 @@ summary_dt
 subpages = NULL
 # Set knitr options to allow duplicate labels
 options(knitr.duplicate.label = 'allow')
-# Create temporary environment which we use for knitting subpages.RMD 
+# Create temporary environment which we use for knitting subpages.RMD
 subpage_env <- new.env()
 
 # Create subpages
 for ( samplev in summary_df$sample ) {
   # Filter data for sample
-  sample_df <- summary_df %>% 
+  sample_df <- summary_df %>%
     filter(sample == samplev)
-  
+
   # Assign data to subpage_env
   assign("sample_df", sample_df, subpage_env)
   assign("sample", samplev, subpage_env)
-  
+
   # Knit sample subpage using the subpage_env and add result to out vector
   subpages = c(subpages, knitr::knit_child('sampleSubpage.Rmd', envir = subpage_env))
 }
@@ -324,7 +324,7 @@ Row {data-height=500}
 # Have to concat the substrings to grep with
 substring_regex <- paste(control_substrings, collapse = "|")
 df <- select(summary_df, sample, neg_control_info, mean_sequencing_depth, median_sequencing_depth, num_aligned_reads, total_variants, genome_completeness, qc_pass)
-df <- df %>% 
+df <- df %>%
   filter(
     grepl(substring_regex, sample, ignore.case = TRUE)
   ) %>%
@@ -343,7 +343,7 @@ df <- df %>%
 df$completeness_int_color <- add_pass_value_int(df, 'QC Pass')
 
 # Using datatable, removing the index row and adding in highlights for the status
-summary_dt <- df %>% 
+summary_dt <- df %>%
   DT::datatable(rownames = FALSE,
     options = list(
       scrollX = FALSE,
@@ -402,7 +402,7 @@ for (key_process in names(yaml_data)) {
 
 # DF
 df <- data.frame("Process Name" = process, "Software" = softwares, "Version" = versions)
-ddt <- df %>% 
+ddt <- df %>%
   DT::datatable(rownames = FALSE, class = 'cell-border stripe',
     options = list(
       scrollX = FALSE,

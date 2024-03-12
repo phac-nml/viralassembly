@@ -22,7 +22,7 @@ valueBox(sample, icon = "")
 completeness <- sample_df$genome_completeness[1]
 sec_color <- get_genome_completeness_color(completeness)
 valueBox(
-    completeness, 
+    completeness,
     icon = "",
     color = sec_color
 )
@@ -84,7 +84,7 @@ text_info <- paste(
 # Plot variation table
 # I want to make it so that the colors are always the same but was having some trouble with that
 p <- plot_ly(variants) %>%
-  add_trace(x = variants[['position']], y = variants[['percentage_nonref']], 
+  add_trace(x = variants[['position']], y = variants[['percentage_nonref']],
       type = 'scatter', mode = 'markers', color = variants[['variant_type']],
       marker = list(sizemode = 'diameter', size = 15.0, opacity = 0.7),
       text = text_info,
@@ -114,7 +114,7 @@ p
 var_f <- paste0("./variant_tsvs/", sample, ".vcf.tsv")
 if (file.exists(var_f)) {
   variants <- read.table(var_f, header = TRUE, sep = "\t")
-  ddt <- variants %>% 
+  ddt <- variants %>%
     DT::datatable(rownames = FALSE,
       options = list(
         scrollX = FALSE
@@ -123,7 +123,7 @@ if (file.exists(var_f)) {
   variants <- data.frame(matrix(ncol = 4, nrow = 0))
   colv <- c("Pos", "Ref", "Alt", "Qual")
   colnames(variants) <- colv
-  ddt <- variants %>% 
+  ddt <- variants %>%
     DT::datatable(rownames = FALSE)
 }
 ddt
@@ -166,7 +166,7 @@ ggplot(coverage) +
   geom_line(aes(x=position, y=depth)) +
   scale_y_log10() +
   xlab("Genome Position (nt)") +
-  ylab("Sequencing Depth") + 
+  ylab("Sequencing Depth") +
   geom_rect(data=rect_data, aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,fill=col),alpha=0.1) +
   scale_fill_identity()
 ```

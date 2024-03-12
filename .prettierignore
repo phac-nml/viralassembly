@@ -10,7 +10,6 @@ testing/
 testing*
 *.pyc
 bin/
-assets/rmarkdown-reports/
-reportDashboard.Rmd
-sampleAmplicons.Rmd
-sampleSubpage.Rmd
+
+# Rmd files
+**/*.Rmd
