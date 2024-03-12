@@ -25,7 +25,7 @@ process BEDTOOLS_COVERAGE_GENOME_BED {
         -a $genome_bed \\
         -b $bam \\
         >> ${sampleName}.per_base_coverage.bed
-    
+
     # Versions from nf-core #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

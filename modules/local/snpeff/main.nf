@@ -56,7 +56,7 @@ process SNPEFF_DATABASE {
     } else {
         """
         # Check if we can find the reference name in the database
-        if \$(snpEff databases | grep -q "$genome" ); then 
+        if \$(snpEff databases | grep -q "$genome" ); then
             echo "Found $genome in snpEff database"
             snpEff \\
                 -Xmx${avail_mem}M \\

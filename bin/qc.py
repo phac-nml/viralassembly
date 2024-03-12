@@ -126,7 +126,7 @@ def parse_depth_bed(bed: str) -> Tuple[float, float]:
 
     Returns:
     --------
-    Float mean sequencing depth 
+    Float mean sequencing depth
     Float median sequencing depth
     '''
     depth = []
@@ -245,7 +245,7 @@ def parse_vcf(vcf_file: str) -> Tuple[str, list, str, str, dict]:
                     variant_positions.append(_create_variantpos_dict(variant, del_range))
                     var_count_dict['num_deletions'] += len(del_range)
                     var_count_dict['num_deletion_sites'] += 1
-                    
+
                 # Insertions
                 elif ref_len < alt_len:
                     if ((alt_len-1) %3 != 0):
@@ -313,7 +313,7 @@ def check_primers(bed, variant_locations: list) -> str:
     '''
     if not variant_locations:
         return 'none'
-    
+
     primer_mutations = []
     with open(bed, 'r') as handle:
         reader = csv.reader(handle, delimiter='\t')

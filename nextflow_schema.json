@@ -253,13 +253,13 @@
                 },
                 "multiqc_config_overall": {
                     "type": "string",
-                    "default": "$baseDir/assets/multiqc_config_overall.yaml",
+                    "default": "$projectDir/assets/multiqc_config_overall.yaml",
                     "description": "MultiQC overall run config yaml file",
                     "format": "file-path"
                 },
                 "multiqc_config_sample": {
                     "type": "string",
-                    "default": "$baseDir/assets/multiqc_config_sample.yaml",
+                    "default": "$projectDir/assets/multiqc_config_sample.yaml",
                     "description": "MultiQC sample config yaml file",
                     "format": "file-path"
                 }

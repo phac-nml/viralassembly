@@ -60,7 +60,7 @@ def main() -> None:
             else:
                 completeness = round(1 - (n_count/amp_length), 2)
             out[name] = str(completeness)
-    
+
     # Output
     with open(f'{str(args.sample)}_amplicon_completeness.csv', 'w') as f:
         header = 'sample,{0}'.format(','.join(out.keys()))

@@ -53,7 +53,7 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
     if variant_str in variants_analyzed:
         return {}
     variants_analyzed.append(variant_str)
-    
+
     # Non-annotated we just need the info in TSV format
     if not annotated:
         out = {
@@ -63,7 +63,7 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
             'Qual': str(var.QUAL)
         }
         return out
-    
+
     # VCF ANN is formatted as a "," list to start so if we find it, we take the first entry and split on |
     #  Also want to make sure that we don't have duplicates by checking if our variant str has been seen already
     var_ann = var.INFO.get('ANN', '')
@@ -131,7 +131,7 @@ def main() -> None:
     outfile = f'{args.sample}.vcf.tsv'
     if args.outfile:
         outfile = args.outfile
-    
+
     if variants != []:
         write_outfile(outfile, variants)
     else:

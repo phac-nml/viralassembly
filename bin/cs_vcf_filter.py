@@ -35,7 +35,7 @@ class NanoporeFilter:
 
         if v.is_indel:
             strand_fraction_by_strand = v.INFO['SupportFractionByStrand']
-            if float(strand_fraction_by_strand[0]) < 0.5: 
+            if float(strand_fraction_by_strand[0]) < 0.5:
                 return False
 
             if float(strand_fraction_by_strand[1]) < 0.5:
@@ -101,7 +101,7 @@ def go(args):
     for v in variants:
         indx = "%s-%s" % (v.CHROM, v.POS)
         group_variants[indx].append(v)
-    
+
     for v in variants:
 
         # if using medaka, we need to do a quick pre-filter to remove rubbish that we don't want adding to the mask
@@ -121,8 +121,8 @@ def go(args):
             if len(group_variants[indx]) > 1:
                 for check_variant in group_variants[indx]:
                     if filter.check_filter(check_variant):
-                        variant_passes = True 
-            
+                        variant_passes = True
+
             if not variant_passes:
                 vcf_writer_filtered.write_record(v)
             else:

@@ -83,7 +83,7 @@ def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
     columns = list(df.columns)
     if any(x not in columns for x in needed_columns):
         raise ValueError('Missing {} column(s) needed for validation'.format([x for x in needed_columns if x not in columns]))
-    
+
 def assess_control(row: pd.Series, threshold: float) -> str:
     """Assess control values to pass or fail them"""
     if row['genome_completeness'] >= threshold:

@@ -43,7 +43,7 @@ ch_fast5s = params.fast5_pass ? file(params.fast5_pass, type: 'dir', checkIfExis
 ch_seqSum = params.sequencing_summary ? file(params.sequencing_summary, type: 'file', checkIfExists: true) : []
 
 // Reference for if not using a scheme
-ch_reference = params.reference_no_scheme ? file(params.reference_no_scheme, type: 'file', checkIfExists: true) : []
+ch_reference = params.reference_no_scheme ? Channel.value(file(params.reference_no_scheme, type: 'file', checkIfExists: true)) : []
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,7 +74,7 @@ workflow NANOPORE {
         )
         ch_scheme = SIMPLE_SCHEME_VALIDATE.out.scheme
         ch_primer_bed = SIMPLE_SCHEME_VALIDATE.out.bed
-        // Overwrite reference if one was given
+        // Overwrite reference if one was given along with a scheme
         ch_reference = SIMPLE_SCHEME_VALIDATE.out.ref
 
         // Amplicon information
@@ -115,7 +115,7 @@ workflow NANOPORE {
     }
     // Pass/fail reads based on count after length filtering
     ch_fastqs
-        .branch{ 
+        .branch{
             pass: it[1].countFastq() >= params.min_reads
             empty: it[1].countFastq() < params.min_reads
         }.set{ ch_filtered_fastqs }

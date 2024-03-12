@@ -1,6 +1,6 @@
 /*
-    Artic subcommands and some custom adaptations of them to work with clair3 without 
-      explicitly having to use the minion.py workflow
+    Artic subcommands and some custom adaptations of them to work with clair3 without
+        explicitly having to use the minion.py workflow
 */
 
 // Helper function for combine VCFs in the format needed for artic merge

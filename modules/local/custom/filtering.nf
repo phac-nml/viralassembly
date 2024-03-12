@@ -16,7 +16,7 @@ process TRACK_FILTERED_SAMPLES {
     '''
     SAMPLENAME="!{meta.id}"
     # Get sample name if metadata is given
-    if [ -f "!{metadata}" ]; then 
+    if [ -f "!{metadata}" ]; then
         ## Make sure we have barcode and sample column indexes
         barcode_col=$(awk -v RS='\t' '/barcode/{print NR; exit}' !{metadata})
         sample_col=$(awk -v RS='\t' '/sample/{print NR; exit}' !{metadata})

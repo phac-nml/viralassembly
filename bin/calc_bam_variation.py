@@ -99,7 +99,7 @@ def calculate_non_ref_percent(pos, pileup_dict, ref_dict) -> float:
     Parameters
     ----------
     pos : int
-        Current genome position 
+        Current genome position
     pileup_dict: dict
         Contains read counts for the current position
     ref_dict: dict
@@ -293,7 +293,7 @@ def main() -> None:
         sys.exit(0)
 
     ref_dict = create_ref_dict(args.reference)
-    var_info = parse_variation_from_bam(path_bam, ref_dict, args.min_base_qual, 
+    var_info = parse_variation_from_bam(path_bam, ref_dict, args.min_base_qual,
                                         args.min_map_qual, args.min_read_count,
                                         args.min_report_percent, args.variant_call_threshold)
     if var_info == []:

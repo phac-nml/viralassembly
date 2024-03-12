@@ -2,7 +2,7 @@
     Variant callers for nanopore amplicon data
         The parameters match those for shotgun data
         The main difference is that the amplicon processes
-        are heavily coupled to use of the readgroup/bed file/regions 
+        are heavily coupled to use of the readgroup/bed file/regions
         while the shotgun callers are not
 */
 process MEDAKA_CONSENSUS {

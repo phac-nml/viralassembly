@@ -201,9 +201,9 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
     path "reportDashboard.html"
 
     script:
-    def rmd_main = "$baseDir/assets/rmarkdown-reports/reportDashboard.Rmd"
-    def rmd_sample = "$baseDir/assets/rmarkdown-reports/sampleSubpage.Rmd"
-    def rmd_amp = "$baseDir/assets/rmarkdown-reports/sampleAmplicons.Rmd"
+    def rmd_main = "$projectDir/assets/rmarkdown-reports/reportDashboard.Rmd"
+    def rmd_sample = "$projectDir/assets/rmarkdown-reports/sampleSubpage.Rmd"
+    def rmd_amp = "$projectDir/assets/rmarkdown-reports/sampleAmplicons.Rmd"
     def amp_arg = merged_amplicon_depth_csv ? "run_amplicons = TRUE" : "run_amplicons = FALSE"
     """
     # Setup sample files to be found by RMD#

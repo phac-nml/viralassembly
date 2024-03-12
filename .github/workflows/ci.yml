@@ -44,4 +44,5 @@ jobs:
         # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test,docker --outdir ./results-clair3
+          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --outdir ./results-clair3-metadata --metadata_tsv .github/test-data/nanopore/metadata.tsv
           nextflow run ${GITHUB_WORKSPACE} -profile test_full,docker --outdir ./results-medaka

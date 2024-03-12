@@ -56,7 +56,7 @@ workflow WF_NANOPORE_SHOTGUN {
     // Preprocessing
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Chopper may be useless as we already filter based on length earlier
-    //  Or I have this workflow earlier in the main one? 
+    //  Or I have this workflow earlier in the main one?
     //  As we are not using amplicons filtering by length isn't as useful depending on if we expect a certain fragment length or not
     CHOPPER(
         ch_fastqs
@@ -145,7 +145,7 @@ workflow WF_NANOPORE_SHOTGUN {
     ch_versions = ch_versions.mix(CUSTOM_VCF_FILTER.out.versions)
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    // Consensus Generation 
+    // Consensus Generation
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Note that this step is slow and while I explored other methods
     //  Like bedtools or samtools depth I couldn't quite get the same formatting

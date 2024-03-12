@@ -19,7 +19,7 @@ process LONGSHOT {
 
     script:
     sampleName = "$meta.id"
-    def VERSION = '0.4.5' // Longshot version does not seem to be being printed out 
+    def VERSION = '0.4.5' // Longshot version does not seem to be being printed out
     """
     longshot \\
         -P 0 \\

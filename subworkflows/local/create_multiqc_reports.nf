@@ -68,7 +68,6 @@ workflow WF_CREATE_MULTIQC_REPORTS {
 
     // Amplicon analysis
     ch_amplicon_completeness = Channel.empty()
-    ch_sample_amplicon_depth = Channel.empty()
     if ( ! params.reference_no_scheme ) {
         // Coverage
         BEDTOOLS_COVERAGE_AMPLICON_BED(
@@ -95,6 +94,9 @@ workflow WF_CREATE_MULTIQC_REPORTS {
             .set { ch_amplicon_completeness }
 
         ch_versions = ch_versions.mix(CREATE_AMPLICON_COMPLETENESS.out.versions)
+    } else {
+        // Create empty amplicon depth tuple with sample meta values to still get sample mqc reports
+        ch_sample_amplicon_depth = ch_bam.map{ it -> tuple(it[0], []) }
     }
 
     // Stats from tools
@@ -109,7 +111,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     )
     ch_versions = ch_versions.mix(SAMTOOLS_FLAGSTAT.out.versions)
 
-    // If not using a scheme, need to correct the headers for qualimap
+    // If not using a scheme, need to correct the headers for qualimap by removing the empty RG
     // BAM channel also no longer needs bai file
     ch_bam = ch_bam.map { it -> tuple(it[0], it[1])}
     if ( ! params.reference_no_scheme ) {
@@ -136,9 +138,8 @@ workflow WF_CREATE_MULTIQC_REPORTS {
         ch_sample_csv
             .join(CREATE_READ_VARIATION_CSV.out.csv, by: [0])
             .join(CREATE_VARIANT_TSV.out.tsv, by: [0])
-            .join(ch_sample_amplicon_depth, by: [0])
-                .ifEmpty([])
             .join(QUALIMAP_BAMQC.out.results, by: [0])
+            .join(ch_sample_amplicon_depth, by: [0])
     )
 
     MULTIQC_OVERALL(

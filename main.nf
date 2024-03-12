@@ -67,7 +67,7 @@ workflow VIRALASSEMBLY {
         Channel.fromPath( params.input, type: 'file', checkIfExists: true )
             .splitCsv(header:true)
             .map{ row -> [ [id: row.sample], file(row.reads, type: 'dir', checkIfExists: true) ] }
-            .branch{ 
+            .branch{
                     pass: it[1].listFiles().size() >= 1
                     empty: it[1].listFiles().size() == 0
                 }.set{ ch_fastqs }

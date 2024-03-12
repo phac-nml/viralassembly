@@ -13,7 +13,7 @@ process MULTIQC_SAMPLE {
 
     input:
     path multiqc_config
-    tuple val(meta), path(sample_csv), path(variation_csv), path(consensus_variant_tsv), path(amp_depth_tsv), path(qualimap_bamqc_data)
+    tuple val(meta), path(sample_csv), path(variation_csv), path(consensus_variant_tsv), path(qualimap_bamqc_data), path(amp_depth_tsv)
 
     output:
     path "*.html", emit: html
