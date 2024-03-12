@@ -1,0 +1,264 @@
+# Top of the page info
+subtitle: "Sample Sequence Summary, QC statistics, and plots"
+report_comment: >
+  This report contains data for a single sample focusing on the coverage depth and the variants.
+  Please see the overall report for the run summary.
+
+# Other things
+data_format: "yaml"
+max_table_rows: 10000
+show_analysis_paths: false
+disable_version_detection: true
+
+# General Statistics Table
+skip_generalstats: true
+
+# Modules/tools supported that we only want to grab
+run_modules:
+  - custom_content
+  - qualimap
+
+# Order for reports
+module_order:
+  - qualimap
+
+report_section_order:
+  software_versions:
+    order: -1000
+
+# Custom data here
+custom_data:
+  # QC CSV
+  qc_csv_table:
+    section_name: "Sample Metrics Table"
+    description: >
+      This table shows the overall quality control metrics the sample
+    plot_type: "table"
+    pconfig:
+      id: "qc_csv_table"
+      table_title: "Sample Metrics Table"
+      namespace: "Sample Metrics Table"
+      col1_header: "Sample"
+      only_defined_headers: True
+      format: "{:,.0f}"
+    headers:
+      sample:
+        scale: False
+      qc_pass:
+        title: "QC Pass"
+        description: "Overall status of the sample"
+        cond_formatting_rules:
+          warn: [{"s_ne": "PASS"}]
+      num_aligned_reads:
+        title: "# Aligned Reads"
+        description: "Number of aligned reads used for variant calling and consensus generation"
+        hidden: False
+      genome_completeness:
+        title: "Genome Completeness"
+        description: "Float value for how many bases in the genome were called with 1.0 being 100%"
+        scale: "RdYlGn"
+        min: 0
+        max: 1
+        format: "{:,.4f}"
+      median_sequencing_depth:
+        title: "Median Depth"
+        description: "Median sequencing depth of the sample"
+      total_variants:
+        title: "Total Variants"
+        description: "Total number of variant sites in the sample"
+        scale: "Greens"
+      num_snps:
+        title: "# SNPs"
+        description: "Number of individual SNPs in the sample"
+        min: 0
+        scale: "PuBu"
+      num_deletions:
+        title: "# Deletions"
+        description: "The total number of deleted bases in the sample"
+        min: 0
+        scale: "Purples"
+      num_deletion_sites:
+        title: "# Deletion Sites"
+        description: "The number of sites in the genome containing a deletion"
+        min: 0
+        scale: "Purples"
+      num_insertions:
+        title: "# Insertions"
+        description: "The total number of inserted bases in the sample"
+        min: 0
+        scale: "Oranges"
+      num_insertion_sites:
+        title: "# Insertion Sites"
+        description: "The number of sites in the genome containing an insertion"
+        min: 0
+        scale: "Oranges"
+      possible_frameshift_variants:
+        title: "Possible Frameshift Variants"
+        description: "Variants detected by SnpEFF as containing a frameshift or if SnpEFF was not run, indels that fail a divisible by 3 check"
+        # Note that the order here must be kept or the no_data will be yellow
+        cond_formatting_rules:
+          pass: [{"s_eq": "none"}]
+          frameshift: [{"s_ne": "none"}]
+          no_data: [{"s_eq": "NA"}]
+        cond_formatting_colours:
+          - 1:
+            frameshift: "#f0ad4e" # Yellow Warn colour
+          - 2:
+            no_data: "#000000" # Black
+
+  # Amplicons section
+  amplicon_depth:
+    id: 'amplicon_depth'
+    file_format: 'tsv'
+    section_name: 'Amplicon Depth Lineplot'
+    description: >
+      Calculated from the primertrimmed sorted bam file using bedtools coverage
+      looking for reads that overlap 85% of the given amplicon region
+    plot_type: 'linegraph'
+    pconfig:
+      id: 'amplicon_depth'
+      title: 'Amplicon Depth'
+      xlab: 'Amplicon ID'
+      ylab: 'Read Depth'
+      logswitch: True
+      logswitch_active: False
+      categories: True
+      ymin: 0
+
+  # Variants
+  consensus_variants_table:
+    section_name: "Consensus Called Variants Table"
+    description: >
+      This table shows all of the called variants found in the final consensus sequence.
+      If SnpEff was run, it also shows the protein variant and effect in the table.
+      Otherwise those columns will be empty
+    plot_type: "table"
+    pconfig:
+      id: "consensus_table"
+      table_title: "Consensus Called Variants Table"
+      namespace: "Consensus Called Variants Table"
+      only_defined_headers: True
+      col1_header: "Position"
+      format: "{:,.0f}"
+    headers:
+      Position:
+        scale: False
+      Ref:
+        title: "Reference Base"
+      Alt:
+        title: "Alternate Base"
+      Qual:
+        title: "Quality"
+        format: "{:,.2f}"
+      Variant:
+        title: "Protein Variant"
+        description: "SnpEff protein variant"
+      Consequence:
+        description: "SnpEff consequence"
+        cond_formatting_rules:
+          missnese: [{"s_contains": "missense"}]
+          nonsense: [{"s_contains": "nonsense"}]
+          frameshift: [{"s_contains": "frameshift"}]
+        cond_formatting_colours:
+          - 1:
+            missnese: "#080180" # Blue
+          - 2:
+            nonsense: "#9c0303" # Red
+          - 3:
+            frameshift: "#000000" # Black
+
+  variation_table:
+    section_name: "Sample Variation Table"
+    description: >
+      This table shows genomic positions in which there is a >= 15% variation from the reference base.
+      This includes mixed sites, SNPs, and deletions but not insertions
+      Note that the lower percentages (below 30) will be called the reference base in the final consensus sequence by default
+      and are included for additional context into potential problematic sites or sites to look further into
+
+    plot_type: "table"
+    pconfig:
+      id: "variation_table"
+      table_title: "Sample Variation Table"
+      namespace: "Sample Variation Table"
+      only_defined_headers: True
+      col1_header: "Position"
+      format: "{:,.0f}"
+    headers:
+      position:
+        scale: False
+      chrom:
+        title: "Chrom"
+        description: "Reference ID that the variation is found"
+      variant_type:
+        title: "Variant Type"
+        description: "Type of variation occuring at the specific site"
+        cond_formatting_rules:
+          A: [{"s_eq": "A SNP"}]
+          T: [{"s_eq": "T SNP"}]
+          G: [{"s_eq": "G SNP"}]
+          C: [{"s_eq": "C SNP"}]
+          Del: [{"s_eq": "Del"}]
+          mixed: [{"s_eq": "Mixed"}]
+        cond_formatting_colours:
+          - 1:
+            A: "#05a605" # Green
+          - 2:
+            T: "#a60505" # Red
+          - 3:
+            G: "#a65005" # Orange
+          - 4:
+            C: "#0535a6" # Blue
+          - 5:
+            Del: "#3d05a6" # Purple
+          - 6:
+            mixed: "#000000" # Black
+      total_reads:
+        title: "Total Reads"
+        description: "Read depth at the given position"
+        min: 0
+        scale: "Blues"
+      percentage_nonref:
+        title: "Non-Ref Percent"
+        description: "Percent of reads at the given position that are not the reference base"
+        suffix: "%"
+        min: 0
+        max: 100
+        format: "{:,.2f}"
+        scale: "RdYlGn"
+      ref_base:
+        title: "Ref Base"
+        description: "Reference base at the given location"
+      A_reads:
+        title: "A Reads"
+        min: 0
+        scale: "Greens"
+      T_reads:
+        title: "T Reads"
+        min: 0
+        scale: "Reds"
+      G_reads:
+        title: "G Reads"
+        min: 0
+        scale: "Oranges"
+      C_reads:
+        title: "C Reads"
+        min: 0
+        scale: "Blues"
+      del_reads:
+        title: "Del Reads"
+        min: 0
+        scale: "Purples"
+
+# Extensions to clean from names
+# extra_fn_clean_exts:
+
+# Search Pathes
+sp:
+  qc_csv_table:
+    fn: '*.qc.csv'
+  amplicon_depth:
+    fn: '*_ampdepth.tsv'
+  variation_table:
+    fn: '*_variation.csv'
+  consensus_variants_table:
+    fn: '*.vcf.tsv'

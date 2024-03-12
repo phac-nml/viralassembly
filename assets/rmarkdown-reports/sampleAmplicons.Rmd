@@ -1,0 +1,74 @@
+<!-- Dynamically add in amplicons if amplicon data used -->
+Amplicons
+==============================
+
+Column {.sidebar}
+------------------------------
+
+**Amplicon Heatmap Explainations**
+
+Amplicon completeness is calculated based on the number of Ns in each defined amplicon
+region based on the primer scheme. If there are no N's, the completeness is considered
+to be 100% (1.0 on the heatmap).
+
+Amplicon depth is calculated using bedtools coverage looking for reads in the bam file
+that overlap 85% of the amplicon region.
+
+These plots are most useful for determining if there are any amplicons with consistent
+dropouts or low sequencing depth across the run that can be adjusted for better results
+going forwards!
+
+Row {data-height=900 .tabset .tabset-fade .tabset-pill}
+------------------------------
+
+### Amplicon Completeness Heatmap
+```{r, amplicon_completeness, echo=FALSE, error=TRUE}
+df <- read.csv('./merged_amplicon_completeness.csv', sep=',', header=TRUE, row.names="sample")
+
+# Sort
+sorted_df <- df[order(row.names(df), decreasing = TRUE), ]
+
+# Matrix of dataframe
+mt <- as.matrix(sorted_df)
+
+# Plot
+p <- plot_ly(x=colnames(mt), y=rownames(mt), z = mt, type = "heatmap", colors = "RdYlGn",
+            text = mt,
+            hovertemplate = paste('<b>Sample</b>: %{y}',
+                                  '<br>Amplicon Name: %{x}<br>',
+                                  'Amplicon Completeness: %{z}',
+                                  '<extra></extra>')) %>%
+  layout(
+    margin = list(l=60),
+    title = "Sample Amplicon Completeness",
+    xaxis = list (title = "Amplicon Name"),
+    yaxis = list (title = "Sample")
+  )
+p
+```
+
+### Amplicon Depth Heatmap
+```{r, amplicon_depth, echo=FALSE, error=TRUE}
+df <- read.csv('./merged_amplicon_depth.csv', sep=',', header=TRUE, row.names="sample")
+
+# Sort
+sorted_df <- df[order(row.names(df), decreasing = TRUE),  ]
+
+# Matrix of dataframe
+mt <- as.matrix(sorted_df)
+
+# Plot
+p <- plot_ly(x=colnames(mt), y=rownames(mt), z = mt, type = "heatmap", colors = "RdYlGn",
+            text = mt,
+            hovertemplate = paste('<b>Sample</b>: %{y}',
+                                  '<br>Amplicon Name: %{x}<br>',
+                                  'Amplicon Depth: %{z}',
+                                  '<extra></extra>')) %>%
+  layout(
+    margin = list(l=60),
+    title = "Sample Amplicon Depth",
+    xaxis = list (title = "Amplicon Name"),
+    yaxis = list (title = "Sample")
+  )
+p
+```

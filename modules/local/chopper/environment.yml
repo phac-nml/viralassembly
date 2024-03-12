@@ -1,0 +1,7 @@
+name: chopper
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::chopper=0.7.0

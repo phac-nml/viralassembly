@@ -1,0 +1,6 @@
+sample,reads
+sample1,.github/test-data/nanopore/fastq_pass/barcode01
+sample2,.github/test-data/nanopore/fastq_pass/barcode02
+100_reads,.github/test-data/nanopore/fastq_pass/barcode03
+25_reads,.github/test-data/nanopore/fastq_pass/barcode24
+negative-ctrl,.github/test-data/nanopore/fastq_pass/barcode94
