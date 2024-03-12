@@ -22,7 +22,7 @@ indent_style = unset
 charset = unset
 end_of_line = unset
 insert_final_newline = unset
-trim_trailing_whitespace = unset
+
 indent_style = unset
 
 [/assets/email*]
@@ -35,3 +35,8 @@ indent_style = unset
 # ignore python
 [*.{py,md}]
 indent_style = unset
+
+# ignore Rmd files
+[*.{Rmd}]
+indent_style = unset
+trim_trailing_whitespace = unset
