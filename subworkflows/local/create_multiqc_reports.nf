@@ -68,7 +68,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
 
     // Amplicon analysis
     ch_amplicon_completeness = Channel.empty()
-    if ( ! params.reference_no_scheme ) {
+    if ( ! params.reference ) {
         // Coverage
         BEDTOOLS_COVERAGE_AMPLICON_BED(
             ch_bam,
@@ -114,7 +114,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     // If not using a scheme, need to correct the headers for qualimap by removing the empty RG
     // BAM channel also no longer needs bai file
     ch_bam = ch_bam.map { it -> tuple(it[0], it[1])}
-    if ( ! params.reference_no_scheme ) {
+    if ( ! params.reference ) {
         SAMTOOLS_REHEADER(
             ch_bam,
             "-c 'grep -v ^@RG'"

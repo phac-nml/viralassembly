@@ -134,7 +134,7 @@
             "description": "Options pertaining to the amplicon sequencing scheme. Scheme directories must include '*.scheme.bed' and '*.reference.fasta'",
             "default": "",
             "properties": {
-                "reference_no_scheme": {
+                "reference": {
                     "type": "string",
                     "description": "Path to local reference file to map to instead of using a primer scheme"
                 },

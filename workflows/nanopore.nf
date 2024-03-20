@@ -43,7 +43,7 @@ ch_fast5s = params.fast5_pass ? file(params.fast5_pass, type: 'dir', checkIfExis
 ch_seqSum = params.sequencing_summary ? file(params.sequencing_summary, type: 'file', checkIfExists: true) : []
 
 // Reference for if not using a scheme
-ch_reference = params.reference_no_scheme ? Channel.value(file(params.reference_no_scheme, type: 'file', checkIfExists: true)) : []
+ch_reference = params.reference ? Channel.value(file(params.reference, type: 'file', checkIfExists: true)) : []
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,7 +64,7 @@ workflow NANOPORE {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ch_amplicon_bed = Channel.empty()
     ch_primer_bed = Channel.value([]) // This has to be a value channel for qc creation to work
-    if ( ! params.reference_no_scheme ) {
+    if ( ! params.reference ) {
         if ( ! ch_local_scheme ) {
             DOWNLOAD_SCHEME()
             ch_local_scheme = DOWNLOAD_SCHEME.out.scheme
@@ -124,7 +124,7 @@ workflow NANOPORE {
     // Chose which pipeline to run based on input params
     //  The "proper" artic minion pipeline or re-implemented nextflow version
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    if ( params.reference_no_scheme ) {
+    if ( params.reference ) {
         WF_NANOPORE_SHOTGUN(
             ch_filtered_fastqs.pass,
             ch_fast5s,

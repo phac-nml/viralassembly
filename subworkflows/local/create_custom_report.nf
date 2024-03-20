@@ -67,7 +67,7 @@ workflow WF_CREATE_CUSTOM_REPORT {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ch_amplicon_coverage = Channel.empty()
     ch_amplicon_completeness = Channel.empty()
-    if ( ! params.reference_no_scheme ) {
+    if ( ! params.reference ) {
         // Coverage
         BEDTOOLS_COVERAGE_AMPLICON_BED(
             ch_bam,

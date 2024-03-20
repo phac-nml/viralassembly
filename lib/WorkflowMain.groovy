@@ -89,12 +89,28 @@ class WorkflowMain {
             log.error("Please provide an input for --variant_caller with any of ['nanopolish', 'medaka', 'clair3']")
             System.exit(1)
         }
+
+        //-- Scheme logic checks
+        //--- Basic
+        if ( ! params.reference && ! params.scheme ) {
+            log.error("Please provide either a reference or a scheme with: '--reference REF.fa' or '--scheme SCHEME'")
+            System.exit(1)
+        } else if ( params.reference && params.scheme ) {
+            log.error("Please provide either a reference or a scheme with: '--reference REF.fa' or '--scheme SCHEME'")
+            System.exit(1)
+        }
+        //--- Scheme info check
+        if ( params.scheme && ! params.scheme_version ) {
+            log.error("Please provide a scheme version with: '--scheme_version VERSION'")
+            System.exit(1)
+        }
+
         //-- Data inputs
         if ( ! params.input && ! params.fastq_pass ) {
-            log.error("Please provide input data with either: '--input samplesheet.csv' or '--fastq_pass fastq_dir/'")
+            log.error("Please provide input data with either: '--input input.csv' or '--fastq_pass fastq_dir/'")
             System.exit(1)
         } else if ( params.input && params.fastq_pass ) {
-            log.error("Please provide input data with either: '--input samplesheet.csv' or '--fastq_pass fastq_dir/'")
+            log.error("Please provide input data with either: '--input input.csv' or '--fastq_pass fastq_dir/'")
             System.exit(1)
         } else if ( params.variant_caller == 'nanopolish' ) {
             if ( ! params.fast5_pass || ! params.sequencing_summary ) {
