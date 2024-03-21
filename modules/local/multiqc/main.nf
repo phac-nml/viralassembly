@@ -56,6 +56,11 @@ process MULTIQC_OVERALL {
 
     script:
     """
-    multiqc -f -k yaml --config $multiqc_config .
+    multiqc \\
+        -f \\
+        -k yaml \\
+        --filename Overall-Run-MultiQC.report.html \\
+        --config $multiqc_config \\
+        .
     """
 }

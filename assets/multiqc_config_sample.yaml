@@ -255,7 +255,8 @@ custom_data:
         scale: "Purples"
 
 # Extensions to clean from names
-# extra_fn_clean_exts:
+extra_fn_clean_exts:
+  - '.nanostat'
 
 # Search Pathes
 sp:

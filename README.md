@@ -134,55 +134,9 @@ Outputs include:
 - Consensus fasta files
 - VCF files
 - Bam files
-- HTML summary files (either custom or multiqc)
+- HTML summary files (either custom or MultiQC)
 
-*More output information can be found in the [output docs](./docs/output.md)
-
-### Consensus Sequences
-Final consensus sequence output by the pipeline found in the `consensus/` directory as: `SAMPLE.consensus.fasta`
-
-### Bam Files
-BAM files in the `bam/` directory include:
-- `SAMPLE.primertrimmed.rg.sorted.bam`
-    - If using a scheme, these are the bam files used for variant calling and downstream QC steps
-- `SAMPLE.sorted.bam`
-    - If not using a scheme, these are the bam files used for all further steps
-        - Still output if using a scheme though
-
-### VCF Files
-VCF files found in the `vcf/` directory include:
-- `SAMPLE.pass.vcf.gz`
-    - Variants passing variant filtering
-- `SAMPLE.pass.norm.vcf.gz`
-    - BCFtools normalized variants passing variant filtering
-
-### SnpEff Outputs
-Output files from SnpEff found in the `snpeff/` directory including:
-- `SAMPLE.ann.vcf`
-    - SnpEff annotated VCF file
-- `SAMPLE.csv`
-    - SnpEff CSV summary
-
-### Variation Files
-Positional variation information based on the pileups and formatted as a CSV file is available in the `variation_csvs/` directory
-
-### Sample Summary Files
-- `sample_csvs/`
-    - Directory containing the individual csv file for each sample
-- `sample_mqc/`
-    - Directory containing MultiQC HTML reports for each sample
-
-### Overall outputs
-- `overall.qc.csv`
-    - Contains all of the calculated per sample metadata from the run along with giving a qc and negative control status
-- `Overall-Run-MultiQC-Report_multiqc_report.html`
-    - MultiQC HTML report containing all sample if running multiQC output
-- `reportDashboard.html`
-    - Custom HTML report containing all samples if running the custom output
-    - Note that it may take a bit to load if running a lot of samples
-    ![custom-report](./pictures/custom_report.png)
-- `pipeline_info/`
-    - Directory containing nextflow run information
+*More output information on pipeline steps and output files can be found in the [output docs](./docs/output.md)*
 
 ## Limitations
 Current limitations include:

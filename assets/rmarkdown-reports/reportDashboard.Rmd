@@ -1,5 +1,5 @@
 ---
-title: "NML Sequencing Run Report"
+title: "Sequencing Run Report"
 output:
   flexdashboard::flex_dashboard:
     orientation: rows

@@ -183,7 +183,9 @@ custom_data:
       ]
 
 # Extensions to clean from names
-# extra_fn_clean_exts:
+extra_fn_clean_exts:
+  - '.nanostat'
+  - '.ann'
 
 # Search Pathes
 sp:
