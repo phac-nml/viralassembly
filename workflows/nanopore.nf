@@ -12,6 +12,10 @@ include { RENAME_FASTQ              } from '../modules/local/custom/utils.nf'
 include { TRACK_FILTERED_SAMPLES as TRACK_INITIAL_FILTERED_SAMPLES } from '../modules/local/custom/filtering.nf'
 include { TRACK_FILTERED_SAMPLES as TRACK_SIZE_FILTERED_SAMPLES    } from '../modules/local/custom/filtering.nf'
 
+// Read QC
+include { CHOPPER                   } from '../modules/local/chopper/main'
+include { NANOSTAT                  } from '../modules/local/nanostat/main'
+
 // Artic related
 include { ARTIC_GUPPYPLEX           } from '../modules/local/artic/guppyplex/main'
 include { ARTIC_MINION              } from '../modules/local/artic/minion/main'
@@ -93,7 +97,7 @@ workflow NANOPORE {
     ch_versions = ch_versions.mix(GET_REF_STATS.out.versions)
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    // Read length and count filtering
+    // Read QC and Statistics
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ARTIC_GUPPYPLEX(
         ch_fastqs
@@ -113,12 +117,27 @@ workflow NANOPORE {
             .map{ fastq -> [ [id: fastq.baseName.replaceAll(~/\.fastq.*$/, '')], file(fastq) ] }
             .set{ ch_fastqs }
     }
-    // Pass/fail reads based on count after length filtering
+
+    // Chopper may be useless as we already filter based on length earlier
+    //  But it also does add quality filtering
+    CHOPPER(
+        ch_fastqs
+    )
+    ch_versions = ch_versions.mix(CHOPPER.out.versions)
+    ch_fastqs = CHOPPER.out.fastq
+
+    // Pass/fail reads based on count after length and quality filtering
     ch_fastqs
         .branch{
             pass: it[1].countFastq() >= params.min_reads
             empty: it[1].countFastq() < params.min_reads
         }.set{ ch_filtered_fastqs }
+
+    // Stats on final reads
+    NANOSTAT(
+        ch_filtered_fastqs.pass
+    )
+    ch_versions = ch_versions.mix(NANOSTAT.out.versions)
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Chose which pipeline to run based on input params
@@ -254,6 +273,7 @@ workflow NANOPORE {
                 ch_bam,
                 ch_vcf,
                 MAKE_SAMPLE_QC_CSV.out.csv,
+                NANOSTAT.out.stats,
                 ch_snpeff_csv,
                 ch_reference,
                 ch_amplicon_bed,

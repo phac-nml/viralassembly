@@ -1,7 +1,7 @@
 # viralassembly
 A generic viral assembly and QC pipeline which utilises a re-implementation of the [artic pipeline](https://github.com/artic-network/fieldbioinformatics/tree/master/artic) to separate out the individual steps allowing greater control on tool versions along with how data is run through the processes. This pipeline can be used as a starting point for analyses on viruses without dedicated workflows already available.
 
-This pipeline is currently intended to be run on either Nanopore Amplicon Sequencing data or Basic Nanopore NGS Sequencing data that can utilize a reference genome for mapping. It generates variant calls, consensus sequences, and quality control information based on the reference. To do this, there are three different variant callers that can be utilized which includes: `clair3`, `medaka`, and `nanopolish` (For R9.4.1 flowcells and below only),
+This pipeline is intended to be run on either Nanopore Amplicon Sequencing data or Basic Nanopore NGS Sequencing data that can utilize a reference genome for mapping variant calling, and other downstream analyses. It generates variant calls, consensus sequences, and quality control information based on the reference. To do this, there are three different variant callers that can be utilized which includes: `clair3`, `medaka`, and `nanopolish` (For R9.4.1 flowcells and below only).
 
 Some of the goals of this pipeline are:
 1. Rework the artic nanopore pipeline steps as nextflow modules to deal with specific bugs and version incompatibilities
@@ -55,7 +55,7 @@ Running the pipeline with [Clair3](https://github.com/HKU-BAL/Clair3) for varian
 - Look for subdirectories off of the input "--fastq_pass" directory called `barcode##` to be used in the pipeline
 - Look for fastq files in the input "--fastq_pass" directory called `*.fastq*` to be used in the pipeline
 
-This pipeline utilizes the same steps as the artic fieldbioinformatics minion pipeline but with each step run using nextflow to allow clair3 to be easily slotted in.
+This pipeline utilizes the same steps as the artic fieldbioinformatics minion pipeline but with each step run using nextflow to allow clair3 to be easily slotted in. See the [clair3 section](./docs/usage.md#clair3) of the usage docs for more information
 
 Basic command:
 ```bash
@@ -63,13 +63,12 @@ nextflow run /PATH/TO/artic-generic-nf/main.nf \
     -profile <PROFILE(s)> \
     --variant_caller 'clair3' \
     --fastq_pass </PATH/TO/fastq_pass> \
-    --clair3_model <Clair3 Model or /PATH/TO/clair3_model> \
-    --reference <REF.fa>
+    --reference <REF.fa> \
     <OPTIONAL INPUTS>
 ```
 
 [Optional inputs](./docs/usage.md#all-parameters) could include:
-- Different schemes
+- [Amplicon scheme](./docs/usage.md#schemes-and-reference) instead of just a reference fasta file
 - Metadata
 - Filtering options
 - Running SnpEff for variant consequence prediction
@@ -80,18 +79,21 @@ Running the pipeline with [medaka](https://github.com/nanoporetech/medaka) for v
 - Look for subdirectories off of the input "--fastq_pass" directory called `barcode##` to be used in the pipeline
 - Look for fastq files in the input "--fastq_pass" directory called `*.fastq*` to be used in the pipeline
 
+See the [medaka section](./docs/usage.md#medaka) of the usage docs for more information
+
 Basic command:
 ```bash
 nextflow run /PATH/TO/artic-generic-nf/main.nf \
     -profile <PROFILE(s)> \
     --variant_caller 'medaka' \
     --fastq_pass </PATH/TO/fastq_pass> \
-    --medaka_model <Medaka Model>
+    --medaka_model <Medaka Model> \
+    --reference <REF.fa> \
     <OPTIONAL INPUTS>
 ```
 
 [Optional inputs](./docs/usage.md#all-parameters) could include:
-- Different schemes
+- [Amplicon scheme](./docs/usage.md#schemes-and-reference) instead of just a reference fasta file
 - Metadata
 - Filtering options
 - Using base `artic minion` instead of nextflow implementation
@@ -103,6 +105,8 @@ Medaka model information [can be found here](https://github.com/nanoporetech/med
 ### Nanopore - Nanopolish
 Running the pipeline with [nanopolish](https://github.com/jts/nanopolish) for variant calls requires fastq files, fast5 files, and the sequencing summary file. When running, the pipeline will look for subdirectories off of the input directory called `barcode##` to be used in the pipeline.
 
+See the [nanopolish section](./docs/usage.md#nanopolish) of the usage docs for more information
+
 Basic command:
 ```bash
 nextflow run /PATH/TO/artic-generic-nf/main.nf \
@@ -110,12 +114,13 @@ nextflow run /PATH/TO/artic-generic-nf/main.nf \
     --variant_caller 'nanopolish' \
     --fastq_pass </PATH/TO/fastq_pass> \
     --fast5_pass </PATH/TO/fast5_pass> \
-    --sequencing_summary </PATH/TO/sequencing_summary.txt>
+    --sequencing_summary </PATH/TO/sequencing_summary.txt> \
+    --reference <REF.fa>
     <OPTIONAL INPUTS>
 ```
 
 [Optional inputs](./docs/usage.md#all-parameters) could include:
-- Different schemes
+- [Amplicon scheme](./docs/usage.md#schemes-and-reference) instead of just a reference fasta file
 - Metadata
 - Filtering options
 - Using base `artic minion` instead of nextflow implementation

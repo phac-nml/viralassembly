@@ -20,10 +20,15 @@ run_modules:
   - samtools
   - qualimap
   - bcftools
+  - nanostat
   - snpeff
 
 # Order for reports
 module_order:
+  - nanostat:
+    name: Nanostat filtered fastq statistics
+    path_filters:
+      - "*.nanostat.txt"
   - samtools
   - qualimap
   - bcftools

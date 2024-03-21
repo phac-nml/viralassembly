@@ -1,4 +1,4 @@
-# Example Commands
+# phac-nml/viralassembly: Example Commands
 A variety of example commands using different parameter options to display how to use each
 
 ## Amplicon
@@ -16,7 +16,7 @@ nextflow run phac-nml/viralassembly \
   --scheme 'hCMV' \
   --scheme_version 'V1' \
   --custom_report \
-  --outdir ./results 
+  --outdir ./results
 ```
 
 ### Medaka
@@ -29,7 +29,7 @@ nextflow run phac-nml/viralassembly \
   --variant_caller 'medaka' \
   --scheme 'nCoV-2019' \
   --scheme_version 'V5.3.2' \
-  --outdir ./results 
+  --outdir ./results
 ```
 
 ### Nanopolish
@@ -45,7 +45,7 @@ nextflow run phac-nml/viralassembly \
   --scheme 'nCoV-2019' \
   --scheme_version 'V5.3.2' \
   --use_artic_tool \
-  --outdir ./results 
+  --outdir ./results
 ```
 
 --------------------------
@@ -90,5 +90,5 @@ nextflow run phac-nml/viralassembly \
   --reference ./REFERENCE.fa \
   --min_length 100 \
   --max_length 600 \
-  --outdir ./results 
+  --outdir ./results
 ```

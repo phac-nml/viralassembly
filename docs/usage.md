@@ -1,7 +1,7 @@
 # phac-nml/viralassembly: Usage
 
 ## Introduction
-This pipeline is intended to be run on either Nanopore Amplicon Sequencing data or Basic Nanopore NGS Sequencing data that can utilize a reference genome for mapping. It generates variant calls, consensus sequences, and quality control information based on the reference. To do this, there are three different variant callers that can be utilized which includes: `nanopolish` (For R9.4.1 flowcells and below only), `medaka`, and `clair3`.
+This pipeline is intended to be run on either Nanopore Amplicon Sequencing data or Basic Nanopore NGS Sequencing data that can utilize a reference genome for mapping variant calling, and other downstream analyses. It generates variant calls, consensus sequences, and quality control information based on the reference. To do this, there are three different variant callers that can be utilized which includes: `clair3`, `medaka`, and `nanopolish` (For R9.4.1 flowcells and below only).
 
 For Amplicon Sequencing data it is at minimum required to:
 1. Specify a path to the reads/input file
@@ -86,6 +86,8 @@ Ex.
 | ntc | /path/to/barcode02 |
 | pos | /path/to/barcode03 |
 
+This will be expanded upon in future releases to allow more varied inputs for the input sheet.
+
 ## Variant Callers
 Three different variant callers are available with slightly different options regarding running with them. For the most accurate results when running with `clair3` or `medaka` pick a model that best matches the input data!!
 
@@ -93,20 +95,28 @@ Three different variant callers are available with slightly different options re
 Clair3 is a germline small variant caller for long-reads.
 
 Running with `clair3` requires the following parameters:
-- `--variant_caller clair3`
+- `--variant_caller clair3`: Sets clair3 as the variant caller
 
-Clair3 comes with some models available and is defaulted to `r941_prom_sup_g5014`. Additional models can be downloaded from [ONT Rerio](https://github.com/nanoporetech/rerio/tree/master) and then specified in the `--clair3_model <MODEL or /PATH/TO/downloaded_clair3_model>` parameter. Remember to pick a model that best represents the data!
+And has the optional parameters of:
+- `--clair3_model <MODEL>`: Specify the base clair3 model
+- `--clair3_user_variant_model </PATH/TO/downloaded_clair3_model>`:  Specify the path to an additionally downloaded model directory
+- `clair3_no_pool_split`: Do not split inputs into pools
+
+Clair3 comes with some models available and is defaulted to `r941_prom_sup_g5014`. Additional models can be downloaded from [ONT Rerio](https://github.com/nanoporetech/rerio/tree/master) and then specified in the `--clair3_user_variant_model </PATH/TO/downloaded_clair3_model>` parameter shown above. Remember to pick a model that best represents the data!
 
 ### [Medaka](https://github.com/nanoporetech/medaka)
 Medaka is a tool to create consensus sequences and variant calls from nanopore sequencing data using neural networks and provied by ONT.
 
 Running with `medaka` requires the following parameters:
-- `--variant_caller medaka`
+- `--variant_caller medaka`: Sets medaka as the variant caller
 
-Medaka models come built in with the tool itself with the default set to `r941_min_hac_g507` which can be changed with `--medaka_model <MODEL>`. More information on models [can be found here](https://github.com/nanoporetech/medaka#models). Remember to pick a model that best represents the data!
+And has the optional parameters of:
+`--medaka_model <MODEL>`: Specify the wanted medaka model
+
+Medaka models come built in with the tool itself with the default set to `r941_min_hac_g507` which can be changed with `--medaka_model <MODEL>` parameter shown above. More information on models [can be found here](https://github.com/nanoporetech/medaka#models). Remember to pick a model that best represents the data!
 
 ### [Nanopolish](https://github.com/jts/nanopolish)
-Nanopolish is a software package for signal-level analysis of Oxford Nanopore sequencing data. It does not presently support the R10.4 flowcells so as a variant caller it should only be used with R9.4 flowcells.
+Nanopolish is a software package for signal-level analysis of Oxford Nanopore sequencing data. It does not presently support the R10.4 flowcells so as a variant caller it should only be used with R9.4 flowcells. It also requires that the fastq data is in barcoded directories to work correctly.
 
 Running with `nanopolish` requires the following parameters:
 - `--variant_caller nanopolish`
@@ -128,10 +138,10 @@ nextflow run phac-nml/viralassembly \
   --medaka_model 'r1041_e82_400bps_sup_v4.3.0' \
   --scheme 'nCoV-2019' \
   --scheme_version 'V5.3.2' \
-  --outdir ./results 
+  --outdir ./results
 ```
 
-This will launch the pipeline with the `docker` configuration profile, the `medaka` variant caller, and the `nCoV-2019` version `V5.3.2` primer scheme from https://github.com/artic-network/primer-schemes/tree/master/nCoV-2019 (default scheme repo to pull). Profile information [can be found above](#profiles) 
+This will launch the pipeline with the `docker` configuration profile, the `medaka` variant caller, and the `nCoV-2019` version `V5.3.2` primer scheme from https://github.com/artic-network/primer-schemes/tree/master/nCoV-2019 (default scheme repo to pull). Profile information [can be found above](#profiles)
 
 ### Non-Amplicon
 The typical command for running the pipeline without an amplicon scheme using medaka and a different medaka model is as follows:
@@ -143,10 +153,10 @@ nextflow run phac-nml/viralassembly \
   --variant_caller medaka \
   --medaka_model 'r1041_e82_400bps_sup_v4.3.0' \
   --reference REF.fa \
-  --outdir ./results 
+  --outdir ./results
 ```
 
-This will launch the pipeline with the `singularity` configuration profile, the `medaka` variant caller, and the specified reference. Profile information [can be found above](#profiles) 
+This will launch the pipeline with the `singularity` configuration profile, the `medaka` variant caller, and the specified reference. Profile information [can be found above](#profiles)
 
 ### Other Run Notes
 
@@ -214,7 +224,9 @@ Use `--version` to see version information
 | Parameter | Description | Type | Default | Notes |
 | - | - | - | - | - |
 | --variant_caller | Pick from the 3 variant callers: 'clair3', 'medaka', 'nanopolish' | Choice | '' | Details above |
-| --clair3_model | Clair3 model to be used in the pipeline | Str/Path | 'r941_prom_sup_g5014' | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
+| --clair3_model | Clair3 base model to be used in the pipeline | Str | 'r941_prom_sup_g5014' | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
+| --clair3_user_variant_model | Path to clair3 additional model directory to use instead of a base model | Path | '' | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
+| --clair3_no_pool_split | Do not split reads into separate pools | Bool | False | Clair3 amplicon sequencing only |
 | --medaka_model | Medaka model to be used in the pipeline | Str | 'r941_min_hac_g507' | Default model will not work the best for all inputs. [See medaka docs](https://github.com/nanoporetech/medaka#models) for additional info |
 | --fastq_pass | Path to directory containing `barcode##` subdirectories | Path | null |  |
 | --fast5_pass | Path to directory containing `barcode##` fast5 subdirectories | Path | null | Only for nanopolish |

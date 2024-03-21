@@ -47,6 +47,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     ch_bam              // channel: [ val(meta), path(bam), path(bai) ]
     ch_vcf              // channel: [ val(meta), path(vcf) ]
     ch_sample_csv       // channel: [ val(meta), path(csv) ]
+    ch_nanostats_stats  // channel: [ val(meta), path(txt) ]
     ch_snpeff_csv       // channel: [ val(meta), path(csv) ] || empty
     ch_reference        // channel: [ path(reference) ]
     ch_amplicon_bed     // channel: [ path(amplicon_bed) ] || empty
@@ -139,6 +140,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
             .join(CREATE_READ_VARIATION_CSV.out.csv, by: [0])
             .join(CREATE_VARIANT_TSV.out.tsv, by: [0])
             .join(QUALIMAP_BAMQC.out.results, by: [0])
+            .join(ch_nanostats_stats, by: [0])
             .join(ch_sample_amplicon_depth, by: [0])
     )
 
@@ -155,6 +157,9 @@ workflow WF_CREATE_MULTIQC_REPORTS {
             .collect{ it[1] },
         QUALIMAP_BAMQC.out.results
             .collect{ it[1] },
+        ch_nanostats_stats
+            .collect{ it[1] }
+            .ifEmpty([]),
         ch_snpeff_csv
             .collect{ it[1] }
             .ifEmpty([]),

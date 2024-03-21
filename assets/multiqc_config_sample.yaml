@@ -16,10 +16,15 @@ skip_generalstats: true
 # Modules/tools supported that we only want to grab
 run_modules:
   - custom_content
+  - nanostat
   - qualimap
 
 # Order for reports
 module_order:
+  - nanostat:
+    name: Nanostat filtered fastq statistics
+    path_filters:
+      - "*.nanostat.txt"
   - qualimap
 
 report_section_order:
