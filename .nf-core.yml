@@ -6,7 +6,11 @@ lint:
   - .github/workflows/awsfulltest.yml
   files_unchanged:
   - CODE_OF_CONDUCT.md
+  pipeline_name_conventions: False
+  actions_awsfulltest: False
   nextflow_config:
-  - manifest.name
-repository_type: pipeline
+    - custom_config
+    - manifest.name
+    - manifest.homePage
 
+repository_type: pipeline

@@ -225,7 +225,7 @@ Final CSV file(s) for both individual samples and the overall run that combines 
 <summary>Output files</summary>
 
 - `sample_mqc/`
-  - `*.report.html`: Sample specific MultiQC HTML report containing visuals and tables 
+  - `*.report.html`: Sample specific MultiQC HTML report containing visuals and tables
 - `Overall-Run-MultiQC.report.html`: Final overall MultiQC report containing visuals and tables for all samples combined
 </details>
 

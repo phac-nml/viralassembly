@@ -95,7 +95,8 @@
                 },
                 "clair3_user_variant_model": {
                     "type": "string",
-                    "description": "Path to local clair3 model folder"
+                    "description": "Path to local clair3 model folder",
+                    "format": "directory-path"
                 },
                 "clair3_no_pool_split": {
                     "type": "boolean",
