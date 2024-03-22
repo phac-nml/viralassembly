@@ -31,15 +31,15 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [BCFtools Consensus](#bcftools-consensus)* - Create consensus sequence from VCF variants and Masked sites
 
 - [QC and Reporting](#qc-and-reporting)
-  - [SnpEff](#snpeff) - Variant annotation and functional prediction
+  - [SnpEff](#snpeff)* - Variant annotation and functional prediction
   - [Qualimap BAMQC](#qualimap-bamqc) - Alignment quality and metrics
   - [Samtools Flagstat](#samtools-flagstat) - Alignment flag stats
   - [BCFtools Stats](#bcftools-stats) - Variant quality and statistics
-  - [Variation CSV](#variation-csv) - Custom reporting script for finding and calculating variation in the BAM pileups
+  - [Variation CSV](#variation-csv)* - Custom reporting script for finding and calculating variation in the BAM pileups
   - [Amplicon Completeness](#amplicon-completeness) - Custom reporting script for calculating amplicon completeness based on bedtools output
-  - [QC Compilation](#qc-compilation) - Custom reporting scripts for each sample and the overall run
-  - [MultiQC](#multiqc) - Sample and Run HTML visual report
-  - [Custom Report](#custom-report) - Custom HTML Run visual report
+  - [QC Compilation](#qc-compilation)* - Custom reporting scripts for each sample and the overall run
+  - [MultiQC](#multiqc)* - Sample and Run HTML visual report
+  - [Custom Report](#custom-report)* - Custom single HTML report including the run and all individual samples
 
 Additionally [Pipeline information](#pipeline-information) which includes report metrics generated during the workflow execution can also be found
 
