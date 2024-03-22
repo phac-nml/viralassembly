@@ -1,0 +1,11 @@
+sample,reads
+negative-ctrl-1,barcode11
+run-ntc-1,barcode94
+pos-ctrl-1,barcode95
+cov-1,barcode5
+cov-2,barcode01
+cov-3,barcode12
+cov-4,barcode19
+cov-5,barcode40
+cov-6,barcode61
+cov-7,barcode75

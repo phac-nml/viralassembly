@@ -8,8 +8,6 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // Other tools
-include { CHOPPER                   } from '../../modules/local/chopper/main'
-include { NANOSTAT                  } from '../../modules/local/nanostat/main'
 include { MINIMAP2_ALIGN            } from '../../modules/local/minimap2/main'
 include { LONGSHOT                  } from '../../modules/local/longshot/main'
 include { BCFTOOLS_NORM             } from '../../modules/local/bcftools/norm/main'
@@ -51,23 +49,6 @@ workflow WF_NANOPORE_SHOTGUN {
     main:
     // Version tracking
     ch_versions = Channel.empty()
-
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    // Preprocessing
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    // Chopper may be useless as we already filter based on length earlier
-    //  Or I have this workflow earlier in the main one?
-    //  As we are not using amplicons filtering by length isn't as useful depending on if we expect a certain fragment length or not
-    CHOPPER(
-        ch_fastqs
-    )
-    ch_versions = ch_versions.mix(CHOPPER.out.versions)
-
-    // Stats
-    NANOSTAT(
-        CHOPPER.out.fastq
-    )
-    ch_versions = ch_versions.mix(NANOSTAT.out.versions)
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Align

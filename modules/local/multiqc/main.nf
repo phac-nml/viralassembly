@@ -13,7 +13,7 @@ process MULTIQC_SAMPLE {
 
     input:
     path multiqc_config
-    tuple val(meta), path(sample_csv), path(variation_csv), path(consensus_variant_tsv), path(qualimap_bamqc_data), path(amp_depth_tsv)
+    tuple val(meta), path(sample_csv), path(variation_csv), path(consensus_variant_tsv), path(qualimap_bamqc_data), path(nanostat_txt), path(amp_depth_tsv)
 
     output:
     path "*.html", emit: html
@@ -46,6 +46,7 @@ process MULTIQC_OVERALL {
     path bcftools_stats
     path samtools_flagstats
     path qualimap_bamqc_data
+    path nanostat_data
     path snpeff_csvs
     path qc_csv
     path versions_yml
@@ -55,6 +56,11 @@ process MULTIQC_OVERALL {
 
     script:
     """
-    multiqc -f -k yaml --config $multiqc_config .
+    multiqc \\
+        -f \\
+        -k yaml \\
+        --filename Overall-Run-MultiQC.report.html \\
+        --config $multiqc_config \\
+        .
     """
 }

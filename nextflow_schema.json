@@ -95,7 +95,8 @@
                 },
                 "clair3_user_variant_model": {
                     "type": "string",
-                    "description": "Path to local clair3 model folder"
+                    "description": "Path to local clair3 model folder",
+                    "format": "directory-path"
                 },
                 "clair3_no_pool_split": {
                     "type": "boolean",
@@ -134,7 +135,7 @@
             "description": "Options pertaining to the amplicon sequencing scheme. Scheme directories must include '*.scheme.bed' and '*.reference.fasta'",
             "default": "",
             "properties": {
-                "reference_no_scheme": {
+                "reference": {
                     "type": "string",
                     "description": "Path to local reference file to map to instead of using a primer scheme"
                 },
