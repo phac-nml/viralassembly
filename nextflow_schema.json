@@ -35,7 +35,6 @@
             "format": "file-path",
             "exists": true,
             "mimetype": "text/csv",
-            "pattern": "^\\S+\\.csv$",
             "description": "Important pipeline values for that are based on which variant caller is being used along with if any metadata is to be added",
             "help_text": "",
             "fa_icon": "fas fa-sign-out-alt",

@@ -79,7 +79,7 @@ class WorkflowMain {
 
         // Can't run singularity with the custom report at the moment
         if ( workflow.containerEngine == 'singularity' && params.custom_report ) {
-            log.error("Custom report is not currently compatible with singularity")
+            log.error("Custom report is not currently compatible with singularity :(")
             System.exit(1)
         }
 
@@ -93,28 +93,28 @@ class WorkflowMain {
         //-- Scheme logic checks
         //--- Basic
         if ( ! params.reference && ! params.scheme ) {
-            log.error("Please provide either a reference or a scheme with: '--reference REF.fa' or '--scheme SCHEME'")
+            log.error("Please provide either a reference (non-amplicon) or a scheme (amplicon) with: '--reference REF.fa' or '--scheme SCHEME'")
             System.exit(1)
         } else if ( params.reference && params.scheme ) {
-            log.error("Please provide either a reference or a scheme with: '--reference REF.fa' or '--scheme SCHEME'")
+            log.error("Please provide either a reference (non-amplicon) or a scheme (amplicon) with: '--reference REF.fa' or '--scheme SCHEME'")
             System.exit(1)
         }
         //--- Scheme info check
         if ( params.scheme && ! params.scheme_version ) {
-            log.error("Please provide a scheme version with: '--scheme_version VERSION'")
+            log.error("Please provide a scheme version along with the given scheme using: '--scheme_version VERSION'")
             System.exit(1)
         }
 
-        //-- Data inputs
+        //-- Data inputs required
         if ( ! params.input && ! params.fastq_pass ) {
             log.error("Please provide input data with either: '--input input.csv' or '--fastq_pass fastq_dir/'")
             System.exit(1)
         } else if ( params.input && params.fastq_pass ) {
-            log.error("Please provide input data with either: '--input input.csv' or '--fastq_pass fastq_dir/'")
+            log.error("Please provide input data with either: '--input input.csv' or '--fastq_pass fastq_dir/' but not both")
             System.exit(1)
         } else if ( params.variant_caller == 'nanopolish' ) {
             if ( ! params.fast5_pass || ! params.sequencing_summary ) {
-                log.error("Please pass both '--fast5_pass fast5_dir/' and '--sequencing_summary' to run nanopolish")
+                log.error("Please pass both '--fast5_pass fast5_dir/' and '--sequencing_summary seqsum.txt' to run nanopolish")
                 System.exit(1)
             }
         }
