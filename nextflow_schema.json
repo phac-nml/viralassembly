@@ -31,14 +31,10 @@
             }
         },
         "important_input_values": {
-            "type": "string",
-            "format": "file-path",
-            "exists": true,
-            "mimetype": "text/csv",
-            "description": "Important pipeline values for that are based on which variant caller is being used along with if any metadata is to be added",
-            "help_text": "",
-            "fa_icon": "fas fa-sign-out-alt",
             "title": "Important input values",
+            "type": "object",
+            "fa_icon": "fas fa-sign-out-alt",
+            "description": "Important pipeline values for that are based on which variant caller is being used along with if any metadata is to be added",
             "properties": {
                 "variant_caller": {
                     "type": "string",
@@ -81,6 +77,7 @@
             "type": "object",
             "description": "Settings pertaining to the specific variant callers models. Be as accurate as possible for best results",
             "default": "",
+            "fa_icon": "fas fa-tools",
             "properties": {
                 "medaka_model": {
                     "type": "string",
@@ -101,14 +98,14 @@
                     "type": "boolean",
                     "description": "Pass to not split amplicon pools when running clair3"
                 }
-            },
-            "fa_icon": "fas fa-tools"
+            }
         },
         "read_filtering_options": {
             "title": "Read filtering options",
             "type": "object",
             "description": "Options pertaining to how to filter reads",
             "default": "",
+            "fa_icon": "fas fa-filter",
             "properties": {
                 "min_reads": {
                     "type": "integer",
@@ -125,8 +122,7 @@
                     "default": 3000,
                     "description": "Maximum read length to keep"
                 }
-            },
-            "fa_icon": "fas fa-filter"
+            }
         },
         "scheme_options": {
             "title": "Scheme options",
@@ -216,6 +212,7 @@
             "type": "object",
             "description": "Options pertaining to QC outputs/stats",
             "default": "",
+            "fa_icon": "fas fa-star",
             "properties": {
                 "skip_qc": {
                     "type": "boolean",
@@ -237,14 +234,14 @@
                     "default": "neg,ntc,blank",
                     "description": "Control prefixes separated by a ',' to determine which samples are negative controls"
                 }
-            },
-            "fa_icon": "fas fa-star"
+            }
         },
         "report_generation_options": {
             "title": "Report generation options",
             "type": "object",
             "description": "Options pertaining to final report generation",
             "default": "",
+            "fa_icon": "fas fa-file-code",
             "properties": {
                 "custom_report": {
                     "type": "boolean",
@@ -263,15 +260,14 @@
                     "description": "MultiQC sample config yaml file",
                     "format": "file-path"
                 }
-            },
-            "fa_icon": "fas fa-file-code"
+            }
         },
         "generic_options": {
             "title": "Generic options",
             "type": "object",
-            "fa_icon": "fas fa-file-import",
             "description": "Less common options for the pipeline, typically set in a config file.",
             "help_text": "These options are generic and don't quite all under any other categories",
+            "fa_icon": "fas fa-file-import",
             "properties": {
                 "outdir": {
                     "type": "string",
@@ -320,6 +316,7 @@
             "type": "object",
             "description": "Options pertaining to resource usage",
             "default": "",
+            "fa_icon": "fas fa-cog",
             "properties": {
                 "max_memory": {
                     "type": "string",
@@ -336,8 +333,7 @@
                     "description": "Maximum time available for a single process to run with",
                     "default": "120.h"
                 }
-            },
-            "fa_icon": "fas fa-cog"
+            }
         }
     },
     "allOf": [

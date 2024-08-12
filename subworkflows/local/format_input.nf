@@ -46,26 +46,24 @@ workflow FORMAT_INPUT {
                 }.set{ ch_fastqs }
         // Failing conditions
         } else {
-            log.error("ERROR: Couldn't detect any fastq files in --fastq_pass ${params.fastq_pass}")
+            log.error("Couldn't detect any fastq files in --fastq_pass ${params.fastq_pass}")
             System.exit(1)
         }
     }
 
     //
-    // Input CSV file with path to fastq barcode directories or single reads
+    // Input CSV file with path to fastq single reads to comply with IRIDA Next (eventually)
     //
     else {
-        // This works for directories
-        Channel.fromPath( params.input, type: 'file', checkIfExists: true )
-            .splitCsv(header:true)
-            .map{ row -> [ [id: row.sample], file(row.reads, type: 'dir', checkIfExists: true) ] }
+        // Using the samplesheet thing
+        Channel.fromList(samplesheetToList(params.input, "assets/schema_input.json"))
             .branch{
-                    pass: it[1].listFiles().size() >= 1
-                    empty: it[1].listFiles().size() == 0
+                pass: it[1].countFastq() >= 1
+                empty: it[1].countFastq() == 0
             }.set{ ch_fastqs }
     }
 
     emit:
-    fastq_pass = ch_fastqs.pass     // 
-    fastq_empty = ch_fastqs.empty   // 
+    pass = ch_fastqs.pass     // channel: [ val(meta), file(fastq) ]
+    empty = ch_fastqs.empty   // channel: [ val(meta), file(fastq) ]
 }

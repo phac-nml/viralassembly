@@ -15,7 +15,7 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { FORMAT_INPUT } from './subworkflows/format_input.nf'
+include { FORMAT_INPUT } from './subworkflows/local/format_input.nf'
 include { NANOPORE } from './workflows/nanopore.nf'
 
 /*
@@ -42,8 +42,8 @@ workflow VIRALASSEMBLY {
     // WORKFLOW: Run pipeline
     //
     NANOPORE (
-        FORMAT_INPUT.out.fastq_pass,
-        FORMAT_INPUT.out.fastq_empty
+        FORMAT_INPUT.out.pass,
+        FORMAT_INPUT.out.empty
     )
 }
 /*

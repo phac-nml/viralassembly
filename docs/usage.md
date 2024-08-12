@@ -75,16 +75,16 @@ Flat:
 ```
 
 ### Input CSV (--input)
-You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to pass in an input CSV file containing 2 columns, `sample`, and `reads` where:
+You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to pass in an input CSV file containing 2 columns, `sample`, and `fastq_1` where:
 - `sample` is the sample name to use
-- `reads` is the path to the barcode directory containing reads
+- `fastq_1` is the path to one fastq file per sample in `.fastq*` format
 
 Ex.
-| sample | reads |
+| sample | fastq_1 |
 | - | - |
-| sample1 | /path/to/barcode01 |
-| ntc | /path/to/barcode02 |
-| pos | /path/to/barcode03 |
+| sample1 | /path/to/sample.fastq |
+| ntc | /path/to/control.fastq |
+| pos | /path/to/pos.fastq |
 
 This will be expanded upon in future releases to allow more varied inputs for the input sheet.
 
@@ -223,12 +223,13 @@ Use `--version` to see version information
 ### All Parameters
 | Parameter | Description | Type | Default | Notes |
 | - | - | - | - | - |
+| --fastq_pass | Path to directory containing `barcode##` subdirectories OR Path to directory containing `*.fastq*` files | Path | null | [Option for input params](#input-parameters) |
+| --input | Path to samplesheet with information about the samples you would like to analyse | Path | null | [Option for input params](#input-parameters) |
 | --variant_caller | Pick from the 3 variant callers: 'clair3', 'medaka', 'nanopolish' | Choice | '' | Details above |
 | --clair3_model | Clair3 base model to be used in the pipeline | Str | 'r941_prom_sup_g5014' | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
 | --clair3_user_variant_model | Path to clair3 additional model directory to use instead of a base model | Path | '' | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
 | --clair3_no_pool_split | Do not split reads into separate pools | Bool | False | Clair3 amplicon sequencing only |
 | --medaka_model | Medaka model to be used in the pipeline | Str | 'r941_min_hac_g507' | Default model will not work the best for all inputs. [See medaka docs](https://github.com/nanoporetech/medaka#models) for additional info |
-| --fastq_pass | Path to directory containing `barcode##` subdirectories OR Path to directory containing `*.fastq*` files | Path | null |  |
 | --fast5_pass | Path to directory containing `barcode##` fast5 subdirectories | Path | null | Only for nanopolish |
 | --sequencing_summary | Path to run `sequencing_summary*.txt` file | Path | null | Only for nanopolish |
 | --min_length | Minimum read length to be kept | Int | 200 | For artic guppyplex |

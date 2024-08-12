@@ -10,12 +10,13 @@
         "sample": {
           "type": "string",
           "pattern": "^\\S+$",
-          "errorMessage": "Sample name must be provided and cannot contain spaces"
+          "errorMessage": "Sample name must be provided and cannot contain spaces",
+          "meta": ["id"]
         },
         "fastq_1": {
           "type": "string",
-          "format": "file-path",
           "pattern": "^\\S+\\.f(ast)?q(\\.gz)?$",
+          "format": "file-path",
           "errorMessage": "FastQ file for reads must be provided, cannot contain spaces, and must have extension '.fq(.gz)' or '.fastq(.gz)'"
         }
       },

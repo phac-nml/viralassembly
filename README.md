@@ -43,8 +43,8 @@ Simple commands to run input data. Input data can be done in three different way
 1. Passing `--fastq_pass </PATH/TO/fastq_pass>` where `fastq_pass` is a directory containing `barcode##` subdirectories with fastq files
 2. Passing `--fastq_pass </PATH/TO/fastqs>` where `fastqs` is a directory containing `.fastq*` files
 3. Passing `--input <samplesheet.csv>` where `samplesheet.csv` is a CSV file with two columns
-    1. `sample` - The name of the sample
-    2. `reads`  - Path to a directory containing reads for the sample in `.fastq*` format
+    1. `sample`  - The name of the sample
+    2. `fastq_1` - Path to one fastq file per sample in `.fastq*` format
 
 The basic examples will show how to run the pipeline using the `--fastq_pass` input but it could be subbed in for the `--input` CSV file if wanted.
 
