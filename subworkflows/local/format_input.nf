@@ -9,6 +9,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { samplesheetToList } from 'plugin/nf-schema'
+include { CAT_FASTQ } from '../../modules/local/custom/utils.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,11 +56,38 @@ workflow FORMAT_INPUT {
     // Input CSV file with path to fastq single reads to comply with IRIDA Next (eventually)
     //
     else {
-        // Using the samplesheet thing
+        // Using the samplesheet thingy
         Channel.fromList(samplesheetToList(params.input, "assets/schema_input.json"))
+            // Group by name
+            .groupTuple(by: 0)
+            .map{ meta, fastqs ->
+                // Set list of fastqs found
+                def gzfq_list = []
+                def fq_list = []
+
+                // Determine if gzipped or not
+                //  The samplesheetToList part should deal with name/extension reqs
+                for ( fastq in fastqs ) {
+                    if ( fastq.isFile() ) {
+                        if ( fastq.getName().endsWith('.gz') ) { 
+                            gzfq_list << fastq
+                        }else {
+                            fq_list << fastq 
+                        }
+                    }
+                }
+                return [meta, gzfq_list, fq_list]
+            }.set{ ch_initial_fastqs }
+
+        // Concatenate fastqs to allow gzipped and non-gzipped together
+        CAT_FASTQ(
+            ch_initial_fastqs
+        )
+
+        CAT_FASTQ.out.fastq
             .branch{
+                empty: it[1].isEmpty()
                 pass: it[1].countFastq() >= 1
-                empty: it[1].countFastq() == 0
             }.set{ ch_fastqs }
     }
 

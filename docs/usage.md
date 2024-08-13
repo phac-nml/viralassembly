@@ -83,10 +83,12 @@ Ex.
 | sample | fastq_1 |
 | - | - |
 | sample1 | /path/to/sample.fastq |
+| sample2 | /path/to/sample2-1.fastq |
+| sample2 | /path/to/sample-2.fastq |
 | ntc | /path/to/control.fastq |
 | pos | /path/to/pos.fastq |
 
-This will be expanded upon in future releases to allow more varied inputs for the input sheet.
+A sample can be given multiple fastq files if it was resequenced or needed a top up run. If there are multiple fastq files for a sample they will be concatenated and gzipped. If not, the input fastq file will just be gzipped (if it isn't already).
 
 ## Variant Callers
 Three different variant callers are available with slightly different options regarding running with them. For the most accurate results when running with `clair3` or `medaka` pick a model that best matches the input data!!
