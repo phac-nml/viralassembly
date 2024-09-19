@@ -69,10 +69,10 @@ workflow FORMAT_INPUT {
                 //  The samplesheetToList part should deal with name/extension reqs
                 for ( fastq in fastqs ) {
                     if ( fastq.isFile() ) {
-                        if ( fastq.getName().endsWith('.gz') ) { 
+                        if ( fastq.getName().endsWith('.gz') ) {
                             gzfq_list << fastq
                         }else {
-                            fq_list << fastq 
+                            fq_list << fastq
                         }
                     }
                 }

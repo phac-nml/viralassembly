@@ -5,21 +5,21 @@
     "description": "Schema for the file provided with params.input",
     "type": "array",
     "items": {
-      "type": "object",
-      "properties": {
-        "sample": {
-          "type": "string",
-          "pattern": "^\\S+$",
-          "errorMessage": "Sample name must be provided and cannot contain spaces",
-          "meta": ["id"]
+        "type": "object",
+        "properties": {
+            "sample": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "meta": ["id"]
+            },
+            "fastq_1": {
+                "type": "string",
+                "pattern": "^\\S+\\.f(ast)?q(\\.gz)?$",
+                "format": "file-path",
+                "errorMessage": "FastQ file for reads must be provided, cannot contain spaces, and must have extension '.fq(.gz)' or '.fastq(.gz)'"
+            }
         },
-        "fastq_1": {
-          "type": "string",
-          "pattern": "^\\S+\\.f(ast)?q(\\.gz)?$",
-          "format": "file-path",
-          "errorMessage": "FastQ file for reads must be provided, cannot contain spaces, and must have extension '.fq(.gz)' or '.fastq(.gz)'"
-        }
-      },
-      "required": ["sample", "fastq_1"]
+        "required": ["sample", "fastq_1"]
     }
 }
