@@ -11,7 +11,7 @@ Some of the goals of this pipeline are:
 2. Allow the pipeline to be used on other viruses with or without amplicon schemes
     - Due to the QC steps there is unfortunately a current limitation at working with segmented viruses
         - The pipeline will automatically exit after assembly and not generate QC and Reports for these at this time
-        - This will be fully implemented at some point
+        - This will hopefully be fully implemented at some point in the future
 3. Provide `Run` level and `Sample` level final reports
 
 ## Index
@@ -32,7 +32,7 @@ Some of the goals of this pipeline are:
         - Conda command: `conda create on nextflow -c conda-forge -c bioconda nextflow`
     2. Install with the instructions at https://www.nextflow.io/
 
-2. Run the pipeline with a profile to handle dependencies:
+2. Run the pipeline with one of the following profiles to handle dependencies (or use your own profile if you have one!):
     - `conda`
     - `mamba`
     - `singularity`
@@ -43,8 +43,8 @@ Simple commands to run input data. Input data can be done in three different way
 1. Passing `--fastq_pass </PATH/TO/fastq_pass>` where `fastq_pass` is a directory containing `barcode##` subdirectories with fastq files
 2. Passing `--fastq_pass </PATH/TO/fastqs>` where `fastqs` is a directory containing `.fastq*` files
 3. Passing `--input <samplesheet.csv>` where `samplesheet.csv` is a CSV file with two columns
-    1. `sample` - The name of the sample
-    2. `reads`  - Path to a directory containing reads for the sample in `.fastq*` format
+    1. `sample`  - The name of the sample
+    2. `fastq_1` - Path to one fastq file per sample in `.fastq*` format
 
 The basic examples will show how to run the pipeline using the `--fastq_pass` input but it could be subbed in for the `--input` CSV file if wanted.
 
@@ -103,7 +103,7 @@ nextflow run /PATH/TO/artic-generic-nf/main.nf \
 Medaka model information [can be found here](https://github.com/nanoporetech/medaka#models)
 
 ### Nanopore - Nanopolish
-Running the pipeline with [nanopolish](https://github.com/jts/nanopolish) for variant calls requires fastq files, fast5 files, and the sequencing summary file. When running, the pipeline will look for subdirectories off of the input directory called `barcode##` to be used in the pipeline.
+Running the pipeline with [nanopolish](https://github.com/jts/nanopolish) for variant calls requires fastq files, fast5 files, and the sequencing summary file instead of providing a model. As such, nanopolish requires that the read ids in the fastq files are linked by the sequencing summary file to their signal-level data in the fast5 files. This makes it **a lot** easier to run using barcoded directories but it can be run with individual read files
 
 See the [nanopolish section](./docs/usage.md#nanopolish) of the usage docs for more information
 

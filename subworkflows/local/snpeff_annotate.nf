@@ -17,7 +17,7 @@ include { ZIP_AND_INDEX_VCF } from '../../modules/local/artic_subcommands/main'
     INITIALIZE CHANNELS FROM PARAMS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-ch_gff = params.gff ? file(params.gff, checkIfExists: true) : []
+ch_gff = params.gff ? file(params.gff, type: 'file', checkIfExists: true) : []
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

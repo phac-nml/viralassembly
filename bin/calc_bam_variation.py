@@ -86,6 +86,8 @@ def create_ref_dict(ref_fasta) -> dict:
     ref_dict = {}
     ref_fasta = pysam.FastaFile(ref_fasta)
     for idx, base in enumerate(ref_fasta.fetch(ref_fasta.references[0])):
+        # Allows lowercase and uppercase refs, fixes small bug
+        base = base.upper()
         ref_dict[idx] = base
 
     return ref_dict

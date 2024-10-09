@@ -1,4 +1,35 @@
 // Custom Utility Modules
+process CAT_FASTQ {
+    label 'process_single'
+    tag "$meta.id"
+
+    conda "conda-forge::pigz=2.3.4"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/pigz:2.3.4' :
+        'biocontainers/pigz:2.3.4' }"
+
+    input:
+    tuple val(meta), path(gzipped_reads), path(reads)
+
+    output:
+    tuple val(meta), path("*.merged.fastq.gz"), emit: fastq
+
+    script:
+    // Check if input lists are empty or not
+    def gzReadsExist = !gzipped_reads.empty
+    def readsExist = !reads.empty
+
+    def outName = "${meta.id}.merged.fastq.gz"
+    """
+    touch $outName
+    if [ "$gzReadsExist" == "true" ]; then
+        cat $gzipped_reads >> $outName
+    fi
+    if [ "$readsExist" == "true" ]; then
+        cat $reads | pigz -ck >> $outName
+    fi
+    """
+}
 process DOWNLOAD_SCHEME {
     label 'process_single'
     tag { params.scheme_repo }
