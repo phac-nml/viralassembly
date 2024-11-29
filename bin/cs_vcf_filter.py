@@ -72,8 +72,12 @@ class Clair3Filter:
         # These seem to not be being pulled out though so check if the qual is none to fail them
         if qual == None:
             return False
-        # Temp filter of qual 15, will need to re-evaluate with more data
-        if qual < 15:
+        # 2 is the default for clair3 so bump slightly up to 3
+        if qual < 3:
+            return False
+
+        # Allele fraction > 0.75 required
+        if len(v.samples) != 1 or v.samples[0].data.AF < 0.75:
             return False
 
         if self.no_frameshifts and not in_frame(v):
