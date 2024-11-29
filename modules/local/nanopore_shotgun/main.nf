@@ -171,8 +171,7 @@ process CLAIR3_VARIANTS {
         --platform='ont' \\
         --model_path="\$MODEL_PATH" \\
         --output="${sampleName}-out" \\
-        --qual=2 \\
-        --min_coverage=20 \\
+        --min_coverage=10 \\
         --haploid_precise \\
         --enable_long_indel \\
         --fast_mode \\
