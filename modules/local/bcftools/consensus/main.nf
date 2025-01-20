@@ -1,7 +1,7 @@
 process BCFTOOLS_CONSENSUS {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/consensus", pattern: "${sampleName}.consensus.fasta", mode: "copy"
+    publishDir "${params.outdir}/consensus", pattern: "${meta.id}.consensus.fasta", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -12,23 +12,33 @@ process BCFTOOLS_CONSENSUS {
     tuple val(meta), path(preconsensus), path(coverage_mask), path(pass_vcf), path(pass_vcf_tbi)
 
     output:
-    tuple val(meta), path("${sampleName}.consensus.fasta"), emit: consensus
+    tuple val(meta), path("${meta.id}.consensus.fasta"), emit: consensus
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     # Command #
     bcftools consensus \\
         -f $preconsensus \\
-        ${sampleName}.pass.norm.vcf.gz \\
+        ${meta.id}.pass.norm.vcf.gz \\
         -m $coverage_mask \\
-        -o ${sampleName}.consensus.fasta
+        -o ${meta.id}.consensus.fasta
 
     # Apply samplename as header but keep existing info #
-    sed -i "s/>/>$sampleName /" ${sampleName}.consensus.fasta
+    sed -i "s/>/>$meta.id /" ${meta.id}.consensus.fasta
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bcftools: \$(bcftools --version 2>&1 | head -n1 | sed 's/^.*bcftools //; s/ .*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.consensus.fasta
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         bcftools: \$(bcftools --version 2>&1 | head -n1 | sed 's/^.*bcftools //; s/ .*\$//')

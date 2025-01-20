@@ -1,7 +1,7 @@
 process LONGSHOT {
     label 'process_medium'
     tag "$meta.id"
-    publishDir "${params.outdir}/vcf", pattern: "${sampleName}.longshot.merged.vcf", mode: "copy"
+    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.longshot.merged.vcf", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -14,11 +14,10 @@ process LONGSHOT {
     path reference_fai
 
     output:
-    tuple val(meta), path("${sampleName}.longshot.merged.vcf"), emit: vcf
+    tuple val(meta), path("${meta.id}.longshot.merged.vcf"), emit: vcf
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     def VERSION = '0.4.5' // Longshot version does not seem to be being printed out
     """
     longshot \\
@@ -28,10 +27,22 @@ process LONGSHOT {
         --no_haps \\
         --bam $bam \\
         --ref $reference \\
-        --out ${sampleName}.longshot.merged.vcf \\
+        --out ${meta.id}.longshot.merged.vcf \\
         --potential_variants $vcf
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        longshot: $VERSION
+    END_VERSIONS
+    """
+
+    stub:
+    def VERSION = '0.4.5' // Longshot version does not seem to be being printed out
+    """
+    touch ${meta.id}.longshot.merged.vcf
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         longshot: $VERSION

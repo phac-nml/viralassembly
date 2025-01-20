@@ -11,15 +11,24 @@ process NANOSTAT {
     tuple val(meta), path(fastq)
 
     output:
-    tuple val(meta), path("${sampleName}.nanostat.txt"), emit: stats
+    tuple val(meta), path("${meta.id}.nanostat.txt"), emit: stats
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     NanoStat \\
         --fastq $fastq \\
-        > ${sampleName}.nanostat.txt
+        > ${meta.id}.nanostat.txt
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        NanoStat: \$(NanoStat --version | cut -d ' ' -f 2)
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.nanostat.txt
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

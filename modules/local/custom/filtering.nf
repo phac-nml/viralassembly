@@ -38,4 +38,9 @@ process TRACK_FILTERED_SAMPLES {
     echo "sample,qc_pass" > $SAMPLENAME.status.csv
     echo "$SAMPLENAME,!{fail_message}" >> $SAMPLENAME.status.csv
     '''
+
+    stub:
+    """
+    touch ${meta.id}.status.csv
+    """
 }

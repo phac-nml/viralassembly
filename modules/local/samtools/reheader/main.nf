@@ -12,18 +12,29 @@ process SAMTOOLS_REHEADER {
     val command
 
     output:
-    tuple val(meta), path("${sampleName}.bam"), emit: bam
+    tuple val(meta), path("${meta.id}.bam"), emit: bam
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     samtools \\
         reheader \\
         ${command} \\
         $bam \\
-        > ${sampleName}.bam
+        > ${meta.id}.bam
 
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.bam
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')

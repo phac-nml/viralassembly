@@ -3,7 +3,7 @@
         The parameters match those for shotgun data
         The main difference is that the amplicon processes
         are heavily coupled to use of the readgroup/bed file/regions
-        while the shotgun callers are not
+        while the shotgun processes are not
 */
 process MEDAKA_CONSENSUS {
     label 'process_medium'
@@ -19,11 +19,10 @@ process MEDAKA_CONSENSUS {
     tuple val(meta), path(bam), path(bai), val(pool)
 
     output:
-    tuple val(meta), path("${sampleName}.${pool}.hdf"), val(pool), emit: hdf
+    tuple val(meta), path("${meta.id}.${pool}.hdf"), val(pool), emit: hdf
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     medaka consensus \\
         --model ${params.medaka_model} \\
@@ -32,9 +31,20 @@ process MEDAKA_CONSENSUS {
         --chunk_ovlp 400 \\
         --RG ${pool} \\
         $bam \\
-        ${sampleName}.${pool}.hdf
+        ${meta.id}.${pool}.hdf
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        medaka: \$( medaka --version 2>&1 | sed 's/medaka //g' )
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.${pool}.hdf
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         medaka: \$( medaka --version 2>&1 | sed 's/medaka //g' )
@@ -44,7 +54,7 @@ process MEDAKA_CONSENSUS {
 process MEDAKA_VARIANT {
     label 'process_medium'
     tag "${meta.id}-${pool}"
-    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${sampleName}.${pool}.vcf", mode: "copy"
+    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.${pool}.vcf", mode: "copy"
 
     conda "${moduleDir}/env-medaka.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -56,18 +66,28 @@ process MEDAKA_VARIANT {
     path reference
 
     output:
-    tuple val(meta), path("${sampleName}.${pool}.vcf"), val(pool), emit: vcf
+    tuple val(meta), path("${meta.id}.${pool}.vcf"), val(pool), emit: vcf
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     medaka variant \\
         $reference \\
         $hdf \\
-        ${sampleName}.${pool}.vcf
+        ${meta.id}.${pool}.vcf
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        medaka: \$( medaka --version 2>&1 | sed 's/medaka //g' )
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.${pool}.vcf
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         medaka: \$( medaka --version 2>&1 | sed 's/medaka //g' )
@@ -78,7 +98,7 @@ process NANOPOLISH_VARIANTS {
     label 'process_high'
     label 'error_retry'
     tag "${meta.id}-${pool}"
-    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${sampleName}.${pool}.vcf", mode: "copy"
+    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.${pool}.vcf", mode: "copy"
 
     conda "${moduleDir}/env-nanopolish.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -93,13 +113,12 @@ process NANOPOLISH_VARIANTS {
     path reference_stats // Example: MN908947.3:1-29904
 
     output:
-    tuple val(meta), path("${sampleName}.${pool}.vcf"), val(pool), emit: vcf
+    tuple val(meta), path("${meta.id}.${pool}.vcf"), val(pool), emit: vcf
     path "versions.yml", emit: versions
 
     // Should look into if index can be a separate step per fastq file to speed up time
     //   As then instead of doing it 2x (for 2 pools) it'd only be 1x
     script:
-    sampleName = "$meta.id"
     """
     refstats=\$(cat $reference_stats)
     nanopolish index \\
@@ -118,9 +137,20 @@ process NANOPOLISH_VARIANTS {
         --ploidy 1 \\
         -m 0.15 \\
         --read-group ${pool} \\
-        -o ${sampleName}.${pool}.vcf
+        -o ${meta.id}.${pool}.vcf
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        nanopolish: \$(echo \$(nanopolish --version | grep nanopolish | sed 's/nanopolish version //'))
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.${pool}.vcf
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         nanopolish: \$(echo \$(nanopolish --version | grep nanopolish | sed 's/nanopolish version //'))
@@ -131,7 +161,7 @@ process CLAIR3_VARIANTS {
     label 'process_high'
     label 'error_retry'
     tag "${meta.id}-${pool}"
-    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${sampleName}.${pool}.vcf", mode: "copy"
+    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.${pool}.vcf", mode: "copy"
 
     conda "${moduleDir}/env-clair3.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -146,11 +176,10 @@ process CLAIR3_VARIANTS {
     path model_path
 
     output:
-    tuple val(meta), path("${sampleName}.${pool}.vcf"), val(pool), emit: vcf
+    tuple val(meta), path("${meta.id}.${pool}.vcf"), val(pool), emit: vcf
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     // Using some of the nf-flu work to get clair3 working
     model_suffix = "models/${params.clair3_model}"
     using_conda = (workflow.containerEngine == null || workflow.containerEngine == '')
@@ -173,7 +202,7 @@ process CLAIR3_VARIANTS {
         --threads=${task.cpus} \\
         --platform='ont' \\
         --model_path="\$MODEL_PATH" \\
-        --output="${sampleName}-out" \\
+        --output="${meta.id}-out" \\
         --min_coverage=10 \\
         --haploid_precise \\
         --enable_long_indel \\
@@ -181,10 +210,21 @@ process CLAIR3_VARIANTS {
         --include_all_ctgs \\
         --no_phasing_for_fa
 
-    gunzip ${sampleName}-out/merge_output.vcf.gz
-    ln -s ${sampleName}-out/merge_output.vcf ${sampleName}.${pool}.vcf
+    gunzip ${meta.id}-out/merge_output.vcf.gz
+    ln -s ${meta.id}-out/merge_output.vcf ${meta.id}.${pool}.vcf
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        clair3: \$(echo \$(run_clair3.sh -v) | sed 's/Clair3 //')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.${pool}.vcf
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         clair3: \$(echo \$(run_clair3.sh -v) | sed 's/Clair3 //')
