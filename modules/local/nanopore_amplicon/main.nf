@@ -135,8 +135,8 @@ process CLAIR3_VARIANTS {
 
     conda "${moduleDir}/env-clair3.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/clair3:1.0.5--py39hf5e1c6e_0' :
-        'biocontainers/clair3:1.0.5--py39hf5e1c6e_0' }"
+        'https://depot.galaxyproject.org/singularity/clair3:1.0.6--py39hf5e1c6e_0' :
+        'biocontainers/clair3:1.0.6--py39hf5e1c6e_0' }"
 
     input:
     tuple val(meta), path(bam), path(bai), val(pool), path(pool_bed)
@@ -174,7 +174,6 @@ process CLAIR3_VARIANTS {
         --platform='ont' \\
         --model_path="\$MODEL_PATH" \\
         --output="${sampleName}-out" \\
-        --qual=15 \\
         --min_coverage=10 \\
         --haploid_precise \\
         --enable_long_indel \\

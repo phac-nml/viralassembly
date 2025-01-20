@@ -2,7 +2,7 @@ process SNPEFF_DATABASE {
     label 'process_medium'
     label 'error_ignore' // If can't build we don't run snpeff
     publishDir "${params.outdir}/snpeff/database", pattern: "snpeff_db", mode: "copy"
-    publishDir "${params.outdir}/snpeff/database", pattern: "snpEff.config", mode: "copy"
+    publishDir "${params.outdir}/snpeff/database", pattern: "snpeff.config", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -16,7 +16,7 @@ process SNPEFF_DATABASE {
 
     output:
     path("snpeff_db"), emit: db
-    path('snpEff.config'), optional: true, emit: config
+    path('snpeff.config'), optional: true, emit: config
     path "versions.yml", emit: versions
 
     script:
@@ -43,7 +43,7 @@ process SNPEFF_DATABASE {
         cd ../..
 
         # Create database
-        echo "${genome}.genome : ${genome}" > snpEff.config
+        echo "${genome}.genome : ${genome}" > snpeff.config
         snpEff \\
             -Xmx${avail_mem}M \\
             build \\
@@ -75,13 +75,13 @@ process SNPEFF_DATABASE {
             wget "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=${genome}&rettype=gbwithparts&retmode=text" -O \$GENE_FILE
 
             # Create database
-            echo "${genome}.genome : ${genome}" > snpEff.config
+            echo "${genome}.genome : ${genome}" > snpeff.config
             snpEff \\
                 -Xmx${avail_mem}M \\
                 build \\
                 -v \\
                 -genbank \\
-                -config snpEff.config \\
+                -config snpeff.config \\
                 -dataDir \$PWD/snpeff_db \\
                 ${genome}
         fi

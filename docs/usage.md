@@ -1,7 +1,7 @@
 # phac-nml/viralassembly: Usage
 
 ## Introduction
-This pipeline is intended to be run on either Nanopore Amplicon Sequencing data or Basic Nanopore NGS Sequencing data that can utilize a reference genome for mapping variant calling, and other downstream analyses. It generates variant calls, consensus sequences, and quality control information based on the reference. To do this, there are three different variant callers that can be utilized which includes: `clair3`, `medaka`, and `nanopolish` (For R9.4.1 flowcells and below only).
+This pipeline is intended to be run on either Nanopore Amplicon Sequencing data or Basic Nanopore NGS Sequencing data that can utilize a reference genome for mapping variant calling, and other downstream analyses. It generates variant calls, consensus sequences, and quality control information based on the reference. To do this, there are three different variant callers that can be utilized which includes: `clair3`, `medaka`, and `nanopolish` (which is for R9.4.1 flowcells and below only!).
 
 For Amplicon Sequencing data it is at minimum required to:
 1. Specify a path to the reads/input file
@@ -9,7 +9,7 @@ For Amplicon Sequencing data it is at minimum required to:
 3. Specify the scheme version
 4. Pick a variant caller and caller model
 
-For Basic NGS sequencing data it is required to:
+For Basic NGS Sequencing data it is at minimum required to:
 1. Specify a path to the reads/input file
 2. Specify a path to the reference genome
 3. Pick a variant caller and caller model
@@ -37,7 +37,7 @@ For Basic NGS sequencing data it is required to:
 - [Core Nextflow Arguments](#core-nextflow-arguments)
 
 ## Profiles
-Profiles are used to specify dependency installation, resources, and how to handle pipeline jobs. You can specify more than one profile but avoid passing in more than one dependency managment profiles. They can be passed with `-profile <PROFILE>`
+Profiles are used to specify dependency installation, resources, and how to handle pipeline jobs. You can specify more than one profile but *avoid* passing in more than one dependency managment profiles. They can be passed with `-profile <PROFILE>`
 
 Available:
 - `conda`: Utilize conda to install dependencies and environment management
@@ -49,7 +49,7 @@ Available:
 Two options for fastq data input: `--fastq_pass <FASTQ_PASS/>` or `--input <INPUT.csv>`
 
 ### Fastq Pass Directory (--fastq_pass)
-Specify fastq data to input based on a given directory. The directory can either be barcoded, as would be seen after demultiplexing, or it could be a flat input of fastq files. The barcoded fastq data will be output with the barcode number but can be renamed with a [metadata csv]() input. The flat fastq files will keep their basename (separated out at the first `.`).
+Specify fastq data to input based on a given directory. The directory can either contain barcoded directories (barcodexx), as would be seen after demultiplexing, or it could contain sample fastq files (one fastq per sample). The barcoded fastq data will be output with the barcode number but can be renamed with a [metadata tsv](#metadata) file input. The flat fastq files will keep their basename (separated out at the first `.`). Example:
 
 Barcoded:
 ```
@@ -75,18 +75,20 @@ Flat:
 ```
 
 ### Input CSV (--input)
-You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to pass in an input CSV file containing 2 columns, `sample`, and `reads` where:
+You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to pass in an input CSV file containing 2 columns, `sample`, and `fastq_1` where:
 - `sample` is the sample name to use
-- `reads` is the path to the barcode directory containing reads
+- `fastq_1` is the path to one fastq file per sample in `.fastq*` format
 
 Ex.
-| sample | reads |
+| sample | fastq_1 |
 | - | - |
-| sample1 | /path/to/barcode01 |
-| ntc | /path/to/barcode02 |
-| pos | /path/to/barcode03 |
+| sample1 | /path/to/sample.fastq |
+| sample2 | /path/to/sample2-1.fastq |
+| sample2 | /path/to/sample-2.fastq |
+| ntc | /path/to/control.fastq |
+| pos | /path/to/pos.fastq |
 
-This will be expanded upon in future releases to allow more varied inputs for the input sheet.
+A sample can be given multiple fastq files if it was resequenced or needed a top up run. If there are multiple fastq files for a sample they will be concatenated and gzipped. If not, the input fastq file will just be gzipped (if it isn't already).
 
 ## Variant Callers
 Three different variant callers are available with slightly different options regarding running with them. For the most accurate results when running with `clair3` or `medaka` pick a model that best matches the input data!!
@@ -116,19 +118,19 @@ And has the optional parameters of:
 Medaka models come built in with the tool itself with the default set to `r941_min_hac_g507` which can be changed with `--medaka_model <MODEL>` parameter shown above. More information on models [can be found here](https://github.com/nanoporetech/medaka#models). Remember to pick a model that best represents the data!
 
 ### [Nanopolish](https://github.com/jts/nanopolish)
-Nanopolish is a software package for signal-level analysis of Oxford Nanopore sequencing data. It does not presently support the R10.4 flowcells so as a variant caller it should only be used with R9.4 flowcells. It also requires that the fastq data is in barcoded directories to work correctly.
+Nanopolish is a software package for signal-level analysis of Oxford Nanopore sequencing data. It *does not presently support the R10.4 flowcells* so as a variant caller it should only be used with R9.4 flowcells.
 
 Running with `nanopolish` requires the following parameters:
 - `--variant_caller nanopolish`
 - `--fast5_pass <FAST5_PASS/>`
 - `--sequencing_summary <SEQ_SUM.txt>`
 
-Nanopolish requires the fast5 directory along with the sequencing summary file to be used as input instead of a model.
+Nanopolish requires the fast5 directory along with the sequencing summary file to be used as input instead of a model. As such, nanopolish requires that the read ids in the fastq files are linked by the sequencing summary file to their signal-level data in the fast5 files. This makes it **a lot** easier to run using barcoded directories but it can be done with individual read files
 
 ## Running the pipeline
 
 ### Amplicon
-The typical command for running the pipeline with an amplicon scheme using medaka and a different medaka model is as follows:
+The typical command for running the pipeline with an [amplicon scheme](#schemes-and-reference) using medaka and a different medaka model is as follows:
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -223,12 +225,13 @@ Use `--version` to see version information
 ### All Parameters
 | Parameter | Description | Type | Default | Notes |
 | - | - | - | - | - |
+| --fastq_pass | Path to directory containing `barcode##` subdirectories OR Path to directory containing `*.fastq*` files | Path | null | [Option for input params](#input-parameters) |
+| --input | Path to samplesheet with information about the samples you would like to analyse | Path | null | [Option for input params](#input-parameters) |
 | --variant_caller | Pick from the 3 variant callers: 'clair3', 'medaka', 'nanopolish' | Choice | '' | Details above |
 | --clair3_model | Clair3 base model to be used in the pipeline | Str | 'r941_prom_sup_g5014' | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
 | --clair3_user_variant_model | Path to clair3 additional model directory to use instead of a base model | Path | '' | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
 | --clair3_no_pool_split | Do not split reads into separate pools | Bool | False | Clair3 amplicon sequencing only |
 | --medaka_model | Medaka model to be used in the pipeline | Str | 'r941_min_hac_g507' | Default model will not work the best for all inputs. [See medaka docs](https://github.com/nanoporetech/medaka#models) for additional info |
-| --fastq_pass | Path to directory containing `barcode##` subdirectories | Path | null |  |
 | --fast5_pass | Path to directory containing `barcode##` fast5 subdirectories | Path | null | Only for nanopolish |
 | --sequencing_summary | Path to run `sequencing_summary*.txt` file | Path | null | Only for nanopolish |
 | --min_length | Minimum read length to be kept | Int | 200 | For artic guppyplex |

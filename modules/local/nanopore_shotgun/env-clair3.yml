@@ -4,4 +4,4 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - bioconda::clair3=1.0.5
+  - bioconda::clair3=1.0.6

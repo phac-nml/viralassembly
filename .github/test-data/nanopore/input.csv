@@ -1,6 +1,6 @@
-sample,reads
-sample1,.github/test-data/nanopore/fastq_pass/barcode01
-sample2,.github/test-data/nanopore/fastq_pass/barcode02
-100_reads,.github/test-data/nanopore/fastq_pass/barcode03
-25_reads,.github/test-data/nanopore/fastq_pass/barcode24
-negative-ctrl,.github/test-data/nanopore/fastq_pass/barcode94
+sample,fastq_1
+sample1,.github/test-data/nanopore/fastq_pass/barcode01/barcode01.fastq.gz
+sample2,.github/test-data/nanopore/fastq_pass/barcode02/barcode02.fastq.gz
+100_reads,.github/test-data/nanopore/fastq_pass/barcode03/barcode03.fastq.gz
+25_reads,.github/test-data/nanopore/fastq_pass/barcode24/barcode24.fastq.gz
+negative-ctrl,.github/test-data/nanopore/fastq_pass/barcode94/barcode94.fastq.gz
