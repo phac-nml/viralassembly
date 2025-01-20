@@ -255,11 +255,6 @@
                     "fa_icon": "fas fa-folder-open",
                     "default": "results"
                 },
-                "cache": {
-                    "type": "string",
-                    "fa_icon": "fas fa-folder-minus",
-                    "description": "Path to directory containing env/container shared store"
-                },
                 "version": {
                     "type": "boolean",
                     "description": "Display version and exit.",
