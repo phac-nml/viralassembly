@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/phac-nml/viralassembly/master/nextflow_schema.json",
+    "$id": "https://raw.githubusercontent.com/phac-nml/viralassembly/main/nextflow_schema.json",
     "title": "phac-nml/viralassembly pipeline parameters",
     "description": "Assemble and QC viral reads",
     "type": "object",

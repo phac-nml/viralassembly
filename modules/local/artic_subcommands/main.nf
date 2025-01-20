@@ -15,8 +15,8 @@ def transformVCFList (inputList) {
 process ARTIC_ALIGN_TRIM {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/bam", pattern: "${sampleName}.*trimmed.rg.sorted.bam", mode: "copy"
-    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${sampleName}.alignreport-*", mode: "copy"
+    publishDir "${params.outdir}/bam", pattern: "${meta.id}.*trimmed.rg.sorted.bam", mode: "copy"
+    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.alignreport-*", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -29,19 +29,18 @@ process ARTIC_ALIGN_TRIM {
     val mode
 
     output:
-    tuple val(meta), path("${sampleName}.*trimmed.rg.sorted.bam"), path("${sampleName}.*trimmed.rg.sorted.bam.bai"), emit: bam
+    tuple val(meta), path("${meta.id}.*trimmed.rg.sorted.bam"), path("${meta.id}.*trimmed.rg.sorted.bam.bai"), emit: bam
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     def argsList = []
     if ( params.normalise ) {
         argsList.add("--normalise ${params.normalise}")
     }
-    outName = "${sampleName}.primertrimmed.rg.sorted.bam"
+    outName = "${meta.id}.primertrimmed.rg.sorted.bam"
     // Start mode = Trim to start of primers instead of ends
     if ( mode == "start" ) {
-        outName = "${sampleName}.trimmed.rg.sorted.bam"
+        outName = "${meta.id}.trimmed.rg.sorted.bam"
         argsList.add("--start")
     }
     def argsConfig = argsList.join(" ")
@@ -49,13 +48,25 @@ process ARTIC_ALIGN_TRIM {
     align_trim \\
         $argsConfig \\
         --remove-incorrect-pairs \\
-        --report ${sampleName}.alignreport-${mode}.txt \\
+        --report ${meta.id}.alignreport-${mode}.txt \\
         $primer_bed \\
-        < $bam 2> ${sampleName}.alignreport-${mode}.er | samtools sort -T ${sampleName} - -o $outName
+        < $bam 2> ${meta.id}.alignreport-${mode}.er | samtools sort -T ${meta.id} - -o $outName
 
     samtools index $outName
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.*trimmed.rg.sorted.bam
+    touch ${meta.id}.*trimmed.rg.sorted.bam.bai
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
@@ -65,7 +76,7 @@ process ARTIC_ALIGN_TRIM {
 process ARTIC_VCF_MERGE {
     label 'process_single'
     tag "$meta.id"
-    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${sampleName}.merged.vcf", mode: "copy"
+    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.merged.vcf", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -80,20 +91,30 @@ process ARTIC_VCF_MERGE {
     path primer_bed
 
     output:
-    tuple val(meta), path("${sampleName}.merged.vcf"), emit: vcf
+    tuple val(meta), path("${meta.id}.merged.vcf"), emit: vcf
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     def vcfs = transformVCFList(vcf_tuples)
     """
     artic_vcf_merge \\
-        ${sampleName} \\
+        ${meta.id} \\
         $primer_bed \\
-        2> ${sampleName}.primersitereport.txt \\
+        2> ${meta.id}.primersitereport.txt \\
         $vcfs
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.merged.vcf
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
@@ -113,27 +134,38 @@ process ZIP_AND_INDEX_VCF {
     tuple val(meta), path(vcf)
 
     output:
-    tuple val(meta), path("${sampleName}*.vcf.gz"), path("${sampleName}*.vcf.gz.tbi"), emit: vcf
+    tuple val(meta), path("${meta.id}*.vcf.gz"), path("${meta.id}*.vcf.gz.tbi"), emit: vcf
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     bgzip -f $vcf
     tabix -f -p vcf ${vcf}.gz
 
-    # Versions from nf-core #
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         tabix: \$(echo \$(tabix -h 2>&1) | sed 's/^.*Version: //; s/ .*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.vcf.gz
+    touch ${meta.id}.vcf.gz.tbi
+
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
     END_VERSIONS
     """
 }
 process CUSTOM_VCF_FILTER {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/vcf", pattern: "${sampleName}.pass.vcf.gz*", mode: "copy"
-    publishDir "${params.outdir}/vcf", pattern: "${sampleName}.fail.vcf", mode: "copy"
+    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.pass.vcf.gz*", mode: "copy"
+    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.fail.vcf", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -144,12 +176,11 @@ process CUSTOM_VCF_FILTER {
     tuple val(meta), path(vcf)
 
     output:
-    tuple val(meta), path("${sampleName}.pass.vcf.gz"), path("${sampleName}.pass.vcf.gz.tbi"), emit: pass_vcf
-    tuple val(meta), path("${sampleName}.fail.vcf"), emit: fail_vcf
+    tuple val(meta), path("${meta.id}.pass.vcf.gz"), path("${meta.id}.pass.vcf.gz.tbi"), emit: pass_vcf
+    tuple val(meta), path("${meta.id}.fail.vcf"), emit: fail_vcf
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     def filterArg = '--nanopolish'
     if ( params.variant_caller == 'medaka' ) {
         filterArg = '--medaka'
@@ -160,12 +191,25 @@ process CUSTOM_VCF_FILTER {
     cs_vcf_filter.py \\
         $filterArg \\
         $vcf \\
-        ${sampleName}.pass.vcf \\
-        ${sampleName}.fail.vcf
-    bgzip -f ${sampleName}.pass.vcf
-    tabix -p vcf ${sampleName}.pass.vcf.gz
+        ${meta.id}.pass.vcf \\
+        ${meta.id}.fail.vcf
+    bgzip -f ${meta.id}.pass.vcf
+    tabix -p vcf ${meta.id}.pass.vcf.gz
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.pass.vcf.gz
+    touch ${meta.id}.pass.vcf.gz.tbi
+    touch ${meta.id}.fail.vcf
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
@@ -175,7 +219,7 @@ process CUSTOM_VCF_FILTER {
 process ARTIC_MAKE_DEPTH_MASK{
     label 'process_single'
     tag "$meta.id"
-    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${sampleName}.coverage_mask.txt", mode: "copy"
+    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.coverage_mask.txt", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -187,19 +231,29 @@ process ARTIC_MAKE_DEPTH_MASK{
     path reference
 
     output:
-    tuple val(meta), path("${sampleName}.coverage_mask.txt"), emit: coverage_mask
+    tuple val(meta), path("${meta.id}.coverage_mask.txt"), emit: coverage_mask
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     artic_make_depth_mask \\
         --store-rg-depths \\
         $reference \\
         $bam \\
-        ${sampleName}.coverage_mask.txt
+        ${meta.id}.coverage_mask.txt
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.coverage_mask.txt
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
@@ -212,7 +266,7 @@ process CUSTOM_MAKE_DEPTH_MASK {
     label 'process_medium'
     label 'error_retry'
     tag "${meta.id}"
-    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${sampleName}.coverage_mask.txt", mode: "copy"
+    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.coverage_mask.txt", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -224,16 +278,20 @@ process CUSTOM_MAKE_DEPTH_MASK {
     path(reference)
 
     output:
-    tuple val(meta), path("${sampleName}.coverage_mask.txt"), emit: coverage_mask
+    tuple val(meta), path("${meta.id}.coverage_mask.txt"), emit: coverage_mask
 
     script:
-    sampleName = "$meta.id"
     """
     cs_make_depth_mask.py \\
         --depth 20 \\
         $reference \\
         $bam \\
-        ${sampleName}.coverage_mask.txt
+        ${meta.id}.coverage_mask.txt
+    """
+
+    stub:
+    """
+    touch ${meta.id}.coverage_mask.txt
     """
 }
 process ARTIC_MASK {
@@ -250,19 +308,29 @@ process ARTIC_MASK {
     path reference
 
     output:
-    tuple val(meta), path("${sampleName}.preconsensus.fasta"), emit: preconsensus
+    tuple val(meta), path("${meta.id}.preconsensus.fasta"), emit: preconsensus
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     artic_mask \\
         $reference \\
         $coverage_mask \\
         $fail_vcf \\
-        ${sampleName}.preconsensus.fasta
+        ${meta.id}.preconsensus.fasta
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.preconsensus.fasta
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')

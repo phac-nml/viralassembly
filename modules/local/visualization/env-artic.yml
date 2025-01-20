@@ -5,3 +5,4 @@ channels:
   - defaults
 dependencies:
   - bioconda::artic=1.2.4
+  - bioconda::medaka=1.11.3

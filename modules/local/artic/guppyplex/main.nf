@@ -11,11 +11,10 @@ process ARTIC_GUPPYPLEX {
     tuple val(meta), path(fastq)
 
     output:
-    tuple val(meta), path("${sampleName}.fastq"), emit: fastq
+    tuple val(meta), path("${meta.id}.fastq"), emit: fastq
     path("versions.yml"), emit: versions
 
     script:
-    sampleName = "$meta.id"
     // Fastq input can either be a directory or a set of fastq files
     //  Outputs are the same then after allowing a streamlined pipeline
     if ( fastq.isDirectory() ) {
@@ -23,7 +22,7 @@ process ARTIC_GUPPYPLEX {
         artic guppyplex \\
             --min-length ${params.min_length} \\
             --max-length ${params.max_length} \\
-            --output ${sampleName}.fastq \\
+            --output ${meta.id}.fastq \\
             --directory $fastq
 
         # Versions #
@@ -39,7 +38,7 @@ process ARTIC_GUPPYPLEX {
         artic guppyplex \\
             --min-length ${params.min_length} \\
             --max-length ${params.max_length} \\
-            --output ${sampleName}.fastq \\
+            --output ${meta.id}.fastq \\
             --directory input_fastq
 
         # Versions #
@@ -49,4 +48,15 @@ process ARTIC_GUPPYPLEX {
         END_VERSIONS
         """
     }
+
+    stub:
+    """
+    touch ${meta.id}.fastq
+
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
+    """
 }
