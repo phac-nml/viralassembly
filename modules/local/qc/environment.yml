@@ -1,4 +1,4 @@
-name: qc
+name: artic
 channels:
   - conda-forge
   - bioconda
