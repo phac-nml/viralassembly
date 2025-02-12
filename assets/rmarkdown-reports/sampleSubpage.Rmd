@@ -63,45 +63,49 @@ var_f <- paste0("./all_variation_positions/", sample, "_variation.csv")
 if (file.exists(var_f)) {
   variants <- read.table(var_f, header = TRUE, sep = ",")
 } else {
-  variants <- data.frame(matrix(ncol = 10, nrow = 0))
-  colv <- c("position", "ref_base", "percentage_nonref", "variant_type", "total_reads", "A_reads", "T_reads", "C_reads", "G_reads", "del_reads")
-  colnames(variants) <- colv
-}
+    variants <- data.frame(matrix(ncol = 12, nrow = 0))
+    colv <- c("position", "ref_base", "percentage_nonref", "variant_type", "total_reads", "A", "T", "C", "G", "del", "ins", "distribution")
+    colnames(variants) <- colv
+  }
 
-# Text info for hover
-text_info <- paste(
-  'Position: ', variants[['position']], '<br>',
-  'Reference: ', variants[['ref_base']], '<br>',
-  'Total Reads: ', variants[['total_reads']], '<br>',
-  '  A: ', variants[['A_reads']], '<br>',
-  '  T: ', variants[['T_reads']], '<br>',
-  '  G: ', variants[['G_reads']], '<br>',
-  '  C: ', variants[['C_reads']], '<br>',
-  '  Del:', variants[['del_reads']],
-  sep = ''
-)
-
-# Plot variation table
-# I want to make it so that the colors are always the same but was having some trouble with that
-p <- plot_ly(variants) %>%
-  add_trace(x = variants[['position']], y = variants[['percentage_nonref']],
-      type = 'scatter', mode = 'markers', color = variants[['variant_type']],
-      marker = list(sizemode = 'diameter', size = 15.0, opacity = 0.7),
-      text = text_info,
-      hovertemplate = paste(
-        '<i>Percentage</i>: %{y:.2f}<br>',
-        '%{text}<extra></extra>',
-        sep=''
-      )
+  # Text info for hover
+  text_info <- paste(
+    'Position: ', variants[['position']], '<br>',
+    'Reference: ', variants[['ref_base']], '<br>',
+    'Total Reads: ', variants[['total_reads']], '<br>',
+    '  A: ', variants[['A']], '<br>',
+    '  T: ', variants[['T']], '<br>',
+    '  G: ', variants[['G']], '<br>',
+    '  C: ', variants[['C']], '<br>',
+    '  Del:', variants[['del']], '<br>',
+    '  Ins:', variants[['ins']], '<br>',
+    'Insertion Distribution: ', variants[['distribution']], '<br>',
+    sep = ''
   )
+  variants$text_info <- text_info
 
-# Add final layout to plot
-p <- p %>%
-  layout(
-    xaxis = list (title = "Position", tickformat = ".0f"),
-    yaxis = list (title = "Percent Non Reference Base", tickformat = '2.%'),
-    shapes = hline(70)
-  )
+  # Plot variation table
+  #  Also customdata instead of text due to https://github.com/plotly/plotly.R/issues/1859
+  p <- plot_ly(variants) %>%
+    add_trace(x = variants[['position']], y = variants[['percentage_nonref']],
+        type = 'scatter', mode = 'markers',
+        color = ~factor(variant_type, levels = c("A SNP", "T SNP", "G SNP", "C SNP", "Ref", "Mixed", "Deletion", "Insertion")),
+        marker = list(sizemode = 'diameter', size = 15.0, opacity = 0.7),
+        customdata = ~text_info,
+        hovertemplate = paste(
+          '<b>Percentage</b>: %{y:.2f}<br>',
+          '%{customdata}<extra></extra>',
+          sep=''
+        )
+    )
+
+  # Add final layout to plot
+  p <- p %>%
+    layout(
+      xaxis = list (title = "Position", tickformat = ".0f"),
+      yaxis = list (title = "Percent Non Reference Base", tickformat = '2.%'),
+      shapes = hline(75)
+    )
 p
 ```
 
