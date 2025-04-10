@@ -8,8 +8,8 @@ process MAKE_SAMPLE_QC_CSV {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(consensus), path(bam), path(bai), path(depth_bed), path(vcf)
@@ -69,8 +69,8 @@ process FINAL_QC_CSV {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     path combined_csv

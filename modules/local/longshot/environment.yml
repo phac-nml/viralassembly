@@ -3,4 +3,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::longshot=0.4.5
+  - bioconda::longshot=1.0.0

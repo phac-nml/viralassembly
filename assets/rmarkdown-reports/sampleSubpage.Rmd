@@ -63,7 +63,7 @@ var_f <- paste0("./all_variation_positions/", sample, "_variation.csv")
 if (file.exists(var_f)) {
   variants <- read.table(var_f, header = TRUE, sep = ",")
 } else {
-    variants <- data.frame(matrix(ncol = 12, nrow = 0))
+    variants <- data.frame(matrix(ncol = 12, nrow = 1))
     colv <- c("position", "ref_base", "percentage_nonref", "variant_type", "total_reads", "A", "T", "C", "G", "del", "ins", "distribution")
     colnames(variants) <- colv
   }

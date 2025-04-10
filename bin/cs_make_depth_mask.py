@@ -5,6 +5,7 @@ Script to create a genomic depth mask for consensus generation
     to remove the need for RG tags steps for non-amplicon data
 """
 from Bio import SeqIO
+from typing import Generator
 import argparse
 import itertools
 import os
@@ -27,7 +28,7 @@ def init_parser() -> argparse.ArgumentParser:
     return parser
 
 # from https://www.geeksforgeeks.org/python-make-a-list-of-intervals-with-sequential-numbers/
-def intervals_extract(iterable) -> list:
+def intervals_extract(iterable) -> Generator[list]:
     """Create list of intervals with sequential numbers"""
     iterable = sorted(set(iterable))
     for _, group in itertools.groupby(enumerate(iterable), lambda t: t[1] - t[0]):

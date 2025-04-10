@@ -7,8 +7,8 @@ process CREATE_READ_VARIATION_CSV {
 
     conda "${moduleDir}/env-artic.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(bam), path(bai)
@@ -51,8 +51,8 @@ process CREATE_VARIANT_TSV {
 
     conda "${moduleDir}/env-artic.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(vcf)
@@ -191,8 +191,8 @@ process CREATE_AMPLICON_COMPLETENESS {
 
     conda "${moduleDir}/env-artic.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(consensus)
@@ -234,7 +234,7 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
     publishDir "${params.outdir}", pattern: "reportDashboard.html", mode: "copy"
 
     conda "${moduleDir}/env-custom-report.yml"
-    //container "https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1" to-create
+    //container "https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0" to-create
 
     input:
     path read_variation_tsvs

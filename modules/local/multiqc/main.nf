@@ -40,8 +40,8 @@ process MULTIQC_OVERALL {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/multiqc:1.20--pyhdfd78af_2' :
-        'biocontainers/multiqc:1.20--pyhdfd78af_2' }"
+        'https://depot.galaxyproject.org/singularity/multiqc:1.26--pyhdfd78af_0' :
+        'biocontainers/multiqc:1.26--pyhdfd78af_0' }"
 
     input:
     path multiqc_config

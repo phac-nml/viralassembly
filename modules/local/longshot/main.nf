@@ -5,8 +5,8 @@ process LONGSHOT {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/longshot:0.4.5--hd175d40_2':
-        'biocontainers/longshot:0.4.5--hd175d40_2' }"
+        'https://depot.galaxyproject.org/singularity/longshot:1.0.0--hd4f2111_2':
+        'biocontainers/longshot:1.0.0--hd4f2111_2' }"
 
     input:
     tuple val(meta), path(vcf), path(tbi), path(bam), path(bai)
@@ -18,7 +18,7 @@ process LONGSHOT {
     path "versions.yml", emit: versions
 
     script:
-    def VERSION = '0.4.5' // Longshot version does not seem to be being printed out
+    def VERSION = '1.0.0' // Longshot version does not seem to be being printed out
     """
     longshot \\
         -P 0 \\
@@ -38,7 +38,7 @@ process LONGSHOT {
     """
 
     stub:
-    def VERSION = '0.4.5' // Longshot version does not seem to be being printed out
+    def VERSION = '1.0.0' // Longshot version does not seem to be being printed out
     """
     touch ${meta.id}.longshot.merged.vcf
 

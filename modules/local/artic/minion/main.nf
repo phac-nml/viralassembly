@@ -9,13 +9,11 @@ process ARTIC_MINION {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(fastq)
-    path fast5_dir
-    path sequencing_summary
     path scheme
 
     output:
@@ -27,34 +25,24 @@ process ARTIC_MINION {
     path "versions.yml", emit: versions
 
     script:
-    // Setup args for medaka vs nanopolish
+    // Clair3 model is added conditonally if it's been set
+    // Setup args
     def argsList = []
-    if ( params.variant_caller == 'medaka' ) {
-        argsList.add("--medaka")
-        argsList.add("--medaka-model ${params.medaka_model}")
-    } else {
-        argsList.add("--fast5-directory $fast5_dir")
-        argsList.add("--sequencing-summary $sequencing_summary")
-    }
     if ( params.normalise ) {
         argsList.add("--normalise ${params.normalise}")
     }
     if ( params.no_frameshift ) {
         argsList.add("--no-frameshifts")
     }
-    def argsConfig = argsList.join(" ")
-
-    // Aligner
-    def alignerArg = "--minimap2"
-    if ( params.use_bwa ) {
-        alignerArg = "--bwa"
+    if ( params.clair3_model && params.clair3_model != 'null') {
+        argsList.add("--model ${params.clair3_model}")
     }
+    def argsConfig = argsList.join(" ")
 
     // Cmd
     """
     artic minion \\
         ${argsConfig} \\
-        ${alignerArg} \\
         --threads ${task.cpus} \\
         --read-file $fastq \\
         --scheme-version ${params.scheme_version} \\
