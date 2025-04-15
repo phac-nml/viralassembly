@@ -1,7 +1,7 @@
 process MINIMAP2_ALIGN {
     label 'process_medium'
     tag "$meta.id"
-    publishDir "${params.outdir}/bam", pattern: "${sampleName}.sorted.bam*", mode: "copy"
+    publishDir "${params.outdir}/bam", pattern: "${meta.id}.sorted.bam*", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -13,11 +13,10 @@ process MINIMAP2_ALIGN {
     path reference
 
     output:
-    tuple val(meta), path("${sampleName}.sorted.bam"), path("${sampleName}.sorted.bam.bai"), emit: bam
+    tuple val(meta), path("${meta.id}.sorted.bam"), path("${meta.id}.sorted.bam.bai"), emit: bam
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     minimap2 \\
         -a \\
@@ -26,11 +25,11 @@ process MINIMAP2_ALIGN {
         $reference \\
         $fastq \\
     | samtools view -bS -F 4 - \\
-    | samtools sort -o ${sampleName}.sorted.bam
+    | samtools sort -o ${meta.id}.sorted.bam
 
-    samtools index ${sampleName}.sorted.bam
+    samtools index ${meta.id}.sorted.bam
 
-    # Versions from nf-core #
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         minimap2: \$(minimap2 --version 2>&1)

@@ -7,26 +7,37 @@ process CREATE_READ_VARIATION_CSV {
 
     conda "${moduleDir}/env-artic.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(bam), path(bai)
     path reference
 
     output:
-    tuple val(meta), path("${sampleName}_variation.csv"), optional: true, emit: csv
+    tuple val(meta), path("${meta.id}_variation.csv"), optional: true, emit: csv
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     calc_bam_variation.py \\
         --bam $bam \\
         --reference $reference \\
-        --sample $sampleName
+        --sample $meta.id
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+        calc_bam_variation.py: 0.1.0
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}_variation.csv
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
@@ -40,26 +51,37 @@ process CREATE_VARIANT_TSV {
 
     conda "${moduleDir}/env-artic.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(vcf)
 
     output:
-    tuple val(meta), path("${sampleName}.vcf.tsv"), optional: true, emit: tsv
+    tuple val(meta), path("${meta.id}.vcf.tsv"), optional: true, emit: tsv
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     def annotated_arg = params.skip_snpeff ? "" : "--annotated"
     """
     vcf_to_tsv.py \\
-        --sample $sampleName \\
+        --sample $meta.id \\
         $annotated_arg \\
         --vcf $vcf
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+        vcf_to_tsv.py: 0.1.0
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.vcf.tsv
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
@@ -109,6 +131,11 @@ process COMBINE_AMPLICON_COVERAGE {
     df.sort_index(axis=0, inplace=True)
     df.to_csv('merged_amplicon_depth.csv', index=True)
     """
+
+    stub:
+    """
+    touch merged_amplicon_depth.csv
+    """
 }
 process CSVTK_SAMPLE_AMPLICON_DEPTH {
     // Just to get the two columns of the amplicon depth file with no header
@@ -124,11 +151,10 @@ process CSVTK_SAMPLE_AMPLICON_DEPTH {
     tuple val(meta), path(bed)
 
     output:
-    tuple val(meta), path("${sampleName}_ampdepth.tsv"), emit: tsv
+    tuple val(meta), path("${meta.id}_ampdepth.tsv"), emit: tsv
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     csvtk cut \\
         -tT \\
@@ -139,9 +165,20 @@ process CSVTK_SAMPLE_AMPLICON_DEPTH {
             -p "^0\$" \\
             -r 0.1 \\
         | tail -n +2 \\
-        > ${sampleName}_ampdepth.tsv
+        > ${meta.id}_ampdepth.tsv
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        csvtk: \$(csvtk version | sed 's/csvtk v//g')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}_ampdepth.tsv
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         csvtk: \$(csvtk version | sed 's/csvtk v//g')
@@ -154,8 +191,8 @@ process CREATE_AMPLICON_COMPLETENESS {
 
     conda "${moduleDir}/env-artic.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(consensus)
@@ -166,14 +203,25 @@ process CREATE_AMPLICON_COMPLETENESS {
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     calc_amplicon_completeness.py \\
-        --sample $sampleName \\
+        --sample $meta.id \\
         --amplicon_bed $amplicon_bed \\
         --consensus $consensus
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+        calc_amplicon_completeness.py: 0.1.0
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}_amplicon_completeness.csv
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
@@ -186,7 +234,7 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
     publishDir "${params.outdir}", pattern: "reportDashboard.html", mode: "copy"
 
     conda "${moduleDir}/env-custom-report.yml"
-    //container "https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1" to-create
+    //container "https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0" to-create
 
     input:
     path read_variation_tsvs
@@ -220,5 +268,10 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
         -e "library(rmarkdown)" \\
         -e "library(flexdashboard)" \\
         -e "rmarkdown::render('reportDashboard.Rmd', params=list($amp_arg))"
+    """
+
+    stub:
+    """
+    touch reportDashboard.html
     """
 }

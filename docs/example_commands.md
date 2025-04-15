@@ -1,9 +1,11 @@
 # phac-nml/viralassembly: Example Commands
+
 A variety of example commands using different parameter options to display how to use each
 
 ## Amplicon
 
 ### Clair3
+
 Clair3 with a local model, local scheme, fastq directory, conda, and the custom report output
 
 ```bash
@@ -20,6 +22,7 @@ nextflow run phac-nml/viralassembly \
 ```
 
 ### Medaka
+
 Minimal input medaka with conda, an input csv file for data, and the nCoV-2019 scheme
 
 ```bash
@@ -33,6 +36,7 @@ nextflow run phac-nml/viralassembly \
 ```
 
 ### Nanopolish
+
 Nanopolish run using singularity and the base artic command line tool (instead of the default nextflow implementation)
 
 ```bash
@@ -48,11 +52,12 @@ nextflow run phac-nml/viralassembly \
   --outdir ./results
 ```
 
---------------------------
+---
 
 ## Non-Amplicon
 
 ### Clair3
+
 Minimal clair3 with docker using a fastq input directory along wth a gff3 reference file for SnpEff
 
 ```bash
@@ -65,6 +70,7 @@ nextflow run phac-nml/viralassembly \
 ```
 
 ### Medaka
+
 Medaka with conda skipping QC and SnpEff
 
 ```bash
@@ -78,6 +84,7 @@ nextflow run phac-nml/viralassembly \
 ```
 
 ### Nanopolish
+
 Nanopolish running with conda, filtering the read lengths to be shorter, and creating a custom report
 
 ```bash

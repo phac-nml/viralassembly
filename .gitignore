@@ -1,8 +1,14 @@
 .nextflow*
 work/
-data/
 results/
+data/
 .DS_Store
 testing/
 testing*
 *.pyc
+null/
+slurm*
+.nf-test.log
+.nf-test/
+lint_log.txt
+lint_results.md

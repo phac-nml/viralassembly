@@ -19,15 +19,19 @@ process MULTIQC_SAMPLE {
     path "*.html", emit: html
 
     script:
-    sampleName = "$meta.id"
     """
     multiqc \\
         -f \\
         -k yaml \\
         --config $multiqc_config \\
-        --filename ${sampleName}.report.html \\
-        --title "NML ${sampleName} Sample Report" \\
+        --filename ${meta.id}.report.html \\
+        --title "NML ${meta.id} Sample Report" \\
         .
+    """
+
+    stub:
+    """
+    touch ${meta.id}.report.html
     """
 }
 process MULTIQC_OVERALL {
@@ -36,8 +40,8 @@ process MULTIQC_OVERALL {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/multiqc:1.20--pyhdfd78af_2' :
-        'biocontainers/multiqc:1.20--pyhdfd78af_2' }"
+        'https://depot.galaxyproject.org/singularity/multiqc:1.26--pyhdfd78af_0' :
+        'biocontainers/multiqc:1.26--pyhdfd78af_0' }"
 
     input:
     path multiqc_config
@@ -62,5 +66,10 @@ process MULTIQC_OVERALL {
         --filename Overall-Run-MultiQC.report.html \\
         --config $multiqc_config \\
         .
+    """
+
+    stub:
+    """
+    touch Overall-Run-MultiQC.report.html
     """
 }

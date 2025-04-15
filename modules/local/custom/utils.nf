@@ -29,6 +29,11 @@ process CAT_FASTQ {
         cat $reads | pigz -ck >> $outName
     fi
     """
+
+    stub:
+    """
+    touch ${meta.id}.merged.fastq.gz
+    """
 }
 process DOWNLOAD_SCHEME {
     label 'process_single'
@@ -41,6 +46,13 @@ process DOWNLOAD_SCHEME {
     script:
     """
     git clone ${params.scheme_repo} primer-schemes
+    """
+
+    stub:
+    """
+    mkdir -p primer-schemes/stub/V1
+    touch primer-schemes/stub/V1/stub.reference.fasta
+    touch primer-schemes/stub/V1/stub.scheme.bed
     """
 }
 process SIMPLE_SCHEME_VALIDATE {
@@ -95,7 +107,20 @@ process GET_REF_STATS {
     cat ${reference}.fai | awk '{print \$1 ":1-" \$2+1}' > refstats.txt
     cat ${reference}.fai | awk '{ print \$1 "	0	" \$2 }' > genome.bed
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${reference}.fai
+    touch refstats.txt
+    touch genome.bed
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
@@ -123,7 +148,19 @@ process CREATE_AMPLICON_BED {
     primers_to_amplicons.py \\
         --bed $bed
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch amplicon.bed
+    touch tiling_region.bed
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
@@ -146,14 +183,24 @@ process RENAME_FASTQ {
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     rename_fastq.py \\
         --fastq $fastq \\
         --metadata $metadata \\
-        --barcode $sampleName
+        --barcode $meta.id
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.fastq
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
@@ -173,5 +220,11 @@ process SPLIT_BED_BY_POOL {
     script:
     """
     awk -F'\t' -v OFS='\t' 'NR>0{print \$1, \$2, \$3, \$4, \$5, \$6 > \$5".split.bed"}' $bed
+    """
+
+    stub:
+    """
+    touch 1.split.bed
+    touch 2.split.bed
     """
 }

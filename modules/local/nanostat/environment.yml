@@ -2,6 +2,5 @@ name: nanostat
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - bioconda::nanostat=1.6.0

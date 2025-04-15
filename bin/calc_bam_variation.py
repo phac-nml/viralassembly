@@ -3,8 +3,11 @@
 import argparse
 import pysam
 import pandas as pd
+import re
 import sys
 from pathlib import Path
+
+from collections import Counter
 
 def init_parser() -> argparse.ArgumentParser:
     '''
@@ -62,17 +65,18 @@ def init_parser() -> argparse.ArgumentParser:
         '--variant_call_threshold',
         required=False,
         type=int,
-        default=70,
+        default=75,
         help='Minimum percentage for a variant to called'
     )
 
     return parser
 
-def create_ref_dict(ref_fasta) -> dict:
+def create_ref_dict(ref_fasta: str) -> dict:
     """
     Purpose
     -------
     Process reference fasta file with pysam to create a dictionary of indexs with their bases
+        It is 0-based
 
     Parameters
     ----------
@@ -92,41 +96,44 @@ def create_ref_dict(ref_fasta) -> dict:
 
     return ref_dict
 
-def calculate_non_ref_percent(pos, pileup_dict, ref_dict) -> float:
+def ensure_all_bases_dict_from_counter(counter: Counter) -> dict:
+    """Write a summary"""
+    d = {base: counter.get(base, 0) for base in ['A', 'T', 'G', 'C', '*', 'ins']}
+    d['del'] = d.pop('*')
+    return d
+
+def calculate_non_ref_percent(pileup_dict: dict, ref_base: str) -> float:
     """
     Purpose
     -------
-    Calculate the non-reference base percentage for the position
+    Calculate the non-reference base percentage for the given position
 
     Parameters
     ----------
-    pos : int
-        Current genome position
     pileup_dict: dict
         Contains read counts for the current position
-    ref_dict: dict
-        Contains: {Position: Base} for the reference genome
+    ref_base: str
+        Reference base
 
     Returns
     -------
     Non-reference percentage as float
     """
     total = pileup_dict["total_reads"]
-    if ref_dict[pos] != "N":
-        ref_base = ref_dict[pos] + "_reads"
-        ref_count = pileup_dict[ref_base]
-        if (total == 0):
+    non_ref_percent = 0
+
+    if ref_base != "N":
+        ref_base_count = pileup_dict[ref_base]
+        if total == 0:
             non_ref_percent = 0
-        elif (ref_count == 0):
+        elif ref_base_count == 0:
             non_ref_percent = 100
         else:
-            non_ref_percent = round((100 - ((ref_count / total) * 100)), 2)
-    else:
-        non_ref_percent = 0
+            non_ref_percent = round((100 - ((ref_base_count / total) * 100)), 2)
 
     return non_ref_percent
 
-def calc_base_percent(pileup_dict, base) -> float:
+def calc_base_percent(pileup_dict: dict, base: str) -> float:
     """
     Purpose
     -------
@@ -143,39 +150,9 @@ def calc_base_percent(pileup_dict, base) -> float:
     -------
     Given base percentage as float
     """
-    if pileup_dict["total_reads"] == 0:
-        return 0
     return round(((pileup_dict[base] / pileup_dict["total_reads"]) * 100), 2)
 
-def which_majority(pileup_dict, variant_call_threshold) -> bool:
-    """
-    Purpose
-    -------
-    Determine what the called mutation type is for the given pileup_dict
-
-    Parameters
-    ----------
-    pileup_dict: dict
-        Contains read counts for the current position
-    variant_call_threshold: int
-        Threshold at which a variant is called
-
-    Returns
-    -------
-    String of mutation type
-    """
-    if pileup_dict['A_percent'] >= variant_call_threshold:
-        return 'A SNP'
-    elif pileup_dict['C_percent'] >= variant_call_threshold:
-        return 'C SNP'
-    elif pileup_dict['T_percent'] >= variant_call_threshold:
-        return 'T SNP'
-    elif pileup_dict['G_percent'] >= variant_call_threshold:
-        return 'G SNP'
-    else:
-        return 'Del'
-
-def determine_type(pileup_dict, variant_call_threshold) -> str:
+def determine_type(pileup_dict: dict, most_common_base: str, variant_call_threshold: int) -> str:
     """
     Purpose
     -------
@@ -185,21 +162,32 @@ def determine_type(pileup_dict, variant_call_threshold) -> str:
     ----------
     ref_dict: dict
         Contains: {Position: Base} for the reference genome
+    most_common_base: str
+        The most common base found at pileup location
     variant_call_threshold: int
         Threshold at which a variant is called. Default: 70
 
     Returns
     -------
-    String of the location status
+    String location status
     """
-    if pileup_dict['percentage_nonref'] >= variant_call_threshold:
-        return which_majority(pileup_dict, variant_call_threshold)
-    elif (100 - variant_call_threshold) <= pileup_dict['percentage_nonref'] < variant_call_threshold:
-        return 'Mixed'
-    else:
-        return 'Ref'
+    if most_common_base not in ['A', 'T', 'C', 'G', 'del']:
+        return 'Insertion'
 
-def parse_variation_from_bam(bamfile, ref_dict, base_q, map_q, min_read_count, min_report_percent, variant_call_threshold) -> list:
+    if (100 - variant_call_threshold) >= pileup_dict['percentage_nonref']:
+        return 'Ref'
+    elif calc_base_percent(pileup_dict, most_common_base) >= variant_call_threshold:
+        if most_common_base != 'del':
+            return f'{most_common_base} SNP'
+        else:
+            return 'Deletion'
+    else:
+        return 'Mixed'
+
+def parse_variation_from_bam(bamfile: str, ref_dict: dict, base_q: int,
+                             map_q: int, min_read_count: int,
+                             min_report_percent: int, variant_call_threshold: int
+                            ) -> list:
     """
     Purpose
     -------
@@ -232,47 +220,69 @@ def parse_variation_from_bam(bamfile, ref_dict, base_q, map_q, min_read_count, m
 
     # Based on pysam docs for iterating over each base and Piranha's variation analysis
     for pileupcolumn in bamfile.pileup(bamfile.references[0], min_base_quality=base_q, min_mapping_quality=map_q):
-        pileup_dict = {}
-        A_counter, G_counter, C_counter, T_counter, del_counter = 0,0,0,0,0
+        # Set vars to make access more concise and easier
+        num_reads = pileupcolumn.get_num_aligned()
+        zero_idx_pos = pileupcolumn.reference_pos
+        ref_base = ref_dict[zero_idx_pos]
+
+        # Exit as early as possible if it is NOT a variant that is > min_report_percent
+        #  Also stops 0 read locations from making it in
+        if num_reads < min_read_count:
+            continue
 
         # For each read in the specific position, count total base found
-        for pileupread in pileupcolumn.pileups:
-            if not pileupread.is_del and not pileupread.is_refskip:
-                # Query position is None if is_del or is_refskip is set
-                if pileupread.alignment.query_sequence[pileupread.query_position] == "A":
-                    A_counter += 1
-                elif pileupread.alignment.query_sequence[pileupread.query_position] == "G":
-                    G_counter += 1
-                elif pileupread.alignment.query_sequence[pileupread.query_position] == "C":
-                    C_counter += 1
-                elif pileupread.alignment.query_sequence[pileupread.query_position] == "T":
-                    T_counter += 1
-            else:
-                del_counter += 1
+        data_list = pileupcolumn.get_query_sequences(add_indels=True)
+        case_insensitive_pos_counter = Counter(map(str.upper, data_list))
+
+        # Positions before deletions have "-" in them with the deletion length along with the next positions
+        #  containing *s for the deletions. We are going to summarize deletions basd on the *s so need
+        #  to skip the spots before while tracking the base in the current position
+        #  Ex. ['a-1n', 'a-1n', 'A-1N', 'A-1N']
+        if any([x for x in data_list if '-' in x]):
+            case_insensitive_pos_counter = Counter({k: c for k, c in case_insensitive_pos_counter.items() if '-' not in k})
+            base_list = [x[0].upper() for x in data_list if '-' in x]
+            case_insensitive_pos_counter = case_insensitive_pos_counter + Counter(base_list)
+
+        # Can skip spots where we have the reference base as the most common and it isn't above the minimum report percent
+        most_common_base, read_count = case_insensitive_pos_counter.most_common(1)[0]
+        if (most_common_base == ref_base) and (read_count/num_reads * 100 > 100 - min_report_percent):
+            continue
+
+        # Analyze insertions differently
+        # Insertions are hard as they can be quite variable and we want a summary for them
+        #  Ex. ['A+6AAAAAG', 'A+6AAAAAG', 'a+5aaagg', 'a+6aaaaag']
+        if (any([x for x in data_list if '+' in x])):
+            ins_list = [x for x in data_list if '+' in x]
+            case_insensitive_pos_counter['ins'] = len(ins_list)
+
+            # Do something with it to summarize and adjust this later
+            ins_len_counts = Counter((f'{re.findall(r'\d+', x)[0]}bp' for x in ins_list))
+            ins_summary_str = ", ".join(f"{length}: {count}" for length, count in ins_len_counts.most_common())
+
+        # Add missing bases to the counter, change * to del, and make dict
+        pileup_dict = ensure_all_bases_dict_from_counter(case_insensitive_pos_counter)
 
         # Add values to dictionary
         #  chrom is second as multiqc uses first column for output and having it be the same leads to issues
-        pileup_dict["position"] = pileupcolumn.reference_pos + 1
+        #  if we are using multiqc that is
+        pileup_dict["position"] = zero_idx_pos + 1
         pileup_dict["chrom"] = pileupcolumn.reference_name
-        pileup_dict["A_reads"] = A_counter
-        pileup_dict["C_reads"] = C_counter
-        pileup_dict["T_reads"] = T_counter
-        pileup_dict["G_reads"] = G_counter
-        pileup_dict["del_reads"] = del_counter
-        pileup_dict["total_reads"] = (A_counter + C_counter + T_counter + G_counter + del_counter)
-        pileup_dict["percentage_nonref"] = calculate_non_ref_percent(pileupcolumn.pos, pileup_dict, ref_dict)
-        pileup_dict["ref_base"] = ref_dict[pileupcolumn.reference_pos]
-        pileup_dict["A_percent"] = calc_base_percent(pileup_dict, "A_reads")
-        pileup_dict["C_percent"] = calc_base_percent(pileup_dict, "C_reads")
-        pileup_dict["T_percent"] = calc_base_percent(pileup_dict, "T_reads")
-        pileup_dict["G_percent"] = calc_base_percent(pileup_dict, "G_reads")
-        pileup_dict["del_percent"] = calc_base_percent(pileup_dict, "del_reads")
-        pileup_dict["variant_type"] = determine_type(pileup_dict, variant_call_threshold)
+        pileup_dict["total_reads"] = num_reads
+        pileup_dict["percentage_nonref"] = calculate_non_ref_percent(pileup_dict, ref_base)
+        pileup_dict["ref_base"] = ref_base
 
-        # Report based on threshold and deletion status
-        if pileup_dict["percentage_nonref"] >= min_report_percent:
-            if pileup_dict["total_reads"] >= min_read_count:
-                variation_info.append(pileup_dict)
+        # Type of mutation
+        if most_common_base == '*':
+            most_common_base = 'del'
+        pileup_dict["variant_type"] = determine_type(pileup_dict, most_common_base, variant_call_threshold)
+
+        # If INS < variant_call_threshold we don't want to add insertion summary data
+        if calc_base_percent(pileup_dict, 'ins') < (100 - variant_call_threshold):
+            ins_summary_str = 'NA'
+        pileup_dict["distribution"] = ins_summary_str
+
+        # Add to report
+        variation_info.append(pileup_dict)
 
     return variation_info
 
@@ -301,6 +311,11 @@ def main() -> None:
     if var_info == []:
         sys.exit(0)
     df = pd.DataFrame.from_dict(var_info)
+    # Reorder cols the lazy way
+    df = df[['position', 'chrom', 'A', 'C', 'T', 'G', 'del', 'ins',
+             'total_reads', 'percentage_nonref', 'ref_base',
+             'variant_type', 'distribution'
+            ]]
     df.to_csv(f'{sample_name}_variation.csv', index=False)
 
 if __name__ == "__main__":

@@ -1,10 +1,10 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/phac-nml/viralassembly/master/nextflow_schema.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/phac-nml/viralassembly/main/nextflow_schema.json",
     "title": "phac-nml/viralassembly pipeline parameters",
     "description": "Assemble and QC viral reads",
     "type": "object",
-    "definitions": {
+    "$defs": {
         "input_data_option_choose_1": {
             "title": "Input data option (choose 1)",
             "type": "object",
@@ -15,6 +15,7 @@
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
+                    "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
@@ -24,60 +25,46 @@
                 "fastq_pass": {
                     "type": "string",
                     "description": "Path to directory containing either barcoded fastq files or individually named fastq files",
-                    "help_text": "Barcodes must be formatted as 'barcode##' to be found. Fastq files must end in '.fastq' or '.fastq.gz'",
                     "fa_icon": "fas fa-folder-open",
-                    "format": "directory-path"
+                    "help_text": "Barcodes must be formatted as 'barcode##' to be found. Fastq files must end in '.fastq' or '.fastq.gz'"
                 }
             }
         },
         "important_input_values": {
             "title": "Important input values",
             "type": "object",
-            "fa_icon": "fas fa-sign-out-alt",
             "description": "Important pipeline values for that are based on which variant caller is being used along with if any metadata is to be added",
+            "default": "",
+            "fa_icon": "fas fa-sign-in-alt",
             "properties": {
                 "variant_caller": {
                     "type": "string",
-                    "enum": [
-                        "medaka",
-                        "nanopolish",
-                        "clair3"
-                    ],
-                    "fa_icon": "fas fa-code",
+                    "fa_icon": "fas fa-terminal",
                     "description": "Choose which variant caller to use. Options are 'medaka', 'clair3', and 'nanopolish'"
                 },
                 "metadata": {
                     "type": "string",
                     "fa_icon": "fas fa-file-csv",
-                    "format": "file-path",
-                    "mimetype": "text/plain",
                     "description": "Path to metadata TSV file containing at least columns 'sample' and 'barcode'"
                 },
                 "fast5_pass": {
                     "type": "string",
-                    "format": "directory-path",
                     "fa_icon": "fas fa-folder",
-                    "description": "Path to directory containing fast5 files for nanopolish",
-                    "help_text": "Only for nanopolish"
+                    "description": "Path to directory containing fast5 files for nanopolish only"
                 },
                 "sequencing_summary": {
                     "type": "string",
-                    "format": "file-path",
                     "fa_icon": "fas fa-file-alt",
-                    "description": "Path to sequencing_summary file needed for nanopolish",
-                    "help_text": "Only for nanopolish"
+                    "description": "Path to sequencing_summary file needed for nanopolish only"
                 }
             },
-            "required": [
-                "variant_caller"
-            ]
+            "required": ["variant_caller"]
         },
         "variant_model_settings": {
             "title": "Variant model settings",
             "type": "object",
             "description": "Settings pertaining to the specific variant callers models. Be as accurate as possible for best results",
             "default": "",
-            "fa_icon": "fas fa-tools",
             "properties": {
                 "medaka_model": {
                     "type": "string",
@@ -91,14 +78,14 @@
                 },
                 "clair3_user_variant_model": {
                     "type": "string",
-                    "description": "Path to local clair3 model folder",
-                    "format": "directory-path"
+                    "description": "Path to local clair3 model folder"
                 },
                 "clair3_no_pool_split": {
                     "type": "boolean",
                     "description": "Pass to not split amplicon pools when running clair3"
                 }
-            }
+            },
+            "fa_icon": "fas fa-tools"
         },
         "read_filtering_options": {
             "title": "Read filtering options",
@@ -136,25 +123,23 @@
                 },
                 "scheme": {
                     "type": "string",
-                    "default": "nCoV-2019",
                     "description": "Name of the pathogen to look for a scheme to use"
                 },
                 "scheme_version": {
                     "type": "string",
-                    "default": "freed_nml_test_V2",
                     "description": "Name of the amplicon scheme"
                 },
                 "scheme_repo": {
                     "type": "string",
-                    "default": "https://github.com/DarianHole/primer-schemes.git",
+                    "default": "https://github.com/artic-network/primer-schemes.git",
                     "description": "URL to the online scheme git repo to download"
                 },
                 "local_scheme": {
                     "type": "string",
-                    "format": "directory-path",
                     "description": "Path to local scheme repo use instead of downloading"
                 }
-            }
+            },
+            "fa_icon": "fas fa-book-open"
         },
         "artic_minion_options": {
             "title": "Artic minion options",
@@ -183,9 +168,7 @@
                 },
                 "use_artic_tool": {
                     "type": "boolean",
-                    "fa_icon": "fas fa-caret-right",
-                    "description": "Pass to run tool artic pipeline instead of the nextflow adaptation this pipeline uses",
-                    "help_text": "Clair3 always runs this"
+                    "description": "Pass to run tool artic pipeline instead of the nextflow adaptation this pipeline uses"
                 }
             }
         },
@@ -202,7 +185,6 @@
                 },
                 "gff": {
                     "type": "string",
-                    "format": "file-path",
                     "description": "Path to gff3 formatted file to be used to build SnpEff database"
                 }
             }
@@ -212,16 +194,14 @@
             "type": "object",
             "description": "Options pertaining to QC outputs/stats",
             "default": "",
-            "fa_icon": "fas fa-star",
             "properties": {
                 "skip_qc": {
                     "type": "boolean",
-                    "description": "If passed, skip running all QC and reporting steps",
-                    "fa_icon": "fas fa-forward"
+                    "fa_icon": "fas fa-forward",
+                    "description": "If passed, skip running all QC and reporting steps"
                 },
                 "pcr_primer_bed": {
                     "type": "string",
-                    "format": "file-path",
                     "description": "Path to PCR Primer bed to check for any mutations occuring in defined regions"
                 },
                 "neg_control_threshold": {
@@ -234,40 +214,39 @@
                     "default": "neg,ntc,blank",
                     "description": "Control prefixes separated by a ',' to determine which samples are negative controls"
                 }
-            }
+            },
+            "fa_icon": "fas fa-star"
         },
         "report_generation_options": {
             "title": "Report generation options",
             "type": "object",
             "description": "Options pertaining to final report generation",
             "default": "",
-            "fa_icon": "fas fa-file-code",
             "properties": {
                 "custom_report": {
                     "type": "boolean",
-                    "description": "Create custom report instead of the MultiQC report (singularity not yet supported for custom reports)",
-                    "fa_icon": "fas fa-file-signature"
+                    "fa_icon": "fas fa-file-signature",
+                    "description": "Create custom report instead of the MultiQC report (singularity not yet supported for custom reports)"
                 },
                 "multiqc_config_overall": {
                     "type": "string",
                     "default": "$projectDir/assets/multiqc_config_overall.yaml",
-                    "description": "MultiQC overall run config yaml file",
-                    "format": "file-path"
+                    "description": "MultiQC overall run config yaml file"
                 },
                 "multiqc_config_sample": {
                     "type": "string",
                     "default": "$projectDir/assets/multiqc_config_sample.yaml",
-                    "description": "MultiQC sample config yaml file",
-                    "format": "file-path"
+                    "description": "MultiQC sample config yaml file"
                 }
-            }
+            },
+            "fa_icon": "fas fa-file-code"
         },
         "generic_options": {
             "title": "Generic options",
             "type": "object",
-            "description": "Less common options for the pipeline, typically set in a config file.",
-            "help_text": "These options are generic and don't quite all under any other categories",
             "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
             "properties": {
                 "outdir": {
                     "type": "string",
@@ -275,19 +254,6 @@
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open",
                     "default": "results"
-                },
-                "cache": {
-                    "type": "string",
-                    "help_text": "Path to directory to store or find environments/containers",
-                    "fa_icon": "fas fa-folder",
-                    "format": "directory-path",
-                    "description": "Path to directory containing env/container shared store"
-                },
-                "help": {
-                    "type": "boolean",
-                    "description": "Display help text.",
-                    "fa_icon": "fas fa-question-circle",
-                    "hidden": true
                 },
                 "version": {
                     "type": "boolean",
@@ -297,78 +263,65 @@
                 },
                 "monochrome_logs": {
                     "type": "boolean",
-                    "description": "Do not use coloured log outputs.",
                     "fa_icon": "fas fa-palette",
-                    "hidden": true
+                    "description": "Do not use coloured log outputs."
                 },
                 "show_hidden_params": {
                     "type": "boolean",
-                    "hidden": true,
                     "fa_icon": "fas fa-minus-square"
-                }
-            },
-            "required": [
-                "outdir"
-            ]
-        },
-        "resource_options": {
-            "title": "Resource options",
-            "type": "object",
-            "description": "Options pertaining to resource usage",
-            "default": "",
-            "fa_icon": "fas fa-cog",
-            "properties": {
+                },
                 "max_memory": {
                     "type": "string",
                     "default": "256.GB",
+                    "fa_icon": "fas fa-database",
                     "description": "Maximum memory to use in pipeline for a single process. Given as a string with int.GB"
                 },
                 "max_cpus": {
                     "type": "integer",
                     "default": 16,
+                    "fa_icon": "fas fa-microchip",
                     "description": "Maximum number of CPUs available to use for a single process"
                 },
                 "max_time": {
                     "type": "string",
-                    "description": "Maximum time available for a single process to run with",
-                    "default": "120.h"
+                    "default": "120.h",
+                    "fa_icon": "fas fa-clock",
+                    "description": "Maximum time available for a single process to run with"
                 }
-            }
+            },
+            "required": ["outdir"]
         }
     },
     "allOf": [
         {
-            "$ref": "#/definitions/input_data_option_choose_1"
+            "$ref": "#/$defs/input_data_option_choose_1"
         },
         {
-            "$ref": "#/definitions/important_input_values"
+            "$ref": "#/$defs/important_input_values"
         },
         {
-            "$ref": "#/definitions/variant_model_settings"
+            "$ref": "#/$defs/variant_model_settings"
         },
         {
-            "$ref": "#/definitions/read_filtering_options"
+            "$ref": "#/$defs/read_filtering_options"
         },
         {
-            "$ref": "#/definitions/scheme_options"
+            "$ref": "#/$defs/scheme_options"
         },
         {
-            "$ref": "#/definitions/artic_minion_options"
+            "$ref": "#/$defs/artic_minion_options"
         },
         {
-            "$ref": "#/definitions/snpeff_options"
+            "$ref": "#/$defs/snpeff_options"
         },
         {
-            "$ref": "#/definitions/qc_options"
+            "$ref": "#/$defs/qc_options"
         },
         {
-            "$ref": "#/definitions/report_generation_options"
+            "$ref": "#/$defs/report_generation_options"
         },
         {
-            "$ref": "#/definitions/generic_options"
-        },
-        {
-            "$ref": "#/definitions/resource_options"
+            "$ref": "#/$defs/generic_options"
         }
     ]
 }
