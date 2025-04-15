@@ -1,7 +1,7 @@
 // Visualization Modules
 //  Custom scripts are versioned here
 process CREATE_READ_VARIATION_CSV {
-    label 'process_single'
+    label 'process_high_memory'
     tag "$meta.id"
     publishDir "${params.outdir}/variation_csvs", pattern: "*.csv", mode: "copy"
 
