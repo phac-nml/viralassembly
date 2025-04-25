@@ -14,7 +14,8 @@ process ARTIC_MINION {
 
     input:
     tuple val(meta), path(fastq)
-    path scheme
+    path reference
+    path primer_bed
 
     output:
     tuple val(meta), path("${meta.id}.primertrimmed.rg.sorted.bam"), path("${meta.id}.primertrimmed.rg.sorted.bam.bai"), emit: bam
@@ -26,10 +27,13 @@ process ARTIC_MINION {
 
     script:
     // Clair3 model is added conditonally if it's been set
-    // Setup args
+    //  as clair3 can detect the model from the fastq header
+    // Setup args list
     def argsList = []
     if ( params.normalise ) {
         argsList.add("--normalise ${params.normalise}")
+    } else {
+        argsList.add("--normalise 0")
     }
     if ( params.no_frameshift ) {
         argsList.add("--no-frameshifts")
@@ -39,14 +43,15 @@ process ARTIC_MINION {
     }
     def argsConfig = argsList.join(" ")
 
-    // Cmd
+    // Cmd to run
     """
     artic minion \\
         ${argsConfig} \\
         --threads ${task.cpus} \\
+        --ref $reference \\
+        --bed $primer_bed \\
         --read-file $fastq \\
-        --scheme-version ${params.scheme_version} \\
-        ${params.scheme} \\
+        --model-dir XYZ \\
         ${meta.id}
 
     # Versions #
@@ -61,6 +66,7 @@ process ARTIC_MINION {
     touch ${meta.id}.primertrimmed.rg.sorted.bam
     touch ${meta.id}.primertrimmed.rg.sorted.bam.bai
     touch ${meta.id}.pass.vcf.gz
+    touch ${meta.id}.fail.vcf
     touch ${meta.id}.consensus.fasta
 
     # Versions #

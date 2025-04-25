@@ -24,7 +24,7 @@ process MINIMAP2_ALIGN {
         -t ${task.cpus} \\
         $reference \\
         $fastq \\
-    | samtools view -bS -F 4 - \\
+    | samtools view -b -F 260 - \\
     | samtools sort -o ${meta.id}.sorted.bam
 
     samtools index ${meta.id}.sorted.bam

@@ -203,8 +203,8 @@ process CLAIR3_VARIANTS {
         --min_coverage=10 \\
         --haploid_precise \\
         --enable_long_indel \\
-        --fast_mode \\
         --include_all_ctgs \\
+        --chunk_size=10000 \\
         --no_phasing_for_fa
 
     gunzip ${meta.id}-out/merge_output.vcf.gz

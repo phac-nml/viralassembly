@@ -176,9 +176,8 @@ workflow NANOPORE {
     } else {
         ARTIC_MINION(
             ch_filtered_fastqs.pass,
-            ch_fast5s,
-            ch_seqSum,
-            ch_scheme
+            ch_reference,
+            ch_primer_bed,
         )
         ch_consensus = ARTIC_MINION.out.consensus
         ch_bam = ARTIC_MINION.out.bam

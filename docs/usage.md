@@ -293,7 +293,8 @@ The primer scheme must contain:
 - A primer bed file titled `*primer.bed`
   - Minimum of 6 columns
   - Primer pairs with names containing `_LEFT` and `_RIGHT`
-  - Primer pools
+  - Primer pool numbers (1, 2, 3, etc.)
+  - Primer direction (+ / -)
 
 Example Primer file:
 
@@ -312,7 +313,7 @@ primer-schemes
 └── <SCHEME>
     └── <SCHEME VERSION>
         ├── reference.fasta
-        └── scheme.bed
+        └── primer.bed
 ```
 
 Example for Sars-CoV2:
@@ -322,10 +323,10 @@ primer-schemes
 └── nCoV-2019
     ├── midnight
     |   ├── nCoV-2019.reference.fasta
-    |   └── nCoV-2019.scheme.bed
+    |   └── nCoV-2019.primer.bed
     └── V1
         ├── reference.fasta
-        └── scheme.bed
+        └── primer.bed
 ```
 
 ### Metadata

@@ -28,7 +28,7 @@ def init_parser() -> argparse.ArgumentParser:
     return parser
 
 # from https://www.geeksforgeeks.org/python-make-a-list-of-intervals-with-sequential-numbers/
-def intervals_extract(iterable) -> Generator[list]:
+def intervals_extract(iterable):
     """Create list of intervals with sequential numbers"""
     iterable = sorted(set(iterable))
     for _, group in itertools.groupby(enumerate(iterable), lambda t: t[1] - t[0]):

@@ -15,7 +15,7 @@ def transformVCFList (inputList) {
 process ARTIC_ALIGN_TRIM {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/bam", pattern: "${meta.id}.*trimmed.rg.sorted.bam", mode: "copy"
+    publishDir "${params.outdir}/bam", pattern: "${meta.id}.*trimmed.rg.sorted.bam*", mode: "copy"
     // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.alignreport-*", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
@@ -37,20 +37,21 @@ process ARTIC_ALIGN_TRIM {
     if ( params.normalise ) {
         argsList.add("--normalise ${params.normalise}")
     }
-    outName = "${meta.id}.primertrimmed.rg.sorted.bam"
+    outName = "${meta.id}.trimmed.rg.sorted.bam"
     // Start mode = Trim to start of primers instead of ends
-    if ( mode == "start" ) {
-        outName = "${meta.id}.trimmed.rg.sorted.bam"
-        argsList.add("--start")
+    if ( mode == "primers" ) {
+        outName = "${meta.id}.primertrimmed.rg.sorted.bam"
+        argsList.add("--trim-primers")
     }
     def argsConfig = argsList.join(" ")
     """
     align_trim \\
         $argsConfig \\
         --remove-incorrect-pairs \\
-        --report ${meta.id}.alignreport-${mode}.txt \\
+        --report ${meta.id}.alignreport-${mode}.csv \\
         $primer_bed \\
-        < $bam 2> ${meta.id}.alignreport-${mode}.er | samtools sort -T ${meta.id} - -o $outName
+        < $bam 2> ${meta.id}.alignreport-${mode}.er \\
+    | samtools sort -T ${meta.id} - -o $outName
 
     samtools index $outName
 
@@ -182,14 +183,17 @@ process CUSTOM_VCF_FILTER {
 
     script:
     def filterArg = '--nanopolish'
+    def additionalArg = ''
     if ( params.variant_caller == 'medaka' ) {
         filterArg = '--medaka'
     } else if ( params.variant_caller == 'clair3' ) {
         filterArg = '--clair3'
+        additionalArg = '--min-qual-c3 5'
     }
     """
     cs_vcf_filter.py \\
         $filterArg \\
+        $additionalArg \\
         $vcf \\
         ${meta.id}.pass.vcf \\
         ${meta.id}.fail.vcf
@@ -287,11 +291,23 @@ process CUSTOM_MAKE_DEPTH_MASK {
         $reference \\
         $bam \\
         ${meta.id}.coverage_mask.txt
+
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
     """
 
     stub:
     """
     touch ${meta.id}.coverage_mask.txt
+
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
     """
 }
 process ARTIC_MASK {

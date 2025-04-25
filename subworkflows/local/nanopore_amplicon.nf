@@ -152,8 +152,10 @@ workflow WF_NANOPORE_AMPLICON {
                 .set { ch_bed_pools }
         }
 
-        // Clair3 has is new so using the start trimmed for now
-        ch_trimmed_bams_w_pool = ARTIC_ALIGN_TRIM_START.out.bam.combine(ch_bed_pools) // Channel: [ val(meta), path(bam), path(bai), val(pool), path(pool_bed) ]
+        // Clair3 also uses the primer trimmed bams
+        //  Based on testing, the way the pools and clair3 work, having the primer trimmed bams as input
+        //  allows better and consistent calling in SNPs in primers
+        ch_trimmed_bams_w_pool = ARTIC_ALIGN_TRIM_PRIMERS.out.bam.combine(ch_bed_pools) // Channel: [ val(meta), path(bam), path(bai), val(pool), path(pool_bed) ]
 
         // Run clair3
         CLAIR3_VARIANTS(

@@ -63,8 +63,9 @@ class MedakaFilter:
         return True
 
 class Clair3Filter:
-    def __init__(self, no_frameshifts):
+    def __init__(self, no_frameshifts, min_qual):
         self.no_frameshifts = no_frameshifts
+        self.min_qual = min_qual
 
     def check_filter(self, v):
         qual = v.QUAL
@@ -72,12 +73,12 @@ class Clair3Filter:
         # These seem to not be being pulled out though so check if the qual is none to fail them
         if qual == None:
             return False
-        # 2 is the default for clair3 so bump slightly up to 3
-        if qual < 3:
+        # Qual 2 is the default for clair3 so bump slightly up by default
+        if qual < self.min_qual:
             return False
 
-        # Allele fraction > 0.75 required
-        if len(v.samples) != 1 or v.samples[0].data.AF < 0.75:
+        # Only 1 allele per site
+        if len(v.samples) != 1:
             return False
 
         if self.no_frameshifts and not in_frame(v):
@@ -94,7 +95,7 @@ def go(args):
     elif args.medaka:
         filter = MedakaFilter(args.no_frameshifts)
     elif args.clair3:
-        filter = Clair3Filter(args.no_frameshifts)
+        filter = Clair3Filter(args.no_frameshifts, args.min_qual_c3)
     else:
         print("Please specify a VCF type, i.e. --nanopolish or --medaka or --clair3\n")
         raise SystemExit
@@ -140,6 +141,7 @@ def main():
     parser.add_argument('--medaka', action='store_true')
     parser.add_argument('--clair3', action='store_true')
     parser.add_argument('--no-frameshifts', action='store_true')
+    parser.add_argument('--min-qual-c3', type=int, default=5)
     parser.add_argument('inputvcf')
     parser.add_argument('output_pass_vcf')
     parser.add_argument('output_fail_vcf')

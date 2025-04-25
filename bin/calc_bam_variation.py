@@ -251,12 +251,13 @@ def parse_variation_from_bam(bamfile: str, ref_dict: dict, base_q: int,
         # Analyze insertions differently
         # Insertions are hard as they can be quite variable and we want a summary for them
         #  Ex. ['A+6AAAAAG', 'A+6AAAAAG', 'a+5aaagg', 'a+6aaaaag']
+        ins_regex = re.compile(r'\d+')
         if (any([x for x in data_list if '+' in x])):
             ins_list = [x for x in data_list if '+' in x]
             case_insensitive_pos_counter['ins'] = len(ins_list)
 
             # Do something with it to summarize and adjust this later
-            ins_len_counts = Counter((f'{re.findall(r'\d+', x)[0]}bp' for x in ins_list))
+            ins_len_counts = Counter((f'{re.findall(ins_regex, x)[0]}bp' for x in ins_list))
             ins_summary_str = ", ".join(f"{length}: {count}" for length, count in ins_len_counts.most_common())
 
         # Add missing bases to the counter, change * to del, and make dict

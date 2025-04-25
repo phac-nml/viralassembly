@@ -52,7 +52,7 @@ process DOWNLOAD_SCHEME {
     """
     mkdir -p primer-schemes/stub/V1
     touch primer-schemes/stub/V1/stub.reference.fasta
-    touch primer-schemes/stub/V1/stub.scheme.bed
+    touch primer-schemes/stub/V1/stub.primer.bed
     """
 }
 process SIMPLE_SCHEME_VALIDATE {
@@ -63,7 +63,7 @@ process SIMPLE_SCHEME_VALIDATE {
 
     output:
     path("primer-schemes/${params.scheme}/${params.scheme_version}/*reference.fasta"), emit: ref
-    path("primer-schemes/${params.scheme}/${params.scheme_version}/*scheme.bed"), emit: bed
+    path("primer-schemes/${params.scheme}/${params.scheme_version}/*primer.bed"), emit: bed
     path "primer-schemes", emit: scheme
 
     // No clue if this is the best way to validate but eh for now it works
@@ -75,8 +75,8 @@ process SIMPLE_SCHEME_VALIDATE {
     if [ ! -f primer-schemes/${params.scheme}/${params.scheme_version}/*reference.fasta ]; then
         echo "ERROR: Reference Fasta not found in 'primer-schemes/${params.scheme}/${params.scheme_version}/*reference.fasta'"
         exit 1
-    elif [ ! -f primer-schemes/${params.scheme}/${params.scheme_version}/*scheme.bed ]; then
-        echo "ERROR: Scheme bed file not found in 'primer-schemes/${params.scheme}/${params.scheme_version}/*scheme.bed'"
+    elif [ ! -f primer-schemes/${params.scheme}/${params.scheme_version}/*primer.bed ]; then
+        echo "ERROR: Scheme primer bed file not found in 'primer-schemes/${params.scheme}/${params.scheme_version}/*primer.bed'"
         exit 1
     fi
     """
@@ -172,7 +172,9 @@ process RENAME_FASTQ {
     tag "$meta.id"
 
     conda "conda-forge::python=3.10.2"
-    container "quay.io/biocontainers/python:3.10.2"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/python:3.10.2' :
+        'biocontainers/python:3.10.2' }"
 
     input:
     tuple val(meta), path(fastq)
