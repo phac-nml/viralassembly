@@ -172,38 +172,23 @@ process CLAIR3_VARIANTS {
     tuple val(meta), path(bam), path(bai), val(pool), path(pool_bed)
     path reference
     path fai
-    // optional model_path
-    path model_path
+    path model
 
     output:
     tuple val(meta), path("${meta.id}.${pool}.vcf"), val(pool), emit: vcf
     path "versions.yml", emit: versions
 
     script:
-    // Using some of the nf-flu work to get clair3 working
-    model_suffix = "models/${params.clair3_model}"
-    using_conda = (workflow.containerEngine == null || workflow.containerEngine == '')
     """
-    CLAIR_BIN_DIR=\$(dirname \$(which run_clair3.sh))
-    if [[ "${params.clair3_user_variant_model}" != "" ]] ; then
-        MODEL_PATH=${model_path}
-    else
-        if [[ ${using_conda} = true ]] ; then
-            MODEL_PATH="\$CLAIR_BIN_DIR/${model_suffix}"
-        else
-            MODEL_PATH="/usr/local/bin/models/${params.clair3_model}"
-        fi
-    fi
-
     run_clair3.sh \
         --bam_fn=$bam \\
         --bed_fn=$pool_bed \\
         --ref_fn=$reference \\
         --threads=${task.cpus} \\
         --platform='ont' \\
-        --model_path="\$MODEL_PATH" \\
+        --model_path="$model" \\
         --output="${meta.id}-out" \\
-        --min_coverage=10 \\
+        --min_coverage=5 \\
         --haploid_precise \\
         --enable_long_indel \\
         --include_all_ctgs \\

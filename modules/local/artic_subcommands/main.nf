@@ -183,17 +183,17 @@ process CUSTOM_VCF_FILTER {
 
     script:
     def filterArg = '--nanopolish'
-    def additionalArg = ''
-    if ( params.variant_caller == 'medaka' ) {
-        filterArg = '--medaka'
-    } else if ( params.variant_caller == 'clair3' ) {
-        filterArg = '--clair3'
-        additionalArg = '--min-qual-c3 5'
+    def clair3MinQualArg = ""
+    if ( params.variant_caller == "medaka" ) {
+        filterArg = "--medaka"
+    } else if ( params.variant_caller == "clair3" ) {
+        filterArg = "--clair3"
+        clair3MinQualArg = "--min-qual-c3 ${params.min_qual_clair3}"
     }
     """
     cs_vcf_filter.py \\
         $filterArg \\
-        $additionalArg \\
+        $clair3MinQualArg \\
         $vcf \\
         ${meta.id}.pass.vcf \\
         ${meta.id}.fail.vcf

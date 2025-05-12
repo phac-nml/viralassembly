@@ -30,7 +30,6 @@ include { ARTIC_MASK                } from '../../modules/local/artic_subcommand
     INITIALIZE CHANNELS FROM PARAMS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-ch_user_clair3_model = params.clair3_user_variant_model ? file(params.clair3_user_variant_model, checkIfExists: true) : []
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,6 +44,7 @@ workflow WF_NANOPORE_SHOTGUN {
     ch_reference    // channel: [ file(reference) ]
     ch_ref_fai      // channel: [ file(reference.fai) ]
     ch_refstats     // channel: [ file(refstats.txt) ]
+    ch_clair3_model // channel: [ file(clair3_model) ]
 
     main:
     // Version tracking
@@ -90,7 +90,7 @@ workflow WF_NANOPORE_SHOTGUN {
             ch_bam,
             ch_reference,
             ch_ref_fai,
-            ch_user_clair3_model
+            ch_clair3_model
         )
         ch_primary_vcf = CLAIR3_VARIANTS.out.vcf
         ch_versions = ch_versions.mix(CLAIR3_VARIANTS.out.versions)

@@ -211,22 +211,22 @@ process RENAME_FASTQ {
 }
 process SPLIT_BED_BY_POOL {
     label 'process_single'
-    publishDir "${params.outdir}/bed", pattern: "*.split.bed", mode: "copy"
+    publishDir "${params.outdir}/bed", pattern: "*.bed", mode: "copy"
 
     input:
     path bed
 
     output:
-    path "*.split.bed", emit: bed
+    path "*.bed", emit: bed
 
     script:
     """
-    awk -F'\t' -v OFS='\t' 'NR>0{print \$1, \$2, \$3, \$4, \$5, \$6 > \$5".split.bed"}' $bed
+    awk -F'\t' -v OFS='\t' 'NR>0{print \$1, \$2, \$3, \$4, \$5, \$6 > \$5".bed"}' $bed
     """
 
     stub:
     """
-    touch 1.split.bed
-    touch 2.split.bed
+    touch 1.bed
+    touch 2.bed
     """
 }

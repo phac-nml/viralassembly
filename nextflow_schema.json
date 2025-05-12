@@ -76,7 +76,7 @@
                     "default": "r941_prom_sup_g5014",
                     "description": "Model to use in clair3. See clair3 docs for more info"
                 },
-                "clair3_user_variant_model": {
+                "clair3_local_model": {
                     "type": "string",
                     "description": "Path to local clair3 model folder"
                 },

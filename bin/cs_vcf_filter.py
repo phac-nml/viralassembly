@@ -141,7 +141,7 @@ def main():
     parser.add_argument('--medaka', action='store_true')
     parser.add_argument('--clair3', action='store_true')
     parser.add_argument('--no-frameshifts', action='store_true')
-    parser.add_argument('--min-qual-c3', type=int, default=5)
+    parser.add_argument('--min-qual-c3', type=int, default=8)
     parser.add_argument('inputvcf')
     parser.add_argument('output_pass_vcf')
     parser.add_argument('output_fail_vcf')

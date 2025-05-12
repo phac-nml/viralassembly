@@ -13,7 +13,7 @@ import pysam
 
 def init_parser() -> argparse.ArgumentParser:
     """
-    Specify command line arguments for automatic upload to irida
+    Specify command line arguments
     Returns command line parser with inputs
     """
     parser = argparse.ArgumentParser()

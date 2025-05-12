@@ -16,6 +16,7 @@ process ARTIC_MINION {
     tuple val(meta), path(fastq)
     path reference
     path primer_bed
+    path clair3_model_dir
 
     output:
     tuple val(meta), path("${meta.id}.primertrimmed.rg.sorted.bam"), path("${meta.id}.primertrimmed.rg.sorted.bam.bai"), emit: bam
@@ -38,8 +39,10 @@ process ARTIC_MINION {
     if ( params.no_frameshift ) {
         argsList.add("--no-frameshifts")
     }
-    if ( params.clair3_model && params.clair3_model != 'null') {
-        argsList.add("--model ${params.clair3_model}")
+
+    if ( clair3_model_dir ) {
+        argsList.add("--model-dir ./")
+        argsList.add("--model ${clair3_model_dir}")
     }
     def argsConfig = argsList.join(" ")
 
@@ -51,7 +54,6 @@ process ARTIC_MINION {
         --ref $reference \\
         --bed $primer_bed \\
         --read-file $fastq \\
-        --model-dir XYZ \\
         ${meta.id}
 
     # Versions #

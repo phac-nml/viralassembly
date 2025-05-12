@@ -16,7 +16,8 @@ include { TRACK_FILTERED_SAMPLES as TRACK_SIZE_FILTERED_SAMPLES    } from '../mo
 include { CHOPPER                   } from '../modules/local/chopper/main'
 include { NANOSTAT                  } from '../modules/local/nanostat/main'
 
-// Artic related
+// Artic and model related
+include { ARTIC_GET_MODELS          } from '../modules/local/artic/get_models/main'
 include { ARTIC_GUPPYPLEX           } from '../modules/local/artic/guppyplex/main'
 include { ARTIC_MINION              } from '../modules/local/artic/minion/main'
 
@@ -97,6 +98,20 @@ workflow NANOPORE {
     ch_versions = ch_versions.mix(GET_REF_STATS.out.versions)
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Models (like me <3)
+    //  Medaka just using params for now, should be 
+    //  in the container(?)
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Clair3 model for when running with clair3
+    ch_clair3_model = Channel.empty()
+    if ( params.clair3_local_model ) {
+        ch_clair3_model = file(params.clair3_local_model, checkIfExists: true)
+    } else {
+        ARTIC_GET_MODELS(params.clair3_model)
+        ch_clair3_model = ARTIC_GET_MODELS.out.model
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Read QC and Statistics
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ARTIC_GUPPYPLEX(
@@ -150,7 +165,8 @@ workflow NANOPORE {
             ch_seqSum,
             ch_reference,
             GET_REF_STATS.out.fai,
-            GET_REF_STATS.out.refstats
+            GET_REF_STATS.out.refstats,
+            ch_clair3_model
         )
         ch_consensus = WF_NANOPORE_SHOTGUN.out.consensus
         ch_bam = WF_NANOPORE_SHOTGUN.out.bam
@@ -167,7 +183,8 @@ workflow NANOPORE {
             GET_REF_STATS.out.refstats,
             ch_primer_bed,
             ch_amplicon_bed,
-            CREATE_AMPLICON_BED.out.tiling_bed
+            CREATE_AMPLICON_BED.out.tiling_bed,
+            ch_clair3_model
         )
         ch_consensus = WF_NANOPORE_AMPLICON.out.consensus
         ch_bam = WF_NANOPORE_AMPLICON.out.bam
@@ -178,6 +195,7 @@ workflow NANOPORE {
             ch_filtered_fastqs.pass,
             ch_reference,
             ch_primer_bed,
+            ch_clair3_model.ifEmpty([])
         )
         ch_consensus = ARTIC_MINION.out.consensus
         ch_bam = ARTIC_MINION.out.bam
@@ -210,13 +228,13 @@ workflow NANOPORE {
         TRACK_INITIAL_FILTERED_SAMPLES(
             ch_empty_fastqs,
             ch_metadata,
-            "Too few found fastqs"
+            "TOO FEW INPUT READS"
         )
         ch_filter_tracking = ch_filter_tracking.mix(TRACK_INITIAL_FILTERED_SAMPLES.out.csv)
         TRACK_SIZE_FILTERED_SAMPLES(
             ch_filtered_fastqs.empty,
             ch_metadata,
-            "Too few size selected reads"
+            "TOO FEW SIZE SELECTED READS"
         )
         ch_filter_tracking = ch_filter_tracking.mix(TRACK_SIZE_FILTERED_SAMPLES.out.csv)
 

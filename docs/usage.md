@@ -117,10 +117,10 @@ Running with `clair3` requires the following parameters:
 And has the optional parameters of:
 
 - `--clair3_model <MODEL>`: Specify the base clair3 model
-- `--clair3_user_variant_model </PATH/TO/downloaded_clair3_model>`: Specify the path to an additionally downloaded model directory
+- `--clair3_local_model </PATH/TO/downloaded_clair3_model>`: Specify the path to an additionally downloaded model directory
 - `clair3_no_pool_split`: Do not split inputs into pools
 
-Clair3 comes with some models available and is defaulted to `r941_prom_sup_g5014`. Additional models can be downloaded from [ONT Rerio](https://github.com/nanoporetech/rerio/tree/master) and then specified in the `--clair3_user_variant_model </PATH/TO/downloaded_clair3_model>` parameter shown above. Remember to pick a model that best represents the data!
+Clair3 comes with some models available and is defaulted to `r941_prom_sup_g5014`. Additional models can be downloaded from [ONT Rerio](https://github.com/nanoporetech/rerio/tree/master) and then specified in the `--clair3_local_model </PATH/TO/downloaded_clair3_model>` parameter shown above. Remember to pick a model that best represents the data!
 
 ### [Medaka](https://github.com/nanoporetech/medaka)
 
@@ -253,7 +253,7 @@ Use `--version` to see version information
 | --input                     | Path to samplesheet with information about the samples you would like to analyse                         | Path   | null                                                  | [Option for input params](#input-parameters)                                                                                                     |
 | --variant_caller            | Pick from the 3 variant callers: 'clair3', 'medaka', 'nanopolish'                                        | Choice | ''                                                    | Details above                                                                                                                                    |
 | --clair3_model              | Clair3 base model to be used in the pipeline                                                             | Str    | 'r941_prom_sup_g5014'                                 | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
-| --clair3_user_variant_model | Path to clair3 additional model directory to use instead of a base model                                 | Path   | ''                                                    | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
+| --clair3_local_model | Path to clair3 additional model directory to use instead of a base model                                 | Path   | ''                                                    | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
 | --clair3_no_pool_split      | Do not split reads into separate pools                                                                   | Bool   | False                                                 | Clair3 amplicon sequencing only                                                                                                                  |
 | --medaka_model              | Medaka model to be used in the pipeline                                                                  | Str    | 'r941_min_hac_g507'                                   | Default model will not work the best for all inputs. [See medaka docs](https://github.com/nanoporetech/medaka#models) for additional info        |
 | --fast5_pass                | Path to directory containing `barcode##` fast5 subdirectories                                            | Path   | null                                                  | Only for nanopolish                                                                                                                              |
