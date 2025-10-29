@@ -234,7 +234,7 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
     publishDir "${params.outdir}", pattern: "reportDashboard.html", mode: "copy"
 
     conda "${moduleDir}/env-custom-report.yml"
-    //container "https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0" to-create
+    container "docker.io/darianhole/measeq-report:latest"
 
     input:
     path read_variation_tsvs
