@@ -14,13 +14,6 @@ include { ZIP_AND_INDEX_VCF } from '../../modules/local/artic_subcommands/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    INITIALIZE CHANNELS FROM PARAMS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-ch_gff = params.gff ? file(params.gff, type: 'file', checkIfExists: true) : []
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN SUBWORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -31,7 +24,8 @@ workflow WF_SNPEFF_ANNOTATE {
 
     main:
     // Version tracking
-    ch_versions = Channel.empty()
+    ch_gff = params.gff ? file(params.gff, type: 'file', checkIfExists: true) : []
+    ch_versions = channel.empty()
 
     // Get reference id
     ch_reference.splitFasta( record: [ id: true ] )
@@ -63,7 +57,7 @@ workflow WF_SNPEFF_ANNOTATE {
 
     // Remove tabix index from vcf as it is not needed and won't match the normal artic steps as output
     ZIP_AND_INDEX_VCF.out.vcf
-        .map { it -> [ it[0], it[1] ] }
+        .map { meta, vcf, _tbi -> [ meta, vcf ] }
         .set { ch_ann_vcf }
 
     emit:

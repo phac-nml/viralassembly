@@ -25,18 +25,13 @@ include { NANOPORE } from './workflows/nanopore.nf'
 */
 
 //
-// Inital workflow and do parameter checks
-//
-WorkflowMain.initialise(workflow, params, log)
-
-//
 // WORKFLOW: Run main analysis pipeline after formatting inputs
 //
 workflow VIRALASSEMBLY {
-    // Format the input to match based on the type of input - folder, file, or samplesheet
-    FORMAT_INPUT()
 
     main:
+    // Format the input to match based on the type of input - folder, file, or samplesheet
+    FORMAT_INPUT()
 
     //
     // WORKFLOW: Run pipeline
@@ -46,6 +41,7 @@ workflow VIRALASSEMBLY {
         FORMAT_INPUT.out.empty
     )
 }
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -55,6 +51,11 @@ workflow VIRALASSEMBLY {
 workflow {
 
     main:
+
+    //
+    // Inital workflow and do parameter checks
+    //
+    WorkflowMain.initialise(workflow, params, log)
 
     //
     // WORKFLOW: Run main workflow

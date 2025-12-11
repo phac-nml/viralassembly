@@ -65,8 +65,8 @@ workflow WF_CREATE_CUSTOM_REPORT {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Amplicon coverages
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    ch_amplicon_coverage = Channel.empty()
-    ch_amplicon_completeness = Channel.empty()
+    ch_amplicon_coverage = channel.empty()
+    ch_amplicon_completeness = channel.empty()
     if ( ! params.reference ) {
         // Coverage
         BEDTOOLS_COVERAGE_AMPLICON_BED(
@@ -78,7 +78,7 @@ workflow WF_CREATE_CUSTOM_REPORT {
         //  Custom Output - should only run with that later
         COMBINE_AMPLICON_COVERAGE(
             BEDTOOLS_COVERAGE_AMPLICON_BED.out.amplicon_coverage
-                .collect{ it[1] }
+                .collect{ _meta, amp_bed -> amp_bed }
         )
         ch_amplicon_coverage = COMBINE_AMPLICON_COVERAGE.out.amplicons
 
@@ -88,7 +88,7 @@ workflow WF_CREATE_CUSTOM_REPORT {
             ch_amplicon_bed
         )
         CREATE_AMPLICON_COMPLETENESS.out.amplicon_completeness
-            .collectFile(keepHeader: true, sort: { it.baseName }, skip: 1, name: 'merged_amplicon_completeness.csv')
+            .collectFile(keepHeader: true, sort: { csv -> csv.baseName }, skip: 1, name: 'merged_amplicon_completeness.csv')
             .set { ch_amplicon_completeness }
 
         ch_versions = ch_versions.mix(CREATE_AMPLICON_COMPLETENESS.out.versions)
@@ -108,11 +108,11 @@ workflow WF_CREATE_CUSTOM_REPORT {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     CREATE_ALL_SAMPLE_SUMMARY_REPORT(
         CREATE_READ_VARIATION_CSV.out.csv
-            .collect{ it[1] },
+            .collect{ _meta, csv -> csv },
         CREATE_VARIANT_TSV.out.tsv
-            .collect{ it[1] },
+            .collect{ _meta, tsv -> tsv },
         BEDTOOLS_COVERAGE_GENOME_BED.out.cov_bed
-            .collect{ it[1] },
+            .collect{ _meta, bed -> bed },
         ch_amplicon_coverage
             .ifEmpty([]),
         ch_amplicon_completeness

@@ -47,7 +47,6 @@ workflow WF_NANOPORE_AMPLICON {
     ch_fastqs       // channel: [ val(meta), file(fastq) ]
     ch_fast5s       // channel: [ file(fast5s) ]
     ch_seqSum       // channel: [ file(sequencing_summary) ]
-    ch_scheme       // channel: [ file(primer-schemes) ]
     ch_reference    // channel: [ file(reference) ]
     ch_ref_fai      // channel: [ file(reference.fai) ]
     ch_refstats     // channel: [ file(refstats.txt) ]
@@ -58,7 +57,7 @@ workflow WF_NANOPORE_AMPLICON {
 
     main:
     // Version tracking
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Reference Align
@@ -106,7 +105,7 @@ workflow WF_NANOPORE_AMPLICON {
         if ( params.variant_caller == 'medaka' ) {
             // This combines the pool name values with the bams for other steps
             //  Medaka uses the Primer trimmed bam according to docs
-            ch_trimmed_bams_w_pool = ARTIC_ALIGN_TRIM_PRIMERS.out.bam.combine(pools) // Channel: [ val(meta), file(bam), file(bai), val(pool) ]
+            ch_trimmed_bams_w_pool = ARTIC_ALIGN_TRIM_PRIMERS.out.bam.combine(pools) // channel: [ val(meta), file(bam), file(bai), val(pool) ]
 
             MEDAKA_CONSENSUS(
                 ch_trimmed_bams_w_pool
@@ -121,7 +120,7 @@ workflow WF_NANOPORE_AMPLICON {
         } else {
             // This combines the pool name values with the bams for other steps
             //  Nanopolish uses the Start trimmed bam according to docs
-            ch_trimmed_bams_w_pool = ARTIC_ALIGN_TRIM_START.out.bam.combine(pools) // Channel: [ val(meta), file(bam), file(bai), val(pool) ]
+            ch_trimmed_bams_w_pool = ARTIC_ALIGN_TRIM_START.out.bam.combine(pools) // channel: [ val(meta), file(bam), file(bai), val(pool) ]
 
             NANOPOLISH_VARIANTS(
                 ch_fastqs
@@ -155,7 +154,7 @@ workflow WF_NANOPORE_AMPLICON {
         // Clair3 also uses the primer trimmed bams
         //  Based on testing, the way the pools and clair3 work, having the primer trimmed bams as input
         //  allows better and consistent calling in SNPs in primers
-        ch_trimmed_bams_w_pool = ARTIC_ALIGN_TRIM_PRIMERS.out.bam.combine(ch_bed_pools) // Channel: [ val(meta), path(bam), path(bai), val(pool), path(pool_bed) ]
+        ch_trimmed_bams_w_pool = ARTIC_ALIGN_TRIM_PRIMERS.out.bam.combine(ch_bed_pools) // channel: [ val(meta), path(bam), path(bai), val(pool), path(pool_bed) ]
 
         // Run clair3
         CLAIR3_VARIANTS(
@@ -173,16 +172,17 @@ workflow WF_NANOPORE_AMPLICON {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Merge pools by merging the vcf files for each pool together
     ch_tmp_vcfs
-        .map { it -> tuple(it[0], tuple(it[1], it[2])) }
+        .map { meta, vcf, _pool -> [ meta, vcf ] }
         .groupTuple()
-        .set { ch_pooled_vcfs } // Channel: [ val(meta), [[path(vcf), val(pool)], [...]] ]
-    // To merge vcfs, have to utilize the transformVCFList function based on how artic handles input
+        .set { ch_pooled_vcfs } // channel: [ val(meta), [vcf1, vcf2, ... vcfx] ]
+    // To merge vcfs, have to utilize the transformVCFList function based on how artic handles input data
     ARTIC_VCF_MERGE(
         ch_pooled_vcfs,
         ch_primer_bed
     )
     ch_versions = ch_versions.mix(ARTIC_VCF_MERGE.out.versions)
 
+    //
     // Longshot for medaka only as that is how it is in artic minion!
     if ( params.variant_caller == 'medaka' && ! params.skip_longshot ) {
         ZIP_AND_INDEX_VCF(
@@ -240,7 +240,7 @@ workflow WF_NANOPORE_AMPLICON {
 
     // Remove tabix index from vcf as it is not needed and won't match the normal artic steps as output
     CUSTOM_VCF_FILTER.out.pass_vcf
-        .map { it -> [ it[0], it[1] ] }
+        .map { meta, vcf, _tbi -> [ meta, vcf ] }
         .set { ch_pass_vcf }
 
 

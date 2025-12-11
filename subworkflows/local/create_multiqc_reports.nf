@@ -30,14 +30,6 @@ include { MULTIQC_OVERALL   } from '../../modules/local/multiqc/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    INITIALIZE CHANNELS FROM PARAMS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-ch_multiqc_overall_conf = file(params.multiqc_config_overall, checkIfExists: true)
-ch_multiqc_sample_conf = file(params.multiqc_config_sample, checkIfExists: true)
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN SUBWORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -55,6 +47,10 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     ch_versions         // channel: [ path(versions) ]
 
     main:
+    // Channels
+    ch_multiqc_overall_conf = file(params.multiqc_config_overall, checkIfExists: true)
+    ch_multiqc_sample_conf = file(params.multiqc_config_sample, checkIfExists: true)
+
     // Sample variant analysis
     CREATE_READ_VARIATION_CSV(
         ch_bam,
@@ -68,7 +64,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     ch_versions = ch_versions.mix(CREATE_VARIANT_TSV.out.versions)
 
     // Amplicon analysis
-    ch_amplicon_completeness = Channel.empty()
+    ch_amplicon_completeness = channel.empty()
     if ( ! params.reference ) {
         // Coverage
         BEDTOOLS_COVERAGE_AMPLICON_BED(
@@ -91,13 +87,13 @@ workflow WF_CREATE_MULTIQC_REPORTS {
             ch_amplicon_bed
         )
         CREATE_AMPLICON_COMPLETENESS.out.amplicon_completeness
-            .collectFile(keepHeader: true, sort: { it.baseName }, skip: 1, name: 'merged_amplicon_completeness.csv')
+            .collectFile(keepHeader: true, sort: { csv -> csv.baseName }, skip: 1, name: 'merged_amplicon_completeness.csv')
             .set { ch_amplicon_completeness }
 
         ch_versions = ch_versions.mix(CREATE_AMPLICON_COMPLETENESS.out.versions)
     } else {
         // Create empty amplicon depth tuple with sample meta values to still get sample mqc reports
-        ch_sample_amplicon_depth = ch_bam.map{ it -> tuple(it[0], []) }
+        ch_sample_amplicon_depth = ch_bam.map{ meta, _bam, _bai -> [ meta, [] ] }
     }
 
     // Stats from tools
@@ -114,7 +110,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
 
     // If not using a scheme, need to correct the headers for qualimap by removing the empty RG
     // BAM channel also no longer needs bai file
-    ch_bam = ch_bam.map { it -> tuple(it[0], it[1])}
+    ch_bam = ch_bam.map { meta, bam, _bai -> [ meta, bam ] }
     if ( ! params.reference ) {
         SAMTOOLS_REHEADER(
             ch_bam,
@@ -147,21 +143,21 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     MULTIQC_OVERALL(
         ch_multiqc_overall_conf,
         ch_sample_amplicon_depth
-            .collect{ it[1] }
+            .collect{ _meta, tsv -> tsv }
             .ifEmpty([]),
         ch_amplicon_completeness
             .ifEmpty([]),
         BCFTOOLS_STATS.out.stats
-            .collect{ it[1] },
+            .collect{ _meta, txt -> txt },
         SAMTOOLS_FLAGSTAT.out.flagstat
-            .collect{ it[1] },
+            .collect{ _meta, flagstat -> flagstat },
         QUALIMAP_BAMQC.out.results
-            .collect{ it[1] },
+            .collect{ _meta, result_dir -> result_dir },
         ch_nanostats_stats
-            .collect{ it[1] }
+            .collect{ _meta, csv -> csv }
             .ifEmpty([]),
         ch_snpeff_csv
-            .collect{ it[1] }
+            .collect{ _meta, csv -> csv }
             .ifEmpty([]),
         ch_overall_qc_csv,
         CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml

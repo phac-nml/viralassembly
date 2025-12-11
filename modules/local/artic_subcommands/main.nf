@@ -4,13 +4,18 @@
 */
 
 // Helper function for combine VCFs in the format needed for artic merge
+//  Files are always NAME.POOL.vcf based on previous process
+//  So if the name has a . the size() - 2 hopefully gets the right number
 def transformVCFList (inputList) {
-    def transformedOutput = inputList.collect { entry ->
-        "${entry[1]}:${entry[0]}"
+    def transformedOutput = inputList.collect { vcf ->
+        def name_split = vcf.name.split(/\./)
+        def pool = name_split[name_split.size()-2]
+        "${pool}:${vcf}"
     }.join(" ")
     return transformedOutput
 }
 
+//
 // Subcommands start here
 process ARTIC_ALIGN_TRIM {
     label 'process_single'
@@ -20,8 +25,8 @@ process ARTIC_ALIGN_TRIM {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
-        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
+        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(bam), path(bai)
@@ -64,8 +69,8 @@ process ARTIC_ALIGN_TRIM {
 
     stub:
     """
-    touch ${meta.id}.*trimmed.rg.sorted.bam
-    touch ${meta.id}.*trimmed.rg.sorted.bam.bai
+    touch ${meta.id}.trimmed.rg.sorted.bam
+    touch ${meta.id}.trimmed.rg.sorted.bam.bai
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
@@ -74,6 +79,7 @@ process ARTIC_ALIGN_TRIM {
     END_VERSIONS
     """
 }
+
 process ARTIC_VCF_MERGE {
     label 'process_single'
     tag "$meta.id"
@@ -81,14 +87,14 @@ process ARTIC_VCF_MERGE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
-        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
+        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     // The vcf_tuples input is [[ path(vcf), val(pool) ], [...]]
     //   The path(vcf) is turned into a string of the full path using the val() input type
     //   The process still works, just is a bit iffy I'd say
     input:
-    tuple val(meta), val(vcf_tuples)
+    tuple val(meta), path(vcfs)
     path primer_bed
 
     output:
@@ -96,13 +102,13 @@ process ARTIC_VCF_MERGE {
     path "versions.yml", emit: versions
 
     script:
-    def vcfs = transformVCFList(vcf_tuples)
+    def vcfs_in_str = transformVCFList(vcfs)
     """
     artic_vcf_merge \\
         ${meta.id} \\
         $primer_bed \\
         2> ${meta.id}.primersitereport.txt \\
-        $vcfs
+        $vcfs_in_str
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
@@ -122,14 +128,15 @@ process ARTIC_VCF_MERGE {
     END_VERSIONS
     """
 }
+
 process ZIP_AND_INDEX_VCF {
     label 'process_single'
     tag "$meta.id"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
-        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
+        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(vcf)
@@ -162,6 +169,7 @@ process ZIP_AND_INDEX_VCF {
     END_VERSIONS
     """
 }
+
 process CUSTOM_VCF_FILTER {
     label 'process_single'
     tag "$meta.id"
@@ -170,8 +178,8 @@ process CUSTOM_VCF_FILTER {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
-        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
+        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(vcf)
@@ -183,17 +191,20 @@ process CUSTOM_VCF_FILTER {
 
     script:
     def filterArg = '--nanopolish'
-    def clair3MinQualArg = ""
+    def argsList = []
     if ( params.variant_caller == "medaka" ) {
         filterArg = "--medaka"
     } else if ( params.variant_caller == "clair3" ) {
         filterArg = "--clair3"
-        clair3MinQualArg = "--min-qual-c3 ${params.min_qual_clair3}"
+        argsList.add("--min-depth ${params.min_depth}")
+        argsList.add("--min-qual-c3 ${params.min_qual_clair3}")
+        argsList.add("--min-frameshift-qual ${params.min_frameshift_qual}")
+        argsList.add("--min-allele-freq ${params.min_allele_freq}")
     }
     """
     cs_vcf_filter.py \\
         $filterArg \\
-        $clair3MinQualArg \\
+        $argsList \\
         $vcf \\
         ${meta.id}.pass.vcf \\
         ${meta.id}.fail.vcf
@@ -220,6 +231,7 @@ process CUSTOM_VCF_FILTER {
     END_VERSIONS
     """
 }
+
 process ARTIC_MAKE_DEPTH_MASK{
     label 'process_single'
     tag "$meta.id"
@@ -227,8 +239,8 @@ process ARTIC_MAKE_DEPTH_MASK{
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
-        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
+        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(bam), path(bai)
@@ -264,6 +276,7 @@ process ARTIC_MAKE_DEPTH_MASK{
     END_VERSIONS
     """
 }
+
 // Slow but the bedtools adaptation I was working on I couldn't quite get to be genomic index
 //  Will have to look at that more as it was a lot quicker
 process CUSTOM_MAKE_DEPTH_MASK {
@@ -274,8 +287,8 @@ process CUSTOM_MAKE_DEPTH_MASK {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
-        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
+        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(bam), path(bai)
@@ -310,14 +323,15 @@ process CUSTOM_MAKE_DEPTH_MASK {
     END_VERSIONS
     """
 }
+
 process ARTIC_MASK {
     label 'process_single'
     tag "$meta.id"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
-        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
+        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(coverage_mask), path(fail_vcf)

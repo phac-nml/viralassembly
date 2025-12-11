@@ -27,12 +27,6 @@ include { ARTIC_MASK                } from '../../modules/local/artic_subcommand
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    INITIALIZE CHANNELS FROM PARAMS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN SUBWORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -48,7 +42,7 @@ workflow WF_NANOPORE_SHOTGUN {
 
     main:
     // Version tracking
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Align
@@ -160,7 +154,7 @@ workflow WF_NANOPORE_SHOTGUN {
 
     // Remove tabix index from vcf as it is not needed and won't match the normal artic steps as output
     CUSTOM_VCF_FILTER.out.pass_vcf
-        .map { it -> [ it[0], it[1] ] }
+        .map { meta, vcf, _tbi -> [ meta, vcf ] }
         .set { ch_pass_vcf }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //

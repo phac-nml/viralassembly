@@ -32,7 +32,7 @@ process BCFTOOLS_STATS {
 
     stub:
     """
-    touch ${sampleName}.stats.txt
+    touch ${meta.id}.stats.txt
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml

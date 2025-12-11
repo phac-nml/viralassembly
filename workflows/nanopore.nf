@@ -35,23 +35,6 @@ include { WF_CREATE_CUSTOM_REPORT   } from '../subworkflows/local/create_custom_
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    INITIALIZE CHANNELS FROM PARAMS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-// Optional value channel files from params
-ch_metadata = params.metadata ? file(params.metadata, type: 'file', checkIfExists: true) : []
-ch_local_scheme = params.local_scheme ? file(params.local_scheme, type: 'dir', checkIfExists: true) : []
-ch_pcr_primer_bed = params.pcr_primer_bed ? file(params.pcr_primer_bed, type: 'file', checkIfExists: true) : []
-
-// Nanopolish required channels, will be ignored when running medaka but still passed to the process
-ch_fast5s = params.fast5_pass ? file(params.fast5_pass, type: 'dir', checkIfExists: true) : []
-ch_seqSum = params.sequencing_summary ? file(params.sequencing_summary, type: 'file', checkIfExists: true) : []
-
-// Reference for if not using a scheme
-ch_reference = params.reference ? Channel.value(file(params.reference, type: 'file', checkIfExists: true)) : []
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -61,14 +44,26 @@ workflow NANOPORE {
     ch_empty_fastqs     // channel: [ val(meta), file(fastq) ]
 
     main:
+    // Optional value channel files from params
+    ch_metadata = params.metadata ? file(params.metadata, type: 'file', checkIfExists: true) : []
+    ch_local_scheme = params.local_scheme ? file(params.local_scheme, type: 'dir', checkIfExists: true) : []
+    ch_pcr_primer_bed = params.pcr_primer_bed ? file(params.pcr_primer_bed, type: 'file', checkIfExists: true) : []
+
+    // Nanopolish required channels, will be ignored when running medaka but still passed to the process
+    ch_fast5s = params.fast5_pass ? file(params.fast5_pass, type: 'dir', checkIfExists: true) : []
+    ch_seqSum = params.sequencing_summary ? file(params.sequencing_summary, type: 'file', checkIfExists: true) : []
+
+    // Reference for if not using a scheme
+    ch_reference = params.reference ? channel.value(file(params.reference, type: 'file', checkIfExists: true)) : []
+
     // Tool version tracking
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Scheme and Reference
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    ch_amplicon_bed = Channel.empty()
-    ch_primer_bed = Channel.value([]) // This has to be a value channel for qc creation to work
+    ch_amplicon_bed = channel.empty()
+    ch_primer_bed = channel.value([]) // This has to be a value channel for qc creation to work
     if ( ! params.reference ) {
         if ( ! ch_local_scheme ) {
             DOWNLOAD_SCHEME()
@@ -103,7 +98,7 @@ workflow NANOPORE {
     //  in the container(?)
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Clair3 model for when running with clair3
-    ch_clair3_model = Channel.empty()
+    ch_clair3_model = channel.empty()
     if ( params.clair3_local_model ) {
         ch_clair3_model = file(params.clair3_local_model, checkIfExists: true)
     } else {
@@ -121,7 +116,7 @@ workflow NANOPORE {
     ch_versions = ch_versions.mix(ARTIC_GUPPYPLEX.out.versions)
 
     // Rename if given metadata and not using input param, separate out fastqs with little data
-    if ( ch_metadata && ! params.input ) {
+    if ( ch_metadata && !params.input ) {
         RENAME_FASTQ(
             ch_fastqs,
             ch_metadata
@@ -143,9 +138,9 @@ workflow NANOPORE {
 
     // Pass/fail reads based on count after length and quality filtering
     ch_fastqs
-        .branch{
-            pass: it[1].countFastq() >= params.min_reads
-            empty: it[1].countFastq() < params.min_reads
+        .branch{ _meta, fastq ->
+            pass: fastq.countFastq() >= params.min_reads
+            empty: fastq.countFastq() < params.min_reads
         }.set{ ch_filtered_fastqs }
 
     // Stats on final reads
@@ -177,7 +172,6 @@ workflow NANOPORE {
             ch_filtered_fastqs.pass,
             ch_fast5s,
             ch_seqSum,
-            ch_scheme,
             ch_reference,
             GET_REF_STATS.out.fai,
             GET_REF_STATS.out.refstats,
@@ -207,7 +201,7 @@ workflow NANOPORE {
     // SnpEff annotation
     //  Only run if we have one reference sequence for now
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    ch_snpeff_csv = Channel.empty()
+    ch_snpeff_csv = channel.empty()
     if ( (! params.skip_snpeff) || (ch_reference.countFasta() == 1) ) {
         WF_SNPEFF_ANNOTATE(
             ch_vcf,
@@ -224,7 +218,7 @@ workflow NANOPORE {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     if ( (! params.skip_qc) || (ch_reference.countFasta() == 1) ) {
         //  Filtered out samples - might want to move this
-        ch_filter_tracking = Channel.empty()
+        ch_filter_tracking = channel.empty()
         TRACK_INITIAL_FILTERED_SAMPLES(
             ch_empty_fastqs,
             ch_metadata,
@@ -258,7 +252,7 @@ workflow NANOPORE {
         //  Combine QCs, check neg controls
         FINAL_QC_CSV(
             MAKE_SAMPLE_QC_CSV.out.csv
-                .map{ it -> it[1] }
+                .map{ _meta, csv -> csv }
                 .collectFile(keepHeader: true, skip: 1, name: 'concat.qc.csv'),
             ch_filter_tracking
                 .collectFile(keepHeader: true, skip: 1, name: 'filter_tracking.csv')
