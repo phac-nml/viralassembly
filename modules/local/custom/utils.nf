@@ -29,6 +29,11 @@ process CAT_FASTQ {
         cat $reads | pigz -ck >> $outName
     fi
     """
+
+    stub:
+    """
+    touch ${meta.id}.merged.fastq.gz
+    """
 }
 process DOWNLOAD_SCHEME {
     label 'process_single'
@@ -42,6 +47,13 @@ process DOWNLOAD_SCHEME {
     """
     git clone ${params.scheme_repo} primer-schemes
     """
+
+    stub:
+    """
+    mkdir -p primer-schemes/stub/V1
+    touch primer-schemes/stub/V1/stub.reference.fasta
+    touch primer-schemes/stub/V1/stub.primer.bed
+    """
 }
 process SIMPLE_SCHEME_VALIDATE {
     label 'process_single'
@@ -51,7 +63,7 @@ process SIMPLE_SCHEME_VALIDATE {
 
     output:
     path("primer-schemes/${params.scheme}/${params.scheme_version}/*reference.fasta"), emit: ref
-    path("primer-schemes/${params.scheme}/${params.scheme_version}/*scheme.bed"), emit: bed
+    path("primer-schemes/${params.scheme}/${params.scheme_version}/*primer.bed"), emit: bed
     path "primer-schemes", emit: scheme
 
     // No clue if this is the best way to validate but eh for now it works
@@ -63,8 +75,8 @@ process SIMPLE_SCHEME_VALIDATE {
     if [ ! -f primer-schemes/${params.scheme}/${params.scheme_version}/*reference.fasta ]; then
         echo "ERROR: Reference Fasta not found in 'primer-schemes/${params.scheme}/${params.scheme_version}/*reference.fasta'"
         exit 1
-    elif [ ! -f primer-schemes/${params.scheme}/${params.scheme_version}/*scheme.bed ]; then
-        echo "ERROR: Scheme bed file not found in 'primer-schemes/${params.scheme}/${params.scheme_version}/*scheme.bed'"
+    elif [ ! -f primer-schemes/${params.scheme}/${params.scheme_version}/*primer.bed ]; then
+        echo "ERROR: Scheme primer bed file not found in 'primer-schemes/${params.scheme}/${params.scheme_version}/*primer.bed'"
         exit 1
     fi
     """
@@ -95,7 +107,20 @@ process GET_REF_STATS {
     cat ${reference}.fai | awk '{print \$1 ":1-" \$2+1}' > refstats.txt
     cat ${reference}.fai | awk '{ print \$1 "	0	" \$2 }' > genome.bed
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${reference}.fai
+    touch refstats.txt
+    touch genome.bed
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
@@ -123,7 +148,19 @@ process CREATE_AMPLICON_BED {
     primers_to_amplicons.py \\
         --bed $bed
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch amplicon.bed
+    touch tiling_region.bed
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
@@ -135,7 +172,9 @@ process RENAME_FASTQ {
     tag "$meta.id"
 
     conda "conda-forge::python=3.10.2"
-    container "quay.io/biocontainers/python:3.10.2"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/python:3.10.2' :
+        'biocontainers/python:3.10.2' }"
 
     input:
     tuple val(meta), path(fastq)
@@ -146,14 +185,24 @@ process RENAME_FASTQ {
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     rename_fastq.py \\
         --fastq $fastq \\
         --metadata $metadata \\
-        --barcode $sampleName
+        --barcode $meta.id
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //g')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.fastq
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
@@ -162,16 +211,22 @@ process RENAME_FASTQ {
 }
 process SPLIT_BED_BY_POOL {
     label 'process_single'
-    publishDir "${params.outdir}/bed", pattern: "*.split.bed", mode: "copy"
+    publishDir "${params.outdir}/bed", pattern: "*.bed", mode: "copy"
 
     input:
     path bed
 
     output:
-    path "*.split.bed", emit: bed
+    path "*.bed", emit: bed
 
     script:
     """
-    awk -F'\t' -v OFS='\t' 'NR>0{print \$1, \$2, \$3, \$4, \$5, \$6 > \$5".split.bed"}' $bed
+    awk -F'\t' -v OFS='\t' 'NR>0{print \$1, \$2, \$3, \$4, \$5, \$6 > \$5".bed"}' $bed
+    """
+
+    stub:
+    """
+    touch 1.bed
+    touch 2.bed
     """
 }

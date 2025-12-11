@@ -2,7 +2,6 @@ name: custom-report
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - conda-forge::r-base=4.3.2
   - conda-forge::r-rmarkdown=2.25

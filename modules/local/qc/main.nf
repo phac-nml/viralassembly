@@ -8,8 +8,8 @@ process MAKE_SAMPLE_QC_CSV {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(consensus), path(bam), path(bai), path(depth_bed), path(vcf)
@@ -18,11 +18,10 @@ process MAKE_SAMPLE_QC_CSV {
     path pcr_primers
 
     output:
-    tuple val(meta), path ("${sampleName}.qc.csv"), emit: csv
+    tuple val(meta), path ("${meta.id}.qc.csv"), emit: csv
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     // Need to structure args based on what we have
     def version = workflow.manifest.version
     def metadataArg = metadata ? "--metadata $metadata" : ""
@@ -44,9 +43,20 @@ process MAKE_SAMPLE_QC_CSV {
         $metadataArg \\
         $seqArg \\
         $pcrArg \\
-        --sample $sampleName
+        --sample $meta.id
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.qc.csv
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
@@ -59,8 +69,8 @@ process FINAL_QC_CSV {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.6.2--pyhdfd78af_0' :
+        'biocontainers/artic:1.6.2--pyhdfd78af_0' }"
 
     input:
     path combined_csv
@@ -89,7 +99,18 @@ process FINAL_QC_CSV {
         --reference $reference \\
         --version $version
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch overall.qc.csv
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')

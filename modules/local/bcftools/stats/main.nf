@@ -16,15 +16,25 @@ process BCFTOOLS_STATS {
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     # Command #
     bcftools stats \\
         --fasta-ref $reference \\
         $vcf \\
-        > ${sampleName}.stats.txt
+        > ${meta.id}.stats.txt
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bcftools: \$(bcftools --version 2>&1 | head -n1 | sed 's/^.*bcftools //; s/ .*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${sampleName}.stats.txt
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         bcftools: \$(bcftools --version 2>&1 | head -n1 | sed 's/^.*bcftools //; s/ .*\$//')

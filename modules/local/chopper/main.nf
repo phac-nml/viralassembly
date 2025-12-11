@@ -15,7 +15,6 @@ process CHOPPER {
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     // Checking if gzipped or not for stdin to chopper
     //  Note that pipeline should always be just cat
     def cat_cmd = "cat"
@@ -29,8 +28,29 @@ process CHOPPER {
         --threads $task.cpus \\
         --quality 8 \\
         --minlength 100 \\
-    | gzip > ${sampleName}.processed.fastq.gz
+    | gzip > ${meta.id}.processed.fastq.gz
 
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        chopper: \$(chopper --version 2>&1 | cut -d ' ' -f 2)
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    # Adding a read to get the option to pass the filtering read check
+    #  if we want to
+    read="@read1
+    TTT
+    +
+    CCC
+    "
+
+    echo -e \$read > ${meta.id}.processed.fastq
+    gzip ${meta.id}.processed.fastq
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         chopper: \$(chopper --version 2>&1 | cut -d ' ' -f 2)

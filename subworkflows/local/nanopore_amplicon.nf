@@ -36,7 +36,6 @@ include { BCFTOOLS_CONSENSUS        } from '../../modules/local/bcftools/consens
     INITIALIZE CHANNELS FROM PARAMS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-ch_user_clair3_model = params.clair3_user_variant_model ? file(params.clair3_user_variant_model, checkIfExists: true) : []
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,6 +54,7 @@ workflow WF_NANOPORE_AMPLICON {
     ch_primer_bed   // channel: [ file(primer_bed) ]
     ch_amplicon_bed // channel: [ file(amplicon_bed) ]
     ch_tiling_bed   // channel: [ file(tiling_bed) ]
+    ch_clair3_model // channel: [ file(clair3_model) ]
 
     main:
     // Version tracking
@@ -135,7 +135,7 @@ workflow WF_NANOPORE_AMPLICON {
             ch_versions = ch_versions.mix(NANOPOLISH_VARIANTS.out.versions)
         }
     } else {
-        // For clair3 need bed files for each amplicon pool named <POOL>.split.bed
+        // For clair3 need bed files for each amplicon pool named <POOL>.bed
         //  Clair3 doesn't seem to be dealing with the bed files as expected
         //  As such, add option to not split by pool and instead use the whole tiling region
         if ( ! params.clair3_no_pool_split ) {
@@ -144,7 +144,7 @@ workflow WF_NANOPORE_AMPLICON {
             )
             SPLIT_BED_BY_POOL.out.bed
                 .flatten()
-                .map{ bed -> [ bed.baseName.replaceAll(~/\.split\.bed$/, ''), file(bed) ] }
+                .map{ bed -> [ bed.baseName.replaceAll(~/\.bed$/, ''), file(bed) ] }
                 .set { ch_bed_pools }
         } else {
             ch_tiling_bed
@@ -152,15 +152,17 @@ workflow WF_NANOPORE_AMPLICON {
                 .set { ch_bed_pools }
         }
 
-        // Clair3 has is new so using the start trimmed for now
-        ch_trimmed_bams_w_pool = ARTIC_ALIGN_TRIM_START.out.bam.combine(ch_bed_pools) // Channel: [ val(meta), path(bam), path(bai), val(pool), path(pool_bed) ]
+        // Clair3 also uses the primer trimmed bams
+        //  Based on testing, the way the pools and clair3 work, having the primer trimmed bams as input
+        //  allows better and consistent calling in SNPs in primers
+        ch_trimmed_bams_w_pool = ARTIC_ALIGN_TRIM_PRIMERS.out.bam.combine(ch_bed_pools) // Channel: [ val(meta), path(bam), path(bai), val(pool), path(pool_bed) ]
 
         // Run clair3
         CLAIR3_VARIANTS(
             ch_trimmed_bams_w_pool,
             ch_reference,
             ch_ref_fai,
-            ch_user_clair3_model
+            ch_clair3_model
         )
         ch_tmp_vcfs = CLAIR3_VARIANTS.out.vcf
         ch_versions = ch_versions.mix(CLAIR3_VARIANTS.out.versions)
