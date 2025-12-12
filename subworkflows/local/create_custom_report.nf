@@ -39,6 +39,9 @@ workflow WF_CREATE_CUSTOM_REPORT {
     ch_versions         // channel: [ path(versions) ]
 
     main:
+    ch_report_template = channel.fromPath("$projectDir/assets/rmarkdown-reports/reportDashboard.Rmd")
+    ch_report_subpages = channel.fromPath("$projectDir/assets/rmarkdown-reports/sample*.Rmd")
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Variant analysis
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
@@ -107,6 +110,8 @@ workflow WF_CREATE_CUSTOM_REPORT {
     // Final Report
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     CREATE_ALL_SAMPLE_SUMMARY_REPORT(
+        ch_report_template,
+        ch_report_subpages.collect(),
         CREATE_READ_VARIATION_CSV.out.csv
             .collect{ _meta, csv -> csv },
         CREATE_VARIANT_TSV.out.tsv

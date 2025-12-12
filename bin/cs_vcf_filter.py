@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
-'''Filter VCF Variants originally from https://github.com/artic-network/fieldbioinformatics/blob/master/artic/vcf_filter.py'''
+'''
+Filter VCF Variants originally from https://github.com/artic-network/fieldbioinformatics/blob/master/artic/vcf_filter.py
 
-import vcf
+Notable Changes:
+  - Added a custom parameter to adjust the QUAL threshold with it set at 8 by default.
+  - Added a filter for RefCall bases.
+'''
+
+from cyvcf2 import VCF, Writer
 from collections import defaultdict
 
 def in_frame(v):
@@ -104,7 +110,7 @@ class Clair3Filter:
                 return False
 
         # Allele frequency
-        if allele_freq < self.min_allele_frequency:
+        if allele_freq < self.min_allele_freq:
             return False
 
         # Depth
@@ -120,9 +126,12 @@ class Clair3Filter:
 
 
 def go(args):
-    vcf_reader = vcf.Reader(filename=args.inputvcf)
-    vcf_writer = vcf.Writer(open(args.output_pass_vcf, 'w'), vcf_reader)
-    vcf_writer_filtered = vcf.Writer(open(args.output_fail_vcf, 'w'), vcf_reader)
+    vcf_reader = VCF(args.inputvcf)
+    vcf_writer = Writer(args.output_pass_vcf, vcf_reader, "w")
+    vcf_writer.write_header()
+    vcf_writer_filtered = Writer(args.output_fail_vcf, vcf_reader, "w")
+    vcf_writer_filtered.write_header()
+
     if args.nanopolish:
         filter = NanopolishFilter(args.no_frameshifts)
     elif args.medaka:

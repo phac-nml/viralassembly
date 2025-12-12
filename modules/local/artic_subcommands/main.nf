@@ -201,10 +201,11 @@ process CUSTOM_VCF_FILTER {
         argsList.add("--min-frameshift-qual ${params.min_frameshift_qual}")
         argsList.add("--min-allele-freq ${params.min_allele_freq}")
     }
+    def argsConfig = argsList.join(" ")
     """
     cs_vcf_filter.py \\
         $filterArg \\
-        $argsList \\
+        $argsConfig \\
         $vcf \\
         ${meta.id}.pass.vcf \\
         ${meta.id}.fail.vcf

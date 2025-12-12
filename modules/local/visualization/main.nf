@@ -237,6 +237,8 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
     container "docker.io/darianhole/measeq-report:latest"
 
     input:
+    path rmd_base_template
+    path rmd_subpages
     path read_variation_tsvs
     path called_variant_tsvs
     path base_coverage_beds
@@ -249,13 +251,9 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
     path "reportDashboard.html"
 
     script:
-    def rmd_main = "$projectDir/assets/rmarkdown-reports/reportDashboard.Rmd"
-    def rmd_sample = "$projectDir/assets/rmarkdown-reports/sampleSubpage.Rmd"
-    def rmd_amp = "$projectDir/assets/rmarkdown-reports/sampleAmplicons.Rmd"
     def amp_arg = merged_amplicon_depth_csv ? "run_amplicons = TRUE" : "run_amplicons = FALSE"
     """
-    # Setup sample files to be found by RMD#
-    cp $rmd_main $rmd_sample $rmd_amp .
+    # Setup sample files to be found by RMD
     mkdir -p all_variation_positions
     mkdir -p variant_tsvs
     mkdir -p base_coverages
@@ -267,7 +265,7 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
     Rscript \\
         -e "library(rmarkdown)" \\
         -e "library(flexdashboard)" \\
-        -e "rmarkdown::render('reportDashboard.Rmd', params=list($amp_arg))"
+        -e "rmarkdown::render('$rmd_base_template', params=list($amp_arg))"
     """
 
     stub:

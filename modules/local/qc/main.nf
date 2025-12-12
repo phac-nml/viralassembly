@@ -43,7 +43,8 @@ process MAKE_SAMPLE_QC_CSV {
         $metadataArg \\
         $seqArg \\
         $pcrArg \\
-        --sample $meta.id
+        --sample $meta.id \\
+        --irida_id $meta.irida_id
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
