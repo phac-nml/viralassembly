@@ -1,10 +1,10 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$schema": "https://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/phac-nml/viralassembly/main/nextflow_schema.json",
     "title": "phac-nml/viralassembly pipeline parameters",
     "description": "Assemble and QC viral reads",
     "type": "object",
-    "$defs": {
+    "definitions": {
         "input_data_option_choose_1": {
             "title": "Input data option (choose 1)",
             "type": "object",
@@ -294,34 +294,34 @@
     },
     "allOf": [
         {
-            "$ref": "#/$defs/input_data_option_choose_1"
+            "$ref": "#/definitions/input_data_option_choose_1"
         },
         {
-            "$ref": "#/$defs/important_input_values"
+            "$ref": "#/definitions/important_input_values"
         },
         {
-            "$ref": "#/$defs/variant_model_settings"
+            "$ref": "#/definitions/variant_model_settings"
         },
         {
-            "$ref": "#/$defs/read_filtering_options"
+            "$ref": "#/definitions/read_filtering_options"
         },
         {
-            "$ref": "#/$defs/scheme_options"
+            "$ref": "#/definitions/scheme_options"
         },
         {
-            "$ref": "#/$defs/artic_minion_options"
+            "$ref": "#/definitions/artic_minion_options"
         },
         {
-            "$ref": "#/$defs/snpeff_options"
+            "$ref": "#/definitions/snpeff_options"
         },
         {
-            "$ref": "#/$defs/qc_options"
+            "$ref": "#/definitions/qc_options"
         },
         {
-            "$ref": "#/$defs/report_generation_options"
+            "$ref": "#/definitions/report_generation_options"
         },
         {
-            "$ref": "#/$defs/generic_options"
+            "$ref": "#/definitions/generic_options"
         }
     ]
 }

@@ -1,34 +1,72 @@
 repository_type: pipeline
-nf_core_version: "3.0.2"
-bump_version: null
+
+nf_core_version: 3.2.1
+
 lint:
   files_exist:
-    - CODE_OF_CONDUCT.md
     - .github/ISSUE_TEMPLATE/config.yml
+    - .github/ISSUE_TEMPLATE/bug_report.yml
+    - .github/ISSUE_TEMPLATE/feature_request.yml
+    - .github/CONTRIBUTING.md
+    - .github/.dockstore.yml
+    - conf/igenomes.config
+    - conf/igenomes_ignored.config
+    - conf/test.config
+    - conf/test_full.config
+    - assets/email_template.txt
+    - assets/email_template.html
+    - assets/sendmail_template.txt
+    - assets/adaptivecard.json
+    - assets/slackreport.json
+    - assets/nf-core-measeq_logo_light.png
+    - docs/images/nf-core-measeq_logo_light.png
+    - docs/images/nf-core-measeq_logo_dark.png
     - .github/workflows/awstest.yml
     - .github/workflows/awsfulltest.yml
     - assets/multiqc_config.yml
-    - assets/nf-core-viralassembly_logo_light.png
-    - conf/igenomes.config
-    - conf/igenomes_ignored.config
-    - docs/images/nf-core-viralassembly_logo_light.png
-    - docs/images/nf-core-viralassembly_logo_dark.png
-    - lib/NfcoreTemplate.groovy
-    - lib/Utils.groovy
-    - lib/WorkflowMain.groovy
-    - lib/nfcore_external_java_deps.jar
+    - CODE_OF_CONDUCT.md
+    - ro-crate-metadata.json
   files_unchanged:
     - .github/PULL_REQUEST_TEMPLATE.md
-    - .github/CONTRIBUTING.md
-    - .github/ISSUE_TEMPLATE/bug_report.yml
+    - .github/workflows/branch.yml
     - .github/workflows/linting_comment.yml
+    - .github/workflows/linting.yml
+    - .prettierignore
     - docs/README.md
     - LICENSE
-    - .gitignore
-  multiqc_config: False
-  pipeline_name_conventions: False
-  actions_awsfulltest: False
-  nextflow_config: False
+  nextflow_config:
+    - process.cpus
+    - process.memory
+    - process.time
+    - custom_config
+    - params.custom_config_version
+    - params.custom_config_base
+    - manifest.name
+    - manifest.homePage
+    - validation.help.beforeText
+    - validation.help.afterText
+    - validation.summary.beforeText
+    - validation.summary.afterText
+  multiqc_config: false
+  readme:
+    - nextflow_badge
 
 template:
-  prefix: phac-nml
+  org: phac-nml
+  name: viralassembly
+  description: Assemble and QC viral reads with a reference scheme
+  author: Darian Hole
+  version: 1.2.0
+  force: true
+  outdir: .
+  skip_features:
+    - igenomes
+    - github_badges
+    - nf_core_configs
+    - email
+    - adaptivecard
+    - slackreport
+    - seqera_platform
+    - rocrate
+    - vscode
+  is_nfcore: false
