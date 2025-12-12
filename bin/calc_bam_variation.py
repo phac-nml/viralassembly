@@ -37,7 +37,7 @@ def init_parser() -> argparse.ArgumentParser:
         '--min_base_qual',
         required=False,
         type=int,
-        default=10,
+        default=20,
         help='Minimum base quality to use read for position'
     )
     parser.add_argument(
@@ -51,7 +51,7 @@ def init_parser() -> argparse.ArgumentParser:
         '--min_read_count',
         required=False,
         type=int,
-        default=20,
+        default=10,
         help='Minimum number of reads to report position'
     )
     parser.add_argument(
@@ -67,6 +67,13 @@ def init_parser() -> argparse.ArgumentParser:
         type=int,
         default=75,
         help='Minimum percentage for a variant to called'
+    )
+    parser.add_argument(
+        '--indel_call_threshold',
+        required=False,
+        type=int,
+        default=60,
+        help='Minimum percentage for an indel variant to called'
     )
 
     return parser
@@ -152,7 +159,7 @@ def calc_base_percent(pileup_dict: dict, base: str) -> float:
     """
     return round(((pileup_dict[base] / pileup_dict["total_reads"]) * 100), 2)
 
-def determine_type(pileup_dict: dict, most_common_base: str, variant_call_threshold: int) -> str:
+def determine_type(pileup_dict: dict, most_common_base: str, variant_call_threshold: int, indel_call_threshold: int) -> str:
     """
     Purpose
     -------
@@ -165,28 +172,38 @@ def determine_type(pileup_dict: dict, most_common_base: str, variant_call_thresh
     most_common_base: str
         The most common base found at pileup location
     variant_call_threshold: int
-        Threshold at which a variant is called. Default: 70
+        Threshold at which a variant is called. Default: 75
+    indel_call_threshold: int
+        Threshold at which an indel variant is called. Default: 60
 
     Returns
     -------
     String location status
     """
-    if most_common_base not in ['A', 'T', 'C', 'G', 'del']:
-        return 'Insertion'
+    # Report Indels slightly differently
+    if most_common_base not in ['A', 'T', 'C', 'G']:
+        if '+' in most_common_base:
+            most_common_base = 'ins'
+        if calc_base_percent(pileup_dict, most_common_base) >= indel_call_threshold:
+            if most_common_base == 'del':
+                return 'Deletion'
+            else:
+                return 'Insertion'
+        else:
+            return 'Mixed'
 
+    # SNPs
     if (100 - variant_call_threshold) >= pileup_dict['percentage_nonref']:
         return 'Ref'
     elif calc_base_percent(pileup_dict, most_common_base) >= variant_call_threshold:
-        if most_common_base != 'del':
-            return f'{most_common_base} SNP'
-        else:
-            return 'Deletion'
+        return f'{most_common_base} SNP'
     else:
         return 'Mixed'
 
 def parse_variation_from_bam(bamfile: str, ref_dict: dict, base_q: int,
                              map_q: int, min_read_count: int,
-                             min_report_percent: int, variant_call_threshold: int
+                             min_report_percent: int, variant_call_threshold: int,
+                             indel_call_threshold: int
                             ) -> list:
     """
     Purpose
@@ -210,6 +227,8 @@ def parse_variation_from_bam(bamfile: str, ref_dict: dict, base_q: int,
         Minimum non-reference base percentage to report out. Default: 15
     variant_call_threshold: int
         Threshold at which a variant is called. Default: 70
+    indel_call_threshold: int
+        Threshold at which an indel variant is called. Default: 60
 
     Returns
     -------
@@ -251,13 +270,13 @@ def parse_variation_from_bam(bamfile: str, ref_dict: dict, base_q: int,
         # Analyze insertions differently
         # Insertions are hard as they can be quite variable and we want a summary for them
         #  Ex. ['A+6AAAAAG', 'A+6AAAAAG', 'a+5aaagg', 'a+6aaaaag']
-        ins_regex = re.compile(r'\d+')
         if (any([x for x in data_list if '+' in x])):
             ins_list = [x for x in data_list if '+' in x]
             case_insensitive_pos_counter['ins'] = len(ins_list)
 
             # Do something with it to summarize and adjust this later
-            ins_len_counts = Counter((f'{re.findall(ins_regex, x)[0]}bp' for x in ins_list))
+            ins_pattern = re.compile(r"\d+")
+            ins_len_counts = Counter((f"{ins_pattern.findall(x)[0]}bp" for x in ins_list))
             ins_summary_str = ", ".join(f"{length}: {count}" for length, count in ins_len_counts.most_common())
 
         # Add missing bases to the counter, change * to del, and make dict
@@ -275,7 +294,7 @@ def parse_variation_from_bam(bamfile: str, ref_dict: dict, base_q: int,
         # Type of mutation
         if most_common_base == '*':
             most_common_base = 'del'
-        pileup_dict["variant_type"] = determine_type(pileup_dict, most_common_base, variant_call_threshold)
+        pileup_dict["variant_type"] = determine_type(pileup_dict, most_common_base, variant_call_threshold, indel_call_threshold)
 
         # If INS < variant_call_threshold we don't want to add insertion summary data
         if calc_base_percent(pileup_dict, 'ins') < (100 - variant_call_threshold):
@@ -308,7 +327,8 @@ def main() -> None:
     ref_dict = create_ref_dict(args.reference)
     var_info = parse_variation_from_bam(path_bam, ref_dict, args.min_base_qual,
                                         args.min_map_qual, args.min_read_count,
-                                        args.min_report_percent, args.variant_call_threshold)
+                                        args.min_report_percent, args.variant_call_threshold,
+                                        args.indel_call_threshold)
     if var_info == []:
         sys.exit(0)
     df = pd.DataFrame.from_dict(var_info)

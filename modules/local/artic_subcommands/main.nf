@@ -301,7 +301,7 @@ process CUSTOM_MAKE_DEPTH_MASK {
     script:
     """
     cs_make_depth_mask.py \\
-        --depth 20 \\
+        --depth ${params.min_depth} \\
         $reference \\
         $bam \\
         ${meta.id}.coverage_mask.txt
