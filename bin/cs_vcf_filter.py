@@ -99,7 +99,7 @@ class Clair3Filter:
         #  CL arg gives options for what we want to keep as a min quality
         if qual < self.min_variant_qual:
             return False
-        
+
         # Non-divisible by 3 indels are more tolerated at different positions and in different viruses
         #  So allow adjustable min non-divisible qual
         if not in_frame(v):

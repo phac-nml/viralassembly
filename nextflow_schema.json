@@ -93,7 +93,7 @@
                     "default": "r941_prom_sup_g5014",
                     "description": "Model to use in clair3. See clair3 docs for more info. Be as accurate as possible for best results!"
                 },
-                "clair3_user_variant_model": {
+                "clair3_local_model": {
                     "type": "string",
                     "format": "directory-path",
                     "exists": true,
@@ -246,7 +246,7 @@
                 },
                 "neg_ctrl_substrings": {
                     "type": "string",
-                    "default": "neg,ntc,blank",
+                    "default": "neg,ntc,blank,water",
                     "description": "Control prefixes separated by a ',' to determine which samples are negative controls"
                 }
             }
@@ -352,6 +352,9 @@
         },
         {
             "$ref": "#/definitions/required_settings"
+        },
+        {
+            "$ref": "#/definitions/amplicon_settings"
         },
         {
             "$ref": "#/definitions/clair3_settings"

@@ -18,9 +18,9 @@ lint:
     - assets/sendmail_template.txt
     - assets/adaptivecard.json
     - assets/slackreport.json
-    - assets/nf-core-measeq_logo_light.png
-    - docs/images/nf-core-measeq_logo_light.png
-    - docs/images/nf-core-measeq_logo_dark.png
+    - assets/nf-core-viralassembly_logo_light.png
+    - docs/images/nf-core-viralassembly_logo_light.png
+    - docs/images/nf-core-viralassembly_logo_dark.png
     - .github/workflows/awstest.yml
     - .github/workflows/awsfulltest.yml
     - assets/multiqc_config.yml
@@ -28,6 +28,8 @@ lint:
     - ro-crate-metadata.json
   files_unchanged:
     - .github/PULL_REQUEST_TEMPLATE.md
+    - .github/CONTRIBUTING.md
+    - .github/ISSUE_TEMPLATE/bug_report.yml
     - .github/workflows/branch.yml
     - .github/workflows/linting_comment.yml
     - .github/workflows/linting.yml

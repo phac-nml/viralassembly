@@ -77,7 +77,7 @@ workflow NANOPORE {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Models (like me <3)
-    //  Medaka just using params for now, should be 
+    //  Medaka just using params for now, should be
     //  in the container(?)
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Clair3 model for when running with clair3
