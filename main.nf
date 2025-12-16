@@ -15,7 +15,7 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_viralassembly_pipeline'
-include { FORMAT_INPUT            } from './subworkflows/local/format_input.nf'
+include { FORMAT_INPUT            } from './subworkflows/local/format_input'
 include { NANOPORE                } from './workflows/nanopore.nf'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_viralassembly_pipeline'
 

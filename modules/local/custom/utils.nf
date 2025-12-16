@@ -131,6 +131,8 @@ process SPLIT_BED_BY_POOL {
     label 'process_single'
     publishDir "${params.outdir}/bed", pattern: "*.bed", mode: "copy"
 
+    container "biocontainers/coreutils:8.31--h14c3975_0"
+
     input:
     path bed
 

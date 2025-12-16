@@ -8,22 +8,22 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // Other tools
-include { MINIMAP2_ALIGN            } from '../../modules/local/minimap2/main'
-include { LONGSHOT                  } from '../../modules/local/longshot/main'
-include { BCFTOOLS_NORM             } from '../../modules/local/bcftools/norm/main'
-include { BCFTOOLS_CONSENSUS        } from '../../modules/local/bcftools/consensus/main'
+include { MINIMAP2_ALIGN            } from '../../../modules/local/minimap2/main'
+include { LONGSHOT                  } from '../../../modules/local/longshot/main'
+include { BCFTOOLS_NORM             } from '../../../modules/local/bcftools/norm/main'
+include { BCFTOOLS_CONSENSUS        } from '../../../modules/local/bcftools/consensus/main'
 
 // Variant calling tools
-include { MEDAKA_CONSENSUS          } from '../../modules/local/nanopore_shotgun/main'
-include { MEDAKA_VARIANT            } from '../../modules/local/nanopore_shotgun/main'
-include { NANOPOLISH_VARIANTS       } from '../../modules/local/nanopore_shotgun/main'
-include { CLAIR3_VARIANTS           } from '../../modules/local/nanopore_shotgun/main'
+include { MEDAKA_CONSENSUS          } from '../../../modules/local/nanopore_shotgun/main'
+include { MEDAKA_VARIANT            } from '../../../modules/local/nanopore_shotgun/main'
+include { NANOPOLISH_VARIANTS       } from '../../../modules/local/nanopore_shotgun/main'
+include { CLAIR3_VARIANTS           } from '../../../modules/local/nanopore_shotgun/main'
 
 // Artic subcommands steps
-include { ZIP_AND_INDEX_VCF         } from '../../modules/local/artic_subcommands/main'
-include { CUSTOM_VCF_FILTER         } from '../../modules/local/artic_subcommands/main'
-include { CUSTOM_MAKE_DEPTH_MASK    } from '../../modules/local/artic_subcommands/main'
-include { ARTIC_MASK                } from '../../modules/local/artic_subcommands/main'
+include { ZIP_AND_INDEX_VCF         } from '../../../modules/local/artic_subcommands/main'
+include { CUSTOM_VCF_FILTER         } from '../../../modules/local/artic_subcommands/main'
+include { CUSTOM_MAKE_DEPTH_MASK    } from '../../../modules/local/artic_subcommands/main'
+include { ARTIC_MASK                } from '../../../modules/local/artic_subcommands/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

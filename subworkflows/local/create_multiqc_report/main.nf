@@ -8,25 +8,25 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { BCFTOOLS_STATS                 } from '../../modules/local/bcftools/stats/main'
-include { BEDTOOLS_COVERAGE_AMPLICON_BED } from '../../modules/local/bedtools/coverage/main'
-include { QUALIMAP_BAMQC                 } from '../../modules/local/qualimap/bamqc/main'
-include { SAMTOOLS_FLAGSTAT              } from '../../modules/nf-core/samtools/flagstat/main'
-include { SAMTOOLS_REHEADER              } from '../../modules/local/samtools/reheader/main'
+include { BCFTOOLS_STATS                 } from '../../../modules/local/bcftools/stats/main'
+include { BEDTOOLS_COVERAGE_AMPLICON_BED } from '../../../modules/local/bedtools/coverage/main'
+include { QUALIMAP_BAMQC                 } from '../../../modules/local/qualimap/bamqc/main'
+include { SAMTOOLS_FLAGSTAT              } from '../../../modules/nf-core/samtools/flagstat/main'
+include { SAMTOOLS_REHEADER              } from '../../../modules/local/samtools/reheader/main'
 
 // Visualization
-include { CREATE_READ_VARIATION_CSV      } from '../../modules/local/visualization/main'
-include { CREATE_VARIANT_TSV             } from '../../modules/local/visualization/main'
-include { COMBINE_AMPLICON_COVERAGE      } from '../../modules/local/visualization/main'
-include { CSVTK_SAMPLE_AMPLICON_DEPTH    } from '../../modules/local/visualization/main'
-include { CREATE_AMPLICON_COMPLETENESS   } from '../../modules/local/visualization/main'
+include { CREATE_READ_VARIATION_CSV      } from '../../../modules/local/visualization/main'
+include { CREATE_VARIANT_TSV             } from '../../../modules/local/visualization/main'
+include { COMBINE_AMPLICON_COVERAGE      } from '../../../modules/local/visualization/main'
+include { CSVTK_SAMPLE_AMPLICON_DEPTH    } from '../../../modules/local/visualization/main'
+include { CREATE_AMPLICON_COMPLETENESS   } from '../../../modules/local/visualization/main'
 
 // Software Version Dump
-include { CUSTOM_DUMPSOFTWAREVERSIONS    } from '../../modules/nf-core/custom/dumpsoftwareversions/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS    } from '../../../modules/nf-core/custom/dumpsoftwareversions/main'
 
 // MultiQC
-include { MULTIQC_SAMPLE    } from '../../modules/local/multiqc/main'
-include { MULTIQC_OVERALL   } from '../../modules/local/multiqc/main'
+include { MULTIQC_SAMPLE    } from '../../../modules/local/multiqc/main'
+include { MULTIQC_OVERALL   } from '../../../modules/local/multiqc/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

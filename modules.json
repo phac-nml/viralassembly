@@ -1,6 +1,6 @@
 {
     "name": "phac-nml/viralassembly",
-    "homePage": "",
+    "homePage": "https://github.com/phac-nml/viralassembly",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {

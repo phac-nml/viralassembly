@@ -9,18 +9,18 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // Bedtools
-include { BEDTOOLS_COVERAGE_GENOME_BED      } from '../../modules/local/bedtools/coverage/main'
-include { BEDTOOLS_COVERAGE_AMPLICON_BED    } from '../../modules/local/bedtools/coverage/main'
+include { BEDTOOLS_COVERAGE_GENOME_BED      } from '../../../modules/local/bedtools/coverage/main'
+include { BEDTOOLS_COVERAGE_AMPLICON_BED    } from '../../../modules/local/bedtools/coverage/main'
 
 // Visualization
-include { CREATE_READ_VARIATION_CSV         } from '../../modules/local/visualization/main'
-include { CREATE_VARIANT_TSV                } from '../../modules/local/visualization/main'
-include { COMBINE_AMPLICON_COVERAGE         } from '../../modules/local/visualization/main'
-include { CREATE_AMPLICON_COMPLETENESS      } from '../../modules/local/visualization/main'
-include { CREATE_ALL_SAMPLE_SUMMARY_REPORT  } from '../../modules/local/visualization/main'
+include { CREATE_READ_VARIATION_CSV         } from '../../../modules/local/visualization/main'
+include { CREATE_VARIANT_TSV                } from '../../../modules/local/visualization/main'
+include { COMBINE_AMPLICON_COVERAGE         } from '../../../modules/local/visualization/main'
+include { CREATE_AMPLICON_COMPLETENESS      } from '../../../modules/local/visualization/main'
+include { CREATE_ALL_SAMPLE_SUMMARY_REPORT  } from '../../../modules/local/visualization/main'
 
 // Software Version Dump
-include { CUSTOM_DUMPSOFTWAREVERSIONS       } from '../../modules/nf-core/custom/dumpsoftwareversions/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS       } from '../../../modules/nf-core/custom/dumpsoftwareversions/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

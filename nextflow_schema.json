@@ -25,6 +25,7 @@
                 "fastq_pass": {
                     "type": "string",
                     "format": "directory-path",
+                    "pattern": "^\\S+$",
                     "description": "Path to directory containing either barcoded fastq files or individually named fastq files",
                     "fa_icon": "fas fa-folder-open",
                     "help_text": "Barcodes must be formatted as 'barcode##' to be found. Fastq files must end in '.fastq' or '.fastq.gz'"
@@ -32,6 +33,7 @@
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",
+                    "pattern": "^\\S+$",
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
                 }
@@ -90,12 +92,14 @@
             "properties": {
                 "clair3_model": {
                     "type": "string",
-                    "default": "r941_prom_sup_g5014",
+                    "default": "r1041_e82_400bps_sup_v420",
+                    "pattern": "^[A-Za-z0-9_\\-\\.]*$",
                     "description": "Model to use in clair3. See clair3 docs for more info. Be as accurate as possible for best results!"
                 },
                 "clair3_local_model": {
                     "type": "string",
                     "format": "directory-path",
+                    "pattern": "^\\S+$",
                     "exists": true,
                     "description": "Path to local clair3 model folder"
                 },
@@ -130,6 +134,7 @@
                 "medaka_model": {
                     "type": "string",
                     "default": "r941_min_hac_g507",
+                    "pattern": "^[A-Za-z0-9_\\-\\.]*$",
                     "description": "Model to use in medaka. See medaka docs for more info. Be as accurate as possible for best results!"
                 },
                 "skip_longshot": {
@@ -149,6 +154,7 @@
                 "fast5_pass": {
                     "type": "string",
                     "format": "directoy-path",
+                    "pattern": "^\\S+$",
                     "exists": true,
                     "fa_icon": "fas fa-folder",
                     "description": "Path to directory containing fast5 files REQUIRED for nanopolish"
@@ -156,6 +162,7 @@
                 "sequencing_summary": {
                     "type": "string",
                     "format": "file-path",
+                    "pattern": "^\\S+$",
                     "exists": true,
                     "mimetype": "text/plain",
                     "fa_icon": "fas fa-file-alt",
@@ -173,16 +180,19 @@
                 "min_reads": {
                     "type": "integer",
                     "default": 20,
+                    "minimum": 0,
                     "description": "Minimum reads required to run the sample after length filtering"
                 },
                 "min_length": {
                     "type": "integer",
                     "default": 200,
+                    "minimum": 0,
                     "description": "Minimum read length to keep"
                 },
                 "max_length": {
                     "type": "integer",
                     "default": 4000,
+                    "minimum": 100,
                     "description": "Maximum read length to keep"
                 }
             }
@@ -196,12 +206,14 @@
                 "normalise": {
                     "type": "integer",
                     "default": 1000,
+                    "minimum": 0,
                     "description": "Normalize coverage for each amplicon to this threshold",
                     "fa_icon": "fas fa-balance-scale"
                 },
                 "min_depth": {
                     "type": "integer",
                     "default": 20,
+                    "minimum": 0,
                     "description": "Minimum depth to call a position. Positions lower are masked with an N"
                 },
                 "no_frameshift": {
@@ -211,6 +223,8 @@
                 "metadata": {
                     "type": "string",
                     "fa_icon": "fas fa-file-csv",
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.tsv$",
                     "description": "Path to metadata TSV file containing at least columns 'sample' and 'barcode'"
                 },
                 "use_artic_tool": {
@@ -242,10 +256,13 @@
                 "neg_control_threshold": {
                     "type": "number",
                     "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
                     "description": "Float threshold for a negative control sample to be considered contaminated"
                 },
                 "neg_ctrl_substrings": {
                     "type": "string",
+                    "pattern": "^[A-Za-z0-9_,\\-\\.]*$",
                     "default": "neg,ntc,blank,water",
                     "description": "Control prefixes separated by a ',' to determine which samples are negative controls"
                 }

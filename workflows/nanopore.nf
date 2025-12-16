@@ -25,11 +25,11 @@ include { MAKE_SAMPLE_QC_CSV        } from '../modules/local/qc/main'
 include { FINAL_QC_CSV              } from '../modules/local/qc/main'
 
 // Subworkflows
-include { WF_NANOPORE_AMPLICON      } from '../subworkflows/local/nanopore_amplicon.nf'
-include { WF_NANOPORE_SHOTGUN       } from '../subworkflows/local/nanopore_shotgun.nf'
-include { WF_SNPEFF_ANNOTATE        } from '../subworkflows/local/snpeff_annotate.nf'
-include { WF_CREATE_MULTIQC_REPORTS } from '../subworkflows/local/create_multiqc_reports.nf'
-include { WF_CREATE_CUSTOM_REPORT   } from '../subworkflows/local/create_custom_report.nf'
+include { WF_NANOPORE_AMPLICON      } from '../subworkflows/local/nanopore_amplicon'
+include { WF_NANOPORE_SHOTGUN       } from '../subworkflows/local/nanopore_shotgun'
+include { WF_SNPEFF_ANNOTATE        } from '../subworkflows/local/snpeff_annotate'
+include { WF_CREATE_MULTIQC_REPORTS } from '../subworkflows/local/create_multiqc_reports'
+include { WF_CREATE_CUSTOM_REPORT   } from '../subworkflows/local/create_custom_report'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

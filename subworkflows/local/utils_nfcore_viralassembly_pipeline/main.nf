@@ -49,6 +49,30 @@ workflow PIPELINE_INITIALISATION {
     )
 
     //
+    // Check logic required for the pipeline to function properly
+    //  Stuff like files for different inputs, models, etc
+    //
+    // Variant Callers - Clair3 is default but we only allow these 3 (and probably will remove them later for just C3)
+    if ( ! ['medaka', 'nanopolish', 'clair3'].contains(params.variant_caller) ) {
+        log.error("Please provide an input for --variant_caller with any of [ 'clair3', 'nanopolish', 'medaka' ]")
+        System.exit(1)
+    }
+
+    //-- Data Inputs
+    if ( !params.input && !params.fastq_pass ) {
+        log.error("Please provide input data with either: '--input input.csv' or '--fastq_pass fastq_dir/'")
+        System.exit(1)
+    } else if ( params.input && params.fastq_pass ) {
+        log.error("Please provide input data with either: '--input input.csv' or '--fastq_pass fastq_dir/' but not both")
+        System.exit(1)
+    } else if ( params.variant_caller == 'nanopolish' ) {
+        if ( ! params.fast5_pass || ! params.sequencing_summary ) {
+            log.error("Please pass both '--fast5_pass fast5_dir/' and '--sequencing_summary seqsum.txt' to run nanopolish")
+            System.exit(1)
+        }
+    }
+
+    //
     // Summarize and Validate Params
     //
     if (validate_params) {

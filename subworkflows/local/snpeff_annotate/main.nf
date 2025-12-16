@@ -8,9 +8,9 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { SNPEFF_DATABASE   } from '../../modules/local/snpeff/main'
-include { SNPEFF_ANNOTATE   } from '../../modules/local/snpeff/main'
-include { ZIP_AND_INDEX_VCF } from '../../modules/local/artic_subcommands/main'
+include { SNPEFF_DATABASE   } from '../../../modules/local/snpeff/main'
+include { SNPEFF_ANNOTATE   } from '../../../modules/local/snpeff/main'
+include { ZIP_AND_INDEX_VCF } from '../../../modules/local/artic_subcommands/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
