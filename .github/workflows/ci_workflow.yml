@@ -1,5 +1,5 @@
-name: CI nf-test
-# This workflow runs the nf-test tests
+name: CI full pipeline
+# This workflow runs the pipeline with the minimal test dataset to check that it completes without any syntax errors
 on:
   push:
     branches:
@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
   test:
-    name: "Run nf-test with test data on (${{ matrix.NXF_VER }} | ${{ matrix.test_name }} | docker)"
+    name: "Run pipeline with test data (${{ matrix.NXF_VER }} | ${{ matrix.test_name }} | docker)"
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: "${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'phac-nml/viralassembly') }}"
     runs-on: ubuntu-latest
@@ -30,7 +30,7 @@ jobs:
           - "24.10.0"
           - "latest-everything"
         test_name:
-          - "nf-test"
+          - "workflow_full"
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
@@ -43,12 +43,8 @@ jobs:
       - name: Clean up Disk space
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
 
-      - name: Install nf-test
-        run: |
-          wget -qO- https://get.nf-test.com | bash
-          sudo mv nf-test /usr/local/bin/
-
-      - name: Run nf-test
+      - name: Run pipeline with test data
         continue-on-error: ${{ matrix.NXF_VER == 'latest-everything' }}
         run: |
-          nf-test test --verbose
+          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --outdir ./results_clair3
+          nextflow run ${GITHUB_WORKSPACE} -profile test_full,docker --outdir ./results_clair3_full --metadata_tsv test_data/nanopore/metadata.tsv
