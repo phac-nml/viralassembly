@@ -1,6 +1,6 @@
 sample,fastq_1
-sample1,test_data/nanopore/fastq_pass/barcode01/barcode01.fastq.gz
-sample2,test_data/nanopore/fastq_pass/barcode02/barcode02.fastq.gz
-reads_100,test_data/nanopore/fastq_pass/barcode03/barcode03.fastq.gz
-reads_25,test_data/nanopore/fastq_pass/barcode24/barcode24.fastq.gz
-negative-ctrl,test_data/nanopore/fastq_pass/barcode94/barcode94.fastq.gz
+sample1,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/barcode01.fastq.gz
+sample2,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/sample2.fastq.gz
+reads_100,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/100_reads.fastq.gz
+reads_25,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/25_reads.fastq.gz
+negative-ctrl,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/negative-ctrl.fastq.gz

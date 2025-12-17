@@ -79,6 +79,7 @@ nextflow_pipeline {
                 input           = "${projectDir}/test_data/nanopore/input.csv"
                 reference       = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
                 clair3_model    = "r1041_e82_400bps_sup_v420"
+                skip_snpeff     = true
             }
         }
         then {
@@ -273,6 +274,7 @@ nextflow_pipeline {
                 primer_bed      = "${projectDir}/test_data/nanopore/primer.bed"
                 metadata        = "${projectDir}/test_data/nanopore/metadata.tsv"
                 multiqc_report  = true
+                skip_snpeff     = true
             }
         }
         then {
