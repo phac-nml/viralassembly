@@ -1,6 +1,6 @@
-sample,fastq_1
-sample1,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/barcode01.fastq.gz
-sample2,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/sample2.fastq.gz
-reads_100,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/100_reads.fastq.gz
-reads_25,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/25_reads.fastq.gz
-negative-ctrl,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/negative-ctrl.fastq.gz
+sample,fastq_1,sample_name
+sample1,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/barcode01.fastq.gz,sample1
+sample2,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/sample2.fastq.gz,sample2
+reads_100,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/100_reads.fastq.gz,reads_100
+reads_25,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/25_reads.fastq.gz,reads_25
+negative_ctrl,https://github.com/phac-nml/viralassembly/raw/refs/heads/add/iridanext_reqs/test_data/nanopore/fastqs/negative-ctrl.fastq.gz,negative-ctrl

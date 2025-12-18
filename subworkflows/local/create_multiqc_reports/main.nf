@@ -111,7 +111,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     // If not using a scheme, need to correct the headers for qualimap by removing the empty RG
     // BAM channel also no longer needs bai file
     ch_bam = ch_bam.map { meta, bam, _bai -> [ meta, bam ] }
-    if ( ! params.reference ) {
+    if ( params.primer_bed ) {
         SAMTOOLS_REHEADER(
             ch_bam,
             "-c 'grep -v ^@RG'"

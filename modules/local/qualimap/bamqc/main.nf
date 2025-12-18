@@ -1,7 +1,7 @@
 process QUALIMAP_BAMQC {
     tag "$meta.id"
     label 'process_medium'
-    errorStrategy 'ignore' // For empty bams mostly
+    // errorStrategy 'ignore' // For empty bams mostly
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
