@@ -16,7 +16,7 @@ process SNPEFF_DATABASE {
 
     output:
     path("snpeff_db"), emit: db
-    path('snpeff.config'), optional: true, emit: config
+    path("snpeff.config"), optional: true, emit: config
     path "versions.yml", emit: versions
 
     script:
@@ -52,6 +52,12 @@ process SNPEFF_DATABASE {
             -dataDir ./snpeff_db \\
             -gff3 \\
             ${genome}
+
+        # Versions #
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            snpeff: \$(echo \$(snpEff -version 2>&1) | cut -f 2 -d ' ')
+        END_VERSIONS
         """
     } else {
         """
@@ -86,12 +92,25 @@ process SNPEFF_DATABASE {
                 ${genome}
         fi
 
+        # Versions #
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
             snpeff: \$(echo \$(snpEff -version 2>&1) | cut -f 2 -d ' ')
         END_VERSIONS
         """
     }
+
+    stub:
+    """
+    mkdir snpeff_db
+    touch snpeff.config
+
+    # Versions #
+        cat <<-END_VERSIONS > versions.yml
+        "${task.process}":
+            snpeff: \$(echo \$(snpEff -version 2>&1) | cut -f 2 -d ' ')
+        END_VERSIONS
+    """
 }
 process SNPEFF_ANNOTATE {
     tag "$meta.id"
@@ -115,9 +134,6 @@ process SNPEFF_ANNOTATE {
     tuple val(meta), path("*.csv"), emit: csv
     path "versions.yml", emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     // Memory
     def avail_mem = 6144
@@ -126,7 +142,6 @@ process SNPEFF_ANNOTATE {
     } else {
         avail_mem = (task.memory.mega*0.8).intValue()
     }
-    sampleName = "$meta.id"
     // Args for db and config
     def snpeff_db_command = snpeff_db ? "-dataDir \${PWD}/${snpeff_db}" : ""
     def config_command = config ? "-config \${PWD}/${config}" : ""
@@ -139,7 +154,7 @@ process SNPEFF_ANNOTATE {
     # Run command
     snpEff \\
         -Xmx${avail_mem}M \\
-        -csvStats ${sampleName}.csv \\
+        -csvStats ${meta.id}.csv \\
         $snpeff_db_command \\
         $config_command \\
         -no-intergenic \\
@@ -147,8 +162,21 @@ process SNPEFF_ANNOTATE {
         -hgvs1LetterAa \\
         ${genome} \\
         $vcf \\
-        > ${sampleName}.ann.vcf
+        > ${meta.id}.ann.vcf
 
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        snpeff: \$(echo \$(snpEff -version 2>&1) | cut -f 2 -d ' ')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.ann.vcf
+    touch ${meta.id}.csv
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         snpeff: \$(echo \$(snpEff -version 2>&1) | cut -f 2 -d ' ')

@@ -4,8 +4,6 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // Utils / Custom checks
-include { DOWNLOAD_SCHEME           } from '../modules/local/custom/utils.nf'
-include { SIMPLE_SCHEME_VALIDATE    } from '../modules/local/custom/utils.nf'
 include { GET_REF_STATS             } from '../modules/local/custom/utils.nf'
 include { CREATE_AMPLICON_BED       } from '../modules/local/custom/utils.nf'
 include { RENAME_FASTQ              } from '../modules/local/custom/utils.nf'
@@ -16,7 +14,8 @@ include { TRACK_FILTERED_SAMPLES as TRACK_SIZE_FILTERED_SAMPLES    } from '../mo
 include { CHOPPER                   } from '../modules/local/chopper/main'
 include { NANOSTAT                  } from '../modules/local/nanostat/main'
 
-// Artic related
+// Artic and model related
+include { ARTIC_GET_MODELS          } from '../modules/local/artic/get_models/main'
 include { ARTIC_GUPPYPLEX           } from '../modules/local/artic/guppyplex/main'
 include { ARTIC_MINION              } from '../modules/local/artic/minion/main'
 
@@ -26,28 +25,11 @@ include { MAKE_SAMPLE_QC_CSV        } from '../modules/local/qc/main'
 include { FINAL_QC_CSV              } from '../modules/local/qc/main'
 
 // Subworkflows
-include { WF_NANOPORE_AMPLICON      } from '../subworkflows/local/nanopore_amplicon.nf'
-include { WF_NANOPORE_SHOTGUN       } from '../subworkflows/local/nanopore_shotgun.nf'
-include { WF_SNPEFF_ANNOTATE        } from '../subworkflows/local/snpeff_annotate.nf'
-include { WF_CREATE_MULTIQC_REPORTS } from '../subworkflows/local/create_multiqc_reports.nf'
-include { WF_CREATE_CUSTOM_REPORT   } from '../subworkflows/local/create_custom_report.nf'
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    INITIALIZE CHANNELS FROM PARAMS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-// Optional value channel files from params
-ch_metadata = params.metadata ? file(params.metadata, type: 'file', checkIfExists: true) : []
-ch_local_scheme = params.local_scheme ? file(params.local_scheme, type: 'dir', checkIfExists: true) : []
-ch_pcr_primer_bed = params.pcr_primer_bed ? file(params.pcr_primer_bed, type: 'file', checkIfExists: true) : []
-
-// Nanopolish required channels, will be ignored when running medaka but still passed to the process
-ch_fast5s = params.fast5_pass ? file(params.fast5_pass, type: 'dir', checkIfExists: true) : []
-ch_seqSum = params.sequencing_summary ? file(params.sequencing_summary, type: 'file', checkIfExists: true) : []
-
-// Reference for if not using a scheme
-ch_reference = params.reference ? Channel.value(file(params.reference, type: 'file', checkIfExists: true)) : []
+include { WF_NANOPORE_AMPLICON      } from '../subworkflows/local/nanopore_amplicon'
+include { WF_NANOPORE_SHOTGUN       } from '../subworkflows/local/nanopore_shotgun'
+include { WF_SNPEFF_ANNOTATE        } from '../subworkflows/local/snpeff_annotate'
+include { WF_CREATE_MULTIQC_REPORTS } from '../subworkflows/local/create_multiqc_reports'
+include { WF_CREATE_CUSTOM_REPORT   } from '../subworkflows/local/create_custom_report'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,27 +42,24 @@ workflow NANOPORE {
     ch_empty_fastqs     // channel: [ val(meta), file(fastq) ]
 
     main:
+    // Optional value channel files from params
+    ch_metadata = params.metadata ? file(params.metadata, type: 'file', checkIfExists: true) : []
+    ch_pcr_primer_bed = params.pcr_primer_bed ? file(params.pcr_primer_bed, type: 'file', checkIfExists: true) : []
+
+    // Nanopolish required channels, will be ignored when running clair3 or medaka but still passed to the workflow
+    ch_fast5s = params.fast5_pass ? file(params.fast5_pass, type: 'dir', checkIfExists: true) : []
+    ch_seqsum = params.sequencing_summary ? file(params.sequencing_summary, type: 'file', checkIfExists: true) : []
+
     // Tool version tracking
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Scheme and Reference
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    ch_amplicon_bed = Channel.empty()
-    ch_primer_bed = Channel.value([]) // This has to be a value channel for qc creation to work
-    if ( ! params.reference ) {
-        if ( ! ch_local_scheme ) {
-            DOWNLOAD_SCHEME()
-            ch_local_scheme = DOWNLOAD_SCHEME.out.scheme
-        }
-        SIMPLE_SCHEME_VALIDATE(
-            ch_local_scheme
-        )
-        ch_scheme = SIMPLE_SCHEME_VALIDATE.out.scheme
-        ch_primer_bed = SIMPLE_SCHEME_VALIDATE.out.bed
-        // Overwrite reference if one was given along with a scheme
-        ch_reference = SIMPLE_SCHEME_VALIDATE.out.ref
-
+    ch_reference = params.reference     ? channel.value(file(params.reference, type: 'file', checkIfExists: true)) : []
+    ch_primer_bed = params.primer_bed   ? channel.value(file(params.primer_bed, type: 'file', checkIfExists: true)) : []
+    ch_amplicon_bed = channel.empty()
+    if ( params.primer_bed ) {
         // Amplicon information
         CREATE_AMPLICON_BED(
             ch_primer_bed
@@ -97,6 +76,20 @@ workflow NANOPORE {
     ch_versions = ch_versions.mix(GET_REF_STATS.out.versions)
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Models (like me <3)
+    //  Medaka just using params for now, should be
+    //  in the container(?)
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Clair3 model for when running with clair3
+    ch_clair3_model = channel.empty()
+    if ( params.clair3_local_model ) {
+        ch_clair3_model = file(params.clair3_local_model, checkIfExists: true)
+    } else {
+        ARTIC_GET_MODELS(params.clair3_model)
+        ch_clair3_model = ARTIC_GET_MODELS.out.model
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Read QC and Statistics
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ARTIC_GUPPYPLEX(
@@ -106,7 +99,7 @@ workflow NANOPORE {
     ch_versions = ch_versions.mix(ARTIC_GUPPYPLEX.out.versions)
 
     // Rename if given metadata and not using input param, separate out fastqs with little data
-    if ( ch_metadata && ! params.input ) {
+    if ( ch_metadata && !params.input ) {
         RENAME_FASTQ(
             ch_fastqs,
             ch_metadata
@@ -128,9 +121,9 @@ workflow NANOPORE {
 
     // Pass/fail reads based on count after length and quality filtering
     ch_fastqs
-        .branch{
-            pass: it[1].countFastq() >= params.min_reads
-            empty: it[1].countFastq() < params.min_reads
+        .branch{ _meta, fastq ->
+            pass: fastq.countFastq() >= params.min_reads
+            empty: fastq.countFastq() < params.min_reads
         }.set{ ch_filtered_fastqs }
 
     // Stats on final reads
@@ -141,33 +134,33 @@ workflow NANOPORE {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Chose which pipeline to run based on input params
-    //  The "proper" artic minion pipeline or re-implemented nextflow version
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    if ( params.reference ) {
+    if ( !params.primer_bed ) {
         WF_NANOPORE_SHOTGUN(
             ch_filtered_fastqs.pass,
             ch_fast5s,
-            ch_seqSum,
+            ch_seqsum,
             ch_reference,
             GET_REF_STATS.out.fai,
-            GET_REF_STATS.out.refstats
+            GET_REF_STATS.out.refstats,
+            ch_clair3_model
         )
         ch_consensus = WF_NANOPORE_SHOTGUN.out.consensus
         ch_bam = WF_NANOPORE_SHOTGUN.out.bam
         ch_vcf = WF_NANOPORE_SHOTGUN.out.vcf
         ch_versions = ch_versions.mix(WF_NANOPORE_SHOTGUN.out.versions)
-    } else if ( ! params.use_artic_tool ) {
+    } else if ( !params.use_artic_tool ) {
         WF_NANOPORE_AMPLICON(
             ch_filtered_fastqs.pass,
             ch_fast5s,
-            ch_seqSum,
-            ch_scheme,
+            ch_seqsum,
             ch_reference,
             GET_REF_STATS.out.fai,
             GET_REF_STATS.out.refstats,
             ch_primer_bed,
             ch_amplicon_bed,
-            CREATE_AMPLICON_BED.out.tiling_bed
+            CREATE_AMPLICON_BED.out.tiling_bed,
+            ch_clair3_model
         )
         ch_consensus = WF_NANOPORE_AMPLICON.out.consensus
         ch_bam = WF_NANOPORE_AMPLICON.out.bam
@@ -176,9 +169,9 @@ workflow NANOPORE {
     } else {
         ARTIC_MINION(
             ch_filtered_fastqs.pass,
-            ch_fast5s,
-            ch_seqSum,
-            ch_scheme
+            ch_reference,
+            ch_primer_bed,
+            ch_clair3_model.ifEmpty([])
         )
         ch_consensus = ARTIC_MINION.out.consensus
         ch_bam = ARTIC_MINION.out.bam
@@ -190,7 +183,7 @@ workflow NANOPORE {
     // SnpEff annotation
     //  Only run if we have one reference sequence for now
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    ch_snpeff_csv = Channel.empty()
+    ch_snpeff_csv = channel.empty()
     if ( (! params.skip_snpeff) || (ch_reference.countFasta() == 1) ) {
         WF_SNPEFF_ANNOTATE(
             ch_vcf,
@@ -207,17 +200,17 @@ workflow NANOPORE {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     if ( (! params.skip_qc) || (ch_reference.countFasta() == 1) ) {
         //  Filtered out samples - might want to move this
-        ch_filter_tracking = Channel.empty()
+        ch_filter_tracking = channel.empty()
         TRACK_INITIAL_FILTERED_SAMPLES(
             ch_empty_fastqs,
             ch_metadata,
-            "Too few found fastqs"
+            "TOO FEW INPUT READS"
         )
         ch_filter_tracking = ch_filter_tracking.mix(TRACK_INITIAL_FILTERED_SAMPLES.out.csv)
         TRACK_SIZE_FILTERED_SAMPLES(
             ch_filtered_fastqs.empty,
             ch_metadata,
-            "Too few size selected reads"
+            "TOO FEW SIZE SELECTED READS"
         )
         ch_filter_tracking = ch_filter_tracking.mix(TRACK_SIZE_FILTERED_SAMPLES.out.csv)
 
@@ -241,7 +234,7 @@ workflow NANOPORE {
         //  Combine QCs, check neg controls
         FINAL_QC_CSV(
             MAKE_SAMPLE_QC_CSV.out.csv
-                .map{ it -> it[1] }
+                .map{ _meta, csv -> csv }
                 .collectFile(keepHeader: true, skip: 1, name: 'concat.qc.csv'),
             ch_filter_tracking
                 .collectFile(keepHeader: true, skip: 1, name: 'filter_tracking.csv')
@@ -256,18 +249,7 @@ workflow NANOPORE {
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
         // Final reports workflow
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-        if ( params.custom_report ) {
-            WF_CREATE_CUSTOM_REPORT(
-                ch_consensus,
-                ch_bam,
-                ch_vcf,
-                ch_reference,
-                GET_REF_STATS.out.genome_bed,
-                ch_amplicon_bed,
-                FINAL_QC_CSV.out.csv,
-                ch_versions
-            )
-        } else {
+        if ( params.multiqc_report ) {
             WF_CREATE_MULTIQC_REPORTS(
                 ch_consensus,
                 ch_bam,
@@ -276,6 +258,17 @@ workflow NANOPORE {
                 NANOSTAT.out.stats,
                 ch_snpeff_csv,
                 ch_reference,
+                ch_amplicon_bed,
+                FINAL_QC_CSV.out.csv,
+                ch_versions
+            )
+        } else {
+            WF_CREATE_CUSTOM_REPORT(
+                ch_consensus,
+                ch_bam,
+                ch_vcf,
+                ch_reference,
+                GET_REF_STATS.out.genome_bed,
                 ch_amplicon_bed,
                 FINAL_QC_CSV.out.csv,
                 ch_versions

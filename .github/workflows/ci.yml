@@ -1,5 +1,5 @@
-name: nf-core CI
-# This workflow runs the pipeline with the minimal test dataset to check that it completes without any syntax errors
+name: CI nf-test
+# This workflow runs the nf-test tests
 on:
   push:
     branches:
@@ -7,9 +7,12 @@ on:
   pull_request:
   release:
     types: [published]
+  workflow_dispatch:
 
 env:
   NXF_ANSI_LOG: false
+  NXF_SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity
+  NXF_SINGULARITY_LIBRARYDIR: ${{ github.workspace }}/.singularity
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}"
@@ -17,32 +20,35 @@ concurrency:
 
 jobs:
   test:
-    name: Run pipeline with test data
+    name: "Run nf-test with test data on (${{ matrix.NXF_VER }} | ${{ matrix.test_name }} | docker)"
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: "${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == 'phac-nml/viralassembly') }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
         NXF_VER:
-          - "23.04.0"
+          - "24.10.0"
           - "latest-everything"
+        test_name:
+          - "nf-test"
     steps:
       - name: Check out pipeline code
-        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4
 
-      - name: Install Nextflow
-        uses: nf-core/setup-nextflow@b9f764e8ba5c76b712ace14ecbfcef0e40ae2dd8 # v1
+      - name: Set up Nextflow
+        uses: nf-core/setup-nextflow@v2
         with:
           version: "${{ matrix.NXF_VER }}"
 
-      - name: Disk space cleanup
+      - name: Clean up Disk space
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
 
-      - name: Run pipeline with test data
-        # TODO nf-core: You can customise CI pipeline run tests as required
-        # For example: adding multiple test runs with different parameters
-        # Remember that you can parallelise this by using strategy.matrix
+      - name: Install nf-test
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --outdir ./results-clair3
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --outdir ./results-clair3-metadata --metadata_tsv .github/test-data/nanopore/metadata.tsv
-          nextflow run ${GITHUB_WORKSPACE} -profile test_full,docker --outdir ./results-medaka
+          wget -qO- https://get.nf-test.com | bash
+          sudo mv nf-test /usr/local/bin/
+
+      - name: Run nf-test
+        continue-on-error: ${{ matrix.NXF_VER == 'latest-everything' }}
+        run: |
+          nf-test test --verbose

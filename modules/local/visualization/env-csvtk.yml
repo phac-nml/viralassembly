@@ -2,6 +2,5 @@ name: csvtk
 channels:
   - conda-forge
   - bioconda
-  - defaults
 dependencies:
   - bioconda::csvtk=0.29.0

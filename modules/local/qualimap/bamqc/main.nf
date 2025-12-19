@@ -1,6 +1,7 @@
 process QUALIMAP_BAMQC {
     tag "$meta.id"
     label 'process_medium'
+    // errorStrategy 'ignore' // For empty bams mostly
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -11,12 +12,10 @@ process QUALIMAP_BAMQC {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("${sampleName}"), emit: results
+    tuple val(meta), path("${meta.id}"), emit: results
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
-
     def memory = (task.memory.mega*0.8).intValue() + 'M'
     def strandedness = 'non-strand-specific'
     if (meta.strandedness == 'forward') {
@@ -33,9 +32,24 @@ process QUALIMAP_BAMQC {
         bamqc \\
         -bam $bam \\
         -p $strandedness \\
-        -outdir $sampleName \\
+        -outdir $meta.id \\
         -nt ${task.cpus}
 
+    # Just for not failing on empty bams
+    touch ${meta.id}.txt
+
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        qualimap: \$(echo \$(qualimap 2>&1) | sed 's/^.*QualiMap v.//; s/Built.*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    mkdir ${meta.id}
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         qualimap: \$(echo \$(qualimap 2>&1) | sed 's/^.*QualiMap v.//; s/Built.*\$//')

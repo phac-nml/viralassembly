@@ -3,6 +3,8 @@ process TRACK_FILTERED_SAMPLES {
     label 'process_single'
     tag "$meta.id"
 
+    container "biocontainers/coreutils:8.31--h14c3975_0"
+
     input:
     tuple val(meta), path(fastq)
     path metadata
@@ -15,6 +17,7 @@ process TRACK_FILTERED_SAMPLES {
     shell:
     '''
     SAMPLENAME="!{meta.id}"
+    IRIDANAME="!{meta.irida_id}"
     # Get sample name if metadata is given
     if [ -f "!{metadata}" ]; then
         ## Make sure we have barcode and sample column indexes
@@ -31,11 +34,17 @@ process TRACK_FILTERED_SAMPLES {
         ## Set name only if we find a match
         if [ "$sample_name" != "" ]; then
             SAMPLENAME=$sample_name
+            IRIDANAME=$sample_name
         fi
     fi
 
     # Output
-    echo "sample,qc_pass" > $SAMPLENAME.status.csv
-    echo "$SAMPLENAME,!{fail_message}" >> $SAMPLENAME.status.csv
+    echo "sample,qc_pass,irida_id" > $SAMPLENAME.status.csv
+    echo "$SAMPLENAME,!{fail_message},$IRIDANAME" >> $SAMPLENAME.status.csv
     '''
+
+    stub:
+    """
+    touch ${meta.id}.status.csv
+    """
 }

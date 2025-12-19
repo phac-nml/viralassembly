@@ -11,20 +11,30 @@ process SAMTOOLS_DEPTH {
     tuple val(meta), path(bam), path(bai)
 
     output:
-    tuple val(meta), path("${sampleName}.depth.bed"), emit: bed
+    tuple val(meta), path("${meta.id}.depth.bed"), emit: bed
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
     """
     echo -e "chrom\tpos\tdepth" \\
-        > ${sampleName}.depth.bed
+        > ${meta.id}.depth.bed
     samtools depth \\
         -a \\
         $bam \\
-        >> ${sampleName}.depth.bed
+        >> ${meta.id}.depth.bed
 
-    # Versions from nf-core #
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    ${meta.id}.depth.bed
+
+    # Versions #
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')

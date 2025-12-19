@@ -24,6 +24,13 @@ def init_parser() -> argparse.ArgumentParser:
         help='Sample name'
     )
     parser.add_argument(
+        '-i',
+        '--irida_id',
+        required=True,
+        type=str,
+        help='IRIDA ID to upload to'
+    )
+    parser.add_argument(
         '-a',
         '--analysis',
         required=True,
@@ -447,7 +454,8 @@ def main() -> None:
         'possible_frameshift_variants': [frameshift_variants],
         'sequencing_primer_variants': [seq_primer_overlap],
         'diagnostic_primer_variants': [pcr_primer_overlap],
-        'qc_pass': [qc_status]
+        'qc_pass': [qc_status],
+        'irida_id': [args.irida_id]
     }
     df = pd.DataFrame.from_dict(final)
     if args.metadata:

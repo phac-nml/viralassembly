@@ -8,33 +8,25 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { BCFTOOLS_STATS                 } from '../../modules/local/bcftools/stats/main'
-include { BEDTOOLS_COVERAGE_AMPLICON_BED } from '../../modules/local/bedtools/coverage/main'
-include { QUALIMAP_BAMQC                 } from '../../modules/local/qualimap/bamqc/main'
-include { SAMTOOLS_FLAGSTAT              } from '../../modules/nf-core/samtools/flagstat/main'
-include { SAMTOOLS_REHEADER              } from '../../modules/local/samtools/reheader/main'
+include { BCFTOOLS_STATS                 } from '../../../modules/local/bcftools/stats/main'
+include { BEDTOOLS_COVERAGE_AMPLICON_BED } from '../../../modules/local/bedtools/coverage/main'
+include { QUALIMAP_BAMQC                 } from '../../../modules/local/qualimap/bamqc/main'
+include { SAMTOOLS_FLAGSTAT              } from '../../../modules/nf-core/samtools/flagstat/main'
+include { SAMTOOLS_REHEADER              } from '../../../modules/local/samtools/reheader/main'
 
 // Visualization
-include { CREATE_READ_VARIATION_CSV      } from '../../modules/local/visualization/main'
-include { CREATE_VARIANT_TSV             } from '../../modules/local/visualization/main'
-include { COMBINE_AMPLICON_COVERAGE      } from '../../modules/local/visualization/main'
-include { CSVTK_SAMPLE_AMPLICON_DEPTH    } from '../../modules/local/visualization/main'
-include { CREATE_AMPLICON_COMPLETENESS   } from '../../modules/local/visualization/main'
+include { CREATE_READ_VARIATION_CSV      } from '../../../modules/local/visualization/main'
+include { CREATE_VARIANT_TSV             } from '../../../modules/local/visualization/main'
+include { COMBINE_AMPLICON_COVERAGE      } from '../../../modules/local/visualization/main'
+include { CSVTK_SAMPLE_AMPLICON_DEPTH    } from '../../../modules/local/visualization/main'
+include { CREATE_AMPLICON_COMPLETENESS   } from '../../../modules/local/visualization/main'
 
 // Software Version Dump
-include { CUSTOM_DUMPSOFTWAREVERSIONS    } from '../../modules/nf-core/custom/dumpsoftwareversions/main'
+include { CUSTOM_DUMPSOFTWAREVERSIONS    } from '../../../modules/nf-core/custom/dumpsoftwareversions/main'
 
 // MultiQC
-include { MULTIQC_SAMPLE    } from '../../modules/local/multiqc/main'
-include { MULTIQC_OVERALL   } from '../../modules/local/multiqc/main'
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    INITIALIZE CHANNELS FROM PARAMS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-ch_multiqc_overall_conf = file(params.multiqc_config_overall, checkIfExists: true)
-ch_multiqc_sample_conf = file(params.multiqc_config_sample, checkIfExists: true)
+include { MULTIQC_SAMPLE    } from '../../../modules/local/multiqc/main'
+include { MULTIQC_OVERALL   } from '../../../modules/local/multiqc/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -55,6 +47,10 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     ch_versions         // channel: [ path(versions) ]
 
     main:
+    // Channels
+    ch_multiqc_overall_conf = file(params.multiqc_config_overall, checkIfExists: true)
+    ch_multiqc_sample_conf = file(params.multiqc_config_sample, checkIfExists: true)
+
     // Sample variant analysis
     CREATE_READ_VARIATION_CSV(
         ch_bam,
@@ -68,7 +64,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     ch_versions = ch_versions.mix(CREATE_VARIANT_TSV.out.versions)
 
     // Amplicon analysis
-    ch_amplicon_completeness = Channel.empty()
+    ch_amplicon_completeness = channel.empty()
     if ( ! params.reference ) {
         // Coverage
         BEDTOOLS_COVERAGE_AMPLICON_BED(
@@ -91,13 +87,13 @@ workflow WF_CREATE_MULTIQC_REPORTS {
             ch_amplicon_bed
         )
         CREATE_AMPLICON_COMPLETENESS.out.amplicon_completeness
-            .collectFile(keepHeader: true, sort: { it.baseName }, skip: 1, name: 'merged_amplicon_completeness.csv')
+            .collectFile(keepHeader: true, sort: { csv -> csv.baseName }, skip: 1, name: 'merged_amplicon_completeness.csv')
             .set { ch_amplicon_completeness }
 
         ch_versions = ch_versions.mix(CREATE_AMPLICON_COMPLETENESS.out.versions)
     } else {
         // Create empty amplicon depth tuple with sample meta values to still get sample mqc reports
-        ch_sample_amplicon_depth = ch_bam.map{ it -> tuple(it[0], []) }
+        ch_sample_amplicon_depth = ch_bam.map{ meta, _bam, _bai -> [ meta, [] ] }
     }
 
     // Stats from tools
@@ -114,8 +110,8 @@ workflow WF_CREATE_MULTIQC_REPORTS {
 
     // If not using a scheme, need to correct the headers for qualimap by removing the empty RG
     // BAM channel also no longer needs bai file
-    ch_bam = ch_bam.map { it -> tuple(it[0], it[1])}
-    if ( ! params.reference ) {
+    ch_bam = ch_bam.map { meta, bam, _bai -> [ meta, bam ] }
+    if ( params.primer_bed ) {
         SAMTOOLS_REHEADER(
             ch_bam,
             "-c 'grep -v ^@RG'"
@@ -135,33 +131,33 @@ workflow WF_CREATE_MULTIQC_REPORTS {
 
     // Final Reports
     MULTIQC_SAMPLE(
-        ch_multiqc_sample_conf,
         ch_sample_csv
             .join(CREATE_READ_VARIATION_CSV.out.csv, by: [0])
             .join(CREATE_VARIANT_TSV.out.tsv, by: [0])
             .join(QUALIMAP_BAMQC.out.results, by: [0])
             .join(ch_nanostats_stats, by: [0])
-            .join(ch_sample_amplicon_depth, by: [0])
+            .join(ch_sample_amplicon_depth, by: [0]),
+        ch_multiqc_sample_conf
     )
 
     MULTIQC_OVERALL(
         ch_multiqc_overall_conf,
         ch_sample_amplicon_depth
-            .collect{ it[1] }
+            .collect{ _meta, tsv -> tsv }
             .ifEmpty([]),
         ch_amplicon_completeness
             .ifEmpty([]),
         BCFTOOLS_STATS.out.stats
-            .collect{ it[1] },
+            .collect{ _meta, txt -> txt },
         SAMTOOLS_FLAGSTAT.out.flagstat
-            .collect{ it[1] },
+            .collect{ _meta, flagstat -> flagstat },
         QUALIMAP_BAMQC.out.results
-            .collect{ it[1] },
+            .collect{ _meta, result_dir -> result_dir },
         ch_nanostats_stats
-            .collect{ it[1] }
+            .collect{ _meta, csv -> csv }
             .ifEmpty([]),
         ch_snpeff_csv
-            .collect{ it[1] }
+            .collect{ _meta, csv -> csv }
             .ifEmpty([]),
         ch_overall_qc_csv,
         CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml

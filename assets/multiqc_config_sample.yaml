@@ -53,7 +53,7 @@ custom_data:
         title: "QC Pass"
         description: "Overall status of the sample"
         cond_formatting_rules:
-          warn: [{"s_ne": "PASS"}]
+          warn: [{ "s_ne": "PASS" }]
       num_aligned_reads:
         title: "# Aligned Reads"
         description: "Number of aligned reads used for variant calling and consensus generation"
@@ -102,9 +102,9 @@ custom_data:
         description: "Variants detected by SnpEFF as containing a frameshift or if SnpEFF was not run, indels that fail a divisible by 3 check"
         # Note that the order here must be kept or the no_data will be yellow
         cond_formatting_rules:
-          pass: [{"s_eq": "none"}]
-          frameshift: [{"s_ne": "none"}]
-          no_data: [{"s_eq": "NA"}]
+          pass: [{ "s_eq": "none" }]
+          frameshift: [{ "s_ne": "none" }]
+          no_data: [{ "s_eq": "NA" }]
         cond_formatting_colours:
           - 1:
             frameshift: "#f0ad4e" # Yellow Warn colour
@@ -113,18 +113,18 @@ custom_data:
 
   # Amplicons section
   amplicon_depth:
-    id: 'amplicon_depth'
-    file_format: 'tsv'
-    section_name: 'Amplicon Depth Lineplot'
+    id: "amplicon_depth"
+    file_format: "tsv"
+    section_name: "Amplicon Depth Lineplot"
     description: >
       Calculated from the primertrimmed sorted bam file using bedtools coverage
       looking for reads that overlap 85% of the given amplicon region
-    plot_type: 'linegraph'
+    plot_type: "linegraph"
     pconfig:
-      id: 'amplicon_depth'
-      title: 'Amplicon Depth'
-      xlab: 'Amplicon ID'
-      ylab: 'Read Depth'
+      id: "amplicon_depth"
+      title: "Amplicon Depth"
+      xlab: "Amplicon ID"
+      ylab: "Read Depth"
       logswitch: True
       logswitch_active: False
       categories: True
@@ -161,9 +161,9 @@ custom_data:
       Consequence:
         description: "SnpEff consequence"
         cond_formatting_rules:
-          missnese: [{"s_contains": "missense"}]
-          nonsense: [{"s_contains": "nonsense"}]
-          frameshift: [{"s_contains": "frameshift"}]
+          missnese: [{ "s_contains": "missense" }]
+          nonsense: [{ "s_contains": "nonsense" }]
+          frameshift: [{ "s_contains": "frameshift" }]
         cond_formatting_colours:
           - 1:
             missnese: "#080180" # Blue
@@ -198,12 +198,12 @@ custom_data:
         title: "Variant Type"
         description: "Type of variation occuring at the specific site"
         cond_formatting_rules:
-          A: [{"s_eq": "A SNP"}]
-          T: [{"s_eq": "T SNP"}]
-          G: [{"s_eq": "G SNP"}]
-          C: [{"s_eq": "C SNP"}]
-          Del: [{"s_eq": "Del"}]
-          mixed: [{"s_eq": "Mixed"}]
+          A: [{ "s_eq": "A SNP" }]
+          T: [{ "s_eq": "T SNP" }]
+          G: [{ "s_eq": "G SNP" }]
+          C: [{ "s_eq": "C SNP" }]
+          Del: [{ "s_eq": "Del" }]
+          mixed: [{ "s_eq": "Mixed" }]
         cond_formatting_colours:
           - 1:
             A: "#05a605" # Green
@@ -256,15 +256,15 @@ custom_data:
 
 # Extensions to clean from names
 extra_fn_clean_exts:
-  - '.nanostat'
+  - ".nanostat"
 
 # Search Pathes
 sp:
   qc_csv_table:
-    fn: '*.qc.csv'
+    fn: "*.qc.csv"
   amplicon_depth:
-    fn: '*_ampdepth.tsv'
+    fn: "*_ampdepth.tsv"
   variation_table:
-    fn: '*_variation.csv'
+    fn: "*_variation.csv"
   consensus_variants_table:
-    fn: '*.vcf.tsv'
+    fn: "*.vcf.tsv"
