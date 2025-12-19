@@ -187,7 +187,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_100.run_status == "PASS"
             assert iridanext_metadata.reads_100.run_summary == ""
             assert iridanext_metadata.reads_100.pipeline_name == "artic-generic-nf"
-            assert iridanext_metadata.reads_100.pipeline_version == "1.2.0"
+            assert iridanext_metadata.reads_100.pipeline_version == "1.2.0-dev"
 
             // Sample Name: reads_25
             assert iridanext_metadata.reads_25.num_aligned_reads == "0"
@@ -206,7 +206,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_25.run_status == "PASS"
             assert iridanext_metadata.reads_25.run_summary == ""
             assert iridanext_metadata.reads_25.pipeline_name == "artic-generic-nf"
-            assert iridanext_metadata.reads_25.pipeline_version == "1.2.0"
+            assert iridanext_metadata.reads_25.pipeline_version == "1.2.0-dev"
 
             // Sample Name: negative-ctrl with irida_id negative_ctrl
             //  As the `-` doesn't work in `.` notation (as easily)
@@ -226,7 +226,7 @@ nextflow_pipeline {
             assert iridanext_metadata.negative_ctrl.run_status == "PASS"
             assert iridanext_metadata.negative_ctrl.run_summary == ""
             assert iridanext_metadata.negative_ctrl.pipeline_name == "artic-generic-nf"
-            assert iridanext_metadata.negative_ctrl.pipeline_version == "1.2.0"
+            assert iridanext_metadata.negative_ctrl.pipeline_version == "1.2.0-dev"
 
             // Sample Name: sample1 && sample2 as they are the same
             assert iridanext_metadata.sample1.num_aligned_reads == "7598"
@@ -245,7 +245,7 @@ nextflow_pipeline {
             assert iridanext_metadata.sample2.run_status == "PASS"
             assert iridanext_metadata.sample1.run_summary == ""
             assert iridanext_metadata.sample2.pipeline_name == "artic-generic-nf"
-            assert iridanext_metadata.sample1.pipeline_version == "1.2.0"
+            assert iridanext_metadata.sample1.pipeline_version == "1.2.0-dev"
 
             // Pipeline info and tracking
             assert path("$launchDir/results/pipeline_info").exists()
@@ -399,7 +399,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_100.run_status == "PASS"
             assert iridanext_metadata.reads_100.run_summary == ""
             assert iridanext_metadata.reads_100.pipeline_name == "artic-generic-nf"
-            assert iridanext_metadata.reads_100.pipeline_version == "1.2.0"
+            assert iridanext_metadata.reads_100.pipeline_version == "1.2.0-dev"
 
             // Sample Name: reads_25
             assert iridanext_metadata.reads_25.num_aligned_reads == "0"
@@ -418,7 +418,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_25.run_status == "PASS"
             assert iridanext_metadata.reads_25.run_summary == ""
             assert iridanext_metadata.reads_25.pipeline_name == "artic-generic-nf"
-            assert iridanext_metadata.reads_25.pipeline_version == "1.2.0"
+            assert iridanext_metadata.reads_25.pipeline_version == "1.2.0-dev"
 
             // Sample Name: negative-ctrl
             assert iridanext_metadata.negative_ctrl.num_aligned_reads == "0"
@@ -437,7 +437,7 @@ nextflow_pipeline {
             assert iridanext_metadata.negative_ctrl.run_status == "PASS"
             assert iridanext_metadata.negative_ctrl.run_summary == ""
             assert iridanext_metadata.negative_ctrl.pipeline_name == "artic-generic-nf"
-            assert iridanext_metadata.negative_ctrl.pipeline_version == "1.2.0"
+            assert iridanext_metadata.negative_ctrl.pipeline_version == "1.2.0-dev"
 
             // Sample Name: sample1 && sample2 as they are the same
             assert iridanext_metadata.sample1.num_aligned_reads == "7597"
@@ -456,7 +456,7 @@ nextflow_pipeline {
             assert iridanext_metadata.sample2.run_status == "PASS"
             assert iridanext_metadata.sample1.run_summary == ""
             assert iridanext_metadata.sample2.pipeline_name == "artic-generic-nf"
-            assert iridanext_metadata.sample1.pipeline_version == "1.2.0"
+            assert iridanext_metadata.sample1.pipeline_version == "1.2.0-dev"
 
             // Pipeline info and tracking
             assert path("$launchDir/results/pipeline_info").exists()
