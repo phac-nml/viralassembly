@@ -6,38 +6,36 @@ A variety of example commands using different parameter options to display how t
 
 ### Clair3
 
-Clair3 with a local model, local scheme, fastq directory, conda, and the custom report output
+Clair3 with a local model, primer file, fastq directory, conda, and the multiqc report output
 
 ```bash
 nextflow run phac-nml/viralassembly \
   -profile conda \
   --fastq_pass FASTQ_PASS/ \
-  --variant_caller 'clair3' \
-  --clair3_model ./r1041_e82_400bps_sup_v420 \
-  --local_scheme ./primer_schemes \
-  --scheme 'hCMV' \
-  --scheme_version 'V1' \
-  --custom_report \
+  --clair3_model PATH/TO/r1041_e82_400bps_sup_v420 \
+  --reference REF.fa \
+  --primer_bed PRIMER.bed \
+  --multiqc_report \
   --outdir ./results
 ```
 
 ### Medaka
 
-Minimal input medaka with conda, an input csv file for data, and the nCoV-2019 scheme
+Minimal input medaka with conda, an input csv file for data, and just a reference file
 
 ```bash
 nextflow run phac-nml/viralassembly \
   -profile conda \
   --input INPUT.csv \
   --variant_caller 'medaka' \
-  --scheme 'nCoV-2019' \
-  --scheme_version 'V5.3.2' \
+  --reference REF.fa \
+  --primer_bed PRIMER.bed \
   --outdir ./results
 ```
 
 ### Nanopolish
 
-Nanopolish run using singularity and the base artic command line tool (instead of the default nextflow implementation)
+Nanopolish run using singularity
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -46,9 +44,8 @@ nextflow run phac-nml/viralassembly \
   --fast5_pass FAST5_PASS/ \
   --sequencing_summart SEQ_SUM.txt \
   --variant_caller 'nanopolish' \
-  --scheme 'nCoV-2019' \
-  --scheme_version 'V5.3.2' \
-  --use_artic_tool \
+  --reference REF.fa \
+  --primer_bed PRIMER.bed \
   --outdir ./results
 ```
 
@@ -64,7 +61,6 @@ Minimal clair3 with docker using a fastq input directory along wth a gff3 refere
 nextflow run phac-nml/viralassembly \
   -profile docker \
   --fastq_pass FASTQ_PASS/ \
-  --variant_caller 'clair3' \
   --reference ./REFERENCE.fa \
   --gff ./REFERENCE.gff
 ```

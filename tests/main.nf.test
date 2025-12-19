@@ -312,17 +312,17 @@ nextflow_pipeline {
 
             // Intermediate generated bed files
             assert path("$launchDir/results/bed/1.bed").exists()
-            lines = path("$launchDir/results/bed/1.bed").text
+            lines = path("$launchDir/results/bed/1.bed").readLines()
             assert lines.contains("MN908947.3\t54\t1183\tnCoV-2019_1\t1\t+")
             assert lines.size() == 15
 
             assert path("$launchDir/results/bed/2.bed").exists()
-            lines = path("$launchDir/results/bed/2.bed").text
-            assert lines.contains("MN908947.3\1128\2244\tnCoV-2019_2\t2\t+")
+            lines = path("$launchDir/results/bed/2.bed").readLines()
+            assert lines.contains("MN908947.3\t1128\t2244\tnCoV-2019_2\t2\t+")
             assert lines.size() == 14
 
             assert path("$launchDir/results/bed/amplicon.bed").exists()
-            lines = path("$launchDir/results/bed/amplicon.bed").text
+            lines = path("$launchDir/results/bed/amplicon.bed").readLines()
             assert lines.contains("MN908947.3\t54\t1183\tnCoV-2019_1\t1\t+")
             assert lines.size() == 29
 
@@ -362,7 +362,7 @@ nextflow_pipeline {
             // Final Reports
             assert path("$launchDir/results/Overall-Run-MultiQC.report.html").exists()
             assert path("$launchDir/results/sample_mqc/sample1.report.html").exists()
-            assert path("$launchDir/results/sample_mqc/sample1.report.html").exists()
+            assert path("$launchDir/results/sample_mqc/sample2.report.html").exists()
 
             // IRIDA Next output
             def iridanext_json = path("$launchDir/results/iridanext.output.json").json

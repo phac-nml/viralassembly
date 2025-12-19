@@ -12,11 +12,11 @@ process MULTIQC_SAMPLE {
         'biocontainers/multiqc:1.20--pyhdfd78af_2' }"
 
     input:
-    path multiqc_config
     tuple val(meta), path(sample_csv), path(variation_csv), path(consensus_variant_tsv), path(qualimap_bamqc_data), path(nanostat_txt), path(amp_depth_tsv)
+    path multiqc_config
 
     output:
-    path "*.html", emit: html
+    tuple val(meta), path("*.html"), emit: html
 
     script:
     """

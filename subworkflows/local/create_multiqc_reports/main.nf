@@ -131,13 +131,13 @@ workflow WF_CREATE_MULTIQC_REPORTS {
 
     // Final Reports
     MULTIQC_SAMPLE(
-        ch_multiqc_sample_conf,
         ch_sample_csv
             .join(CREATE_READ_VARIATION_CSV.out.csv, by: [0])
             .join(CREATE_VARIANT_TSV.out.tsv, by: [0])
             .join(QUALIMAP_BAMQC.out.results, by: [0])
             .join(ch_nanostats_stats, by: [0])
-            .join(ch_sample_amplicon_depth, by: [0])
+            .join(ch_sample_amplicon_depth, by: [0]),
+        ch_multiqc_sample_conf
     )
 
     MULTIQC_OVERALL(
