@@ -1,5 +1,5 @@
 process BEDTOOLS_COVERAGE_GENOME_BED {
-    label 'process_single'
+    label 'process_medium'
     tag "$meta.id"
 
     conda "${moduleDir}/environment.yml"
