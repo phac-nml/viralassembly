@@ -1,6 +1,6 @@
-name: artic
+name: requests
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::artic=1.7.4
+  - conda-forge::requests=2.26.0

@@ -51,7 +51,9 @@ process CREATE_AMPLICON_BED {
     publishDir "${params.outdir}/bed", pattern: "tiling_region.bed", mode: "copy"
 
     conda "conda-forge::python=3.10.2"
-    container "quay.io/biocontainers/python:3.10.2"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/python:3.10.2' :
+        'biocontainers/python:3.10.2' }"
 
     input:
     path bed

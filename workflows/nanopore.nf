@@ -14,8 +14,10 @@ include { TRACK_FILTERED_SAMPLES as TRACK_SIZE_FILTERED_SAMPLES    } from '../mo
 include { CHOPPER                   } from '../modules/local/chopper/main'
 include { NANOSTAT                  } from '../modules/local/nanostat/main'
 
-// Artic and model related
-include { ARTIC_GET_MODELS          } from '../modules/local/artic/get_models/main'
+// Clair3 model
+include { GET_MODEL                 } from '../modules/local/get_model/main'
+
+// Artic related
 include { ARTIC_GUPPYPLEX           } from '../modules/local/artic/guppyplex/main'
 include { ARTIC_MINION              } from '../modules/local/artic/minion/main'
 
@@ -85,8 +87,8 @@ workflow NANOPORE {
     if ( params.clair3_local_model ) {
         ch_clair3_model = file(params.clair3_local_model, checkIfExists: true)
     } else {
-        ARTIC_GET_MODELS(params.clair3_model)
-        ch_clair3_model = ARTIC_GET_MODELS.out.model
+        GET_MODEL(params.clair3_model)
+        ch_clair3_model = GET_MODEL.out.model
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
