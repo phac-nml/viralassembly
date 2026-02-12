@@ -6,8 +6,8 @@ process SNPEFF_DATABASE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/snpeff:5.0--hdfd78af_1' :
-        'quay.io/biocontainers/snpeff:5.0--hdfd78af_1' }"
+        'https://depot.galaxyproject.org/singularity/snpeff:5.4.0a--hdfd78af_0' :
+        'quay.io/biocontainers/snpeff:5.4.0a--hdfd78af_0' }"
 
     input:
     val genome
@@ -62,6 +62,8 @@ process SNPEFF_DATABASE {
             build \\
             -config snpeff.config \\
             -dataDir ./snpeff_db \\
+            -noCheckCds \\
+            -noCheckProtein \\
             -${format} \\
             -v \\
             ${genome}
@@ -133,8 +135,8 @@ process SNPEFF_ANNOTATE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/snpeff:5.0--hdfd78af_1' :
-        'quay.io/biocontainers/snpeff:5.0--hdfd78af_1' }"
+        'https://depot.galaxyproject.org/singularity/snpeff:5.4.0a--hdfd78af_0' :
+        'quay.io/biocontainers/snpeff:5.4.0a--hdfd78af_0' }"
 
     input:
     tuple val(meta), path(vcf)
