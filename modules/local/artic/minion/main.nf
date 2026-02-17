@@ -2,10 +2,6 @@ process ARTIC_MINION {
     label 'process_high'
     label 'error_retry'
     tag "$meta.id"
-    publishDir "${params.outdir}/consensus", pattern: "${meta.id}.consensus.fasta", mode: "copy"
-    publishDir "${params.outdir}/bam", pattern: "${meta.id}.*bam*", mode: "copy"
-    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.pass.vcf*", mode: "copy"
-    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.fail.vcf", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

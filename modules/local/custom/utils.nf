@@ -1,9 +1,6 @@
 // Custom Utility Modules
 process GET_REF_STATS {
     label 'process_single'
-    publishDir "${params.outdir}/reference", pattern: "${reference}*", mode: "copy"
-    publishDir "${params.outdir}/reference", pattern: "refstats.txt", mode: "copy"
-    publishDir "${params.outdir}/reference", pattern: "genome.bed", mode: "copy"
 
     conda "bioconda::samtools=1.19.2 bioconda::htslib=1.19.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -47,8 +44,6 @@ process GET_REF_STATS {
 }
 process CREATE_AMPLICON_BED {
     label 'process_single'
-    publishDir "${params.outdir}/bed", pattern: "amplicon.bed", mode: "copy"
-    publishDir "${params.outdir}/bed", pattern: "tiling_region.bed", mode: "copy"
 
     conda "conda-forge::python=3.10.2"
     container "quay.io/biocontainers/python:3.10.2"
@@ -129,7 +124,6 @@ process RENAME_FASTQ {
 }
 process SPLIT_BED_BY_POOL {
     label 'process_single'
-    publishDir "${params.outdir}/bed", pattern: "*.bed", mode: "copy"
 
     container "biocontainers/coreutils:8.31--h14c3975_0"
 

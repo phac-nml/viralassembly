@@ -4,7 +4,6 @@
 process MAKE_SAMPLE_QC_CSV {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/sample_csvs", pattern: "*.csv", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -66,7 +65,6 @@ process MAKE_SAMPLE_QC_CSV {
 }
 process FINAL_QC_CSV {
     label 'process_single'
-    publishDir "${params.outdir}", pattern: "overall.qc.csv", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

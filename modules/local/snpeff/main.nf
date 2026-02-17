@@ -1,8 +1,6 @@
 process SNPEFF_DATABASE {
     label 'process_medium'
     label 'error_ignore' // If can't build we don't run snpeff
-    publishDir "${params.outdir}/snpeff/database", pattern: "snpeff_db", mode: "copy"
-    publishDir "${params.outdir}/snpeff/database", pattern: "snpeff.config", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -29,12 +27,12 @@ process SNPEFF_DATABASE {
     }
     // Build with gff if that param is given
     if ( gff ) {
-        def extension = gff.getExtension()
-        if (extension == "gtf") {
+        def ext = gff.extension
+        if (ext == "gtf") {
             format = "gtf22"
         } else {
             format = "gff3"
-            extension = "gff"
+            ext = "gff"
             gff_file = "sequence.gff"
         }
         """
@@ -50,7 +48,7 @@ process SNPEFF_DATABASE {
         # Setup gff
         mkdir -p snpeff_db/${genome}/
         cd snpeff_db/${genome}/
-        ln -s ../../$gff_file genes.$extension
+        ln -s ../../$gff_file genes.$ext
         cd ../../
 
         # Create config
@@ -58,7 +56,7 @@ process SNPEFF_DATABASE {
 
         # Create database
         snpEff \\
-            -Xmx${avail_mem}g \\
+            -Xmx${avail_mem}M \\
             build \\
             -config snpeff.config \\
             -dataDir ./snpeff_db \\
@@ -130,8 +128,6 @@ process SNPEFF_DATABASE {
 process SNPEFF_ANNOTATE {
     tag "$meta.id"
     label 'process_medium'
-    publishDir "${params.outdir}/snpeff", pattern: "*.vcf", mode: "copy"
-    publishDir "${params.outdir}/snpeff", pattern: "*.csv", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

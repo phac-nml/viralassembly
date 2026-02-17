@@ -3,7 +3,6 @@
 process CREATE_READ_VARIATION_CSV {
     label 'process_medium'
     tag "$meta.id"
-    publishDir "${params.outdir}/variation_csvs", pattern: "*.csv", mode: "copy"
 
     conda "${moduleDir}/env-artic.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -231,7 +230,6 @@ process CREATE_AMPLICON_COMPLETENESS {
 }
 process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
     label 'process_medium'
-    publishDir "${params.outdir}", pattern: "reportDashboard.html", mode: "copy"
 
     conda "${moduleDir}/env-custom-report.yml"
     container "docker.io/darianhole/measeq-report:latest"

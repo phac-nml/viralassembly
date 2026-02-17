@@ -3,7 +3,6 @@
 */
 process MULTIQC_SAMPLE {
     label 'process_single'
-    publishDir "${params.outdir}/sample_mqc", pattern: "*.html", mode: "copy"
     tag "$meta.id"
 
     conda "${moduleDir}/environment.yml"
@@ -36,7 +35,6 @@ process MULTIQC_SAMPLE {
 }
 process MULTIQC_OVERALL {
     label 'process_single'
-    publishDir "${params.outdir}", pattern: "*.html", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
