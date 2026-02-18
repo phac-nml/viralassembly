@@ -21,7 +21,7 @@ Large update... to finish draft once ready
 - Expanded container definitions that were missing [PR 10](https://github.com/phac-nml/viralassembly/pull/10)
 - `clair3_model` schema changed from a specific pattern to a list of allowed models [PR 10](https://github.com/phac-nml/viralassembly/pull/10)
 
-## [v1.2.0-dev] - Unreleased
+## [1.2.0-dev] - Unreleased
 
 Large update get ready to go into IRIDA-Next surveillance platform. Mostly focusing on best practices with not too many logic changes overall. `Clair3` has been made the default and recommended variant caller with most of the changes focusing on it. Primer schemes were also changed to just require a primer bed file and a reference file to make them easier to run
 
@@ -91,7 +91,7 @@ Parameters have been added and adjusted so that is something to be aware of. Thi
 - Log and error statements
 - Fixed the cache directory statements
 
-## [v1.0.0] - 2024-03-22
+## [1.0.0] - 2024-03-22
 
 Initial release of `phac-nml/viralassembly`, created from combining the [nf-core](https://nf-co.re/) template with the artic steps.
 
@@ -100,4 +100,6 @@ Initial release of `phac-nml/viralassembly`, created from combining the [nf-core
 - All initial pipeline features and logic
 - All initial docs and images
 
-[v1.0.0]: https://github.com/phac-nml/measeq/releases/tag/1.0.0
+[2.0.0]: https://github.com/phac-nml/measeq/releases/tag/2.0.0
+[1.2.0-dev]: https://github.com/phac-nml/viralassembly/commit/c23323caa4e6b91ced016217e89a399d94c245ec
+[1.0.0]: https://github.com/phac-nml/measeq/releases/tag/1.0.0
