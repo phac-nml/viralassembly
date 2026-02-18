@@ -5,7 +5,7 @@ process SNPEFF_DATABASE {
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/snpeff:5.4.0a--hdfd78af_0' :
-        'quay.io/biocontainers/snpeff:5.4.0a--hdfd78af_0' }"
+        'biocontainers/snpeff:5.4.0a--hdfd78af_0' }"
 
     input:
     val genome
@@ -27,18 +27,7 @@ process SNPEFF_DATABASE {
     }
     // Build with gff if that param is given
     if ( gff ) {
-        def ext = gff.extension
-        if (ext == "gtf") {
-            format = "gtf22"
-        } else {
-            format = "gff3"
-            ext = "gff"
-            gff_file = "sequence.gff"
-        }
         """
-        # Ensure the extension is gff
-        cp "$gff" sequence.gff
-
         # Setup reference
         mkdir -p snpeff_db/genomes/
         cd snpeff_db/genomes/
@@ -48,7 +37,7 @@ process SNPEFF_DATABASE {
         # Setup gff
         mkdir -p snpeff_db/${genome}/
         cd snpeff_db/${genome}/
-        ln -s ../../$gff_file genes.$ext
+        ln -s ../../$gff genes.gff
         cd ../../
 
         # Create config
@@ -62,7 +51,7 @@ process SNPEFF_DATABASE {
             -dataDir ./snpeff_db \\
             -noCheckCds \\
             -noCheckProtein \\
-            -${format} \\
+            -gff3 \\
             -v \\
             ${genome}
 
@@ -132,7 +121,7 @@ process SNPEFF_ANNOTATE {
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/snpeff:5.4.0a--hdfd78af_0' :
-        'quay.io/biocontainers/snpeff:5.4.0a--hdfd78af_0' }"
+        'biocontainers/snpeff:5.4.0a--hdfd78af_0' }"
 
     input:
     tuple val(meta), path(vcf)
