@@ -64,12 +64,33 @@ nextflow_pipeline {
         }
     }
 
+    //--- Test 4 ----------------------------------------------------------------------------
+    test("Invalid Clair3 Model") {
+        tag "fail"
+
+        when {
+            params {
+                outdir       = "results"
+                fastq_pass   = "${projectDir}/test_data/nanopore/fastq_pass"
+                reference    = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
+                clair3_model = "this_is_not_a_model"
+            }
+        }
+        then {
+            // Status
+            assert workflow.failed
+
+            // Message
+            assert workflow.stderr.any { it.contains("* --clair3_model: \'this_is_not_a_model\' is not a valid choice") }
+        }
+    }
+
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                                         Passing Tests
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
-    //--- Test 4 ----------------------------------------------------------------------------
+    //--- Test 5 ----------------------------------------------------------------------------
     test("Nanopore WGS Workflow") {
         tag "success"
 
@@ -253,7 +274,7 @@ nextflow_pipeline {
         }
     }
 
-    //--- Test 5 ----------------------------------------------------------------------------
+    //--- Test 6 ----------------------------------------------------------------------------
     test("Nanopore Amplicon Workflow with MultiQC") {
         tag "success"
 
