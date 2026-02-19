@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
-'''Filter VCF Variants originally from https://github.com/artic-network/fieldbioinformatics/blob/master/artic/vcf_filter.py'''
+'''
+Filter VCF Variants originally from https://github.com/artic-network/fieldbioinformatics/blob/master/artic/vcf_filter.py
 
-import vcf
+Notable Changes:
+  - Added a custom parameter to adjust the QUAL threshold with it set at 8 by default.
+  - Added a filter for RefCall bases.
+'''
+
+from cyvcf2 import VCF, Writer
 from collections import defaultdict
 
 def in_frame(v):
@@ -17,7 +23,8 @@ def in_frame(v):
        return True
     return False
 
-class NanoporeFilter:
+
+class NanopolishFilter:
     def __init__(self, no_frameshifts):
         self.no_frameshifts = no_frameshifts
         pass
@@ -46,6 +53,7 @@ class NanoporeFilter:
 
         return True
 
+
 class MedakaFilter:
     def __init__(self, no_frameshifts):
         self.no_frameshifts = no_frameshifts
@@ -62,39 +70,78 @@ class MedakaFilter:
             return False
         return True
 
+
 class Clair3Filter:
-    def __init__(self, no_frameshifts):
+    def __init__(self, no_frameshifts, min_depth, min_variant_qual, min_frameshift_qual, min_allele_freq):
         self.no_frameshifts = no_frameshifts
+        self.min_depth = min_depth
+        self.min_variant_qual = min_variant_qual
+        self.min_frameshift_qual = min_frameshift_qual
+        self.min_allele_freq = min_allele_freq
 
     def check_filter(self, v):
         qual = v.QUAL
-        # Failed variants can be given as LowQual in the filter column and a qual score of .
-        # These seem to not be being pulled out though so check if the qual is none to fail them
-        if qual == None:
-            return False
-        # 2 is the default for clair3 so bump slightly up to 3
-        if qual < 3:
+
+        # Filter LowQual variants
+        if qual is None:
             return False
 
-        # Allele fraction > 0.75 required
-        if len(v.samples) != 1 or v.samples[0].data.AF < 0.75:
+        # Filter out low allele frequency variants
+        try:
+            allele_freq = v.format("AF")[0][0]
+        except Exception:
+            print(
+                f"ERROR: Could not find AF for variant at {v.CHROM}:{v.POS}, cannot filter on allele frequency"
+            )
+            raise SystemExit(1)
+
+        # Qual 2 is the default for clair3
+        #  CL arg gives options for what we want to keep as a min quality
+        if qual < self.min_variant_qual:
             return False
 
-        if self.no_frameshifts and not in_frame(v):
+        # Non-divisible by 3 indels are more tolerated at different positions and in different viruses
+        #  So allow adjustable min non-divisible qual
+        if not in_frame(v):
+            if self.no_frameshifts:
+                return False
+            # Require a higher quality for frameshifting indels, they're far more likely to be errors
+            if qual < self.min_frameshift_qual:
+                return False
+
+        # Allele frequency
+        if allele_freq < self.min_allele_freq:
+            return False
+
+        # Depth
+        try:
+            depth = v.INFO["DP"]
+        except KeyError:
+            depth = v.format("DP")[0][0]
+
+        if depth < self.min_depth:
             return False
 
         return True
 
+
 def go(args):
-    vcf_reader = vcf.Reader(filename=args.inputvcf)
-    vcf_writer = vcf.Writer(open(args.output_pass_vcf, 'w'), vcf_reader)
-    vcf_writer_filtered = vcf.Writer(open(args.output_fail_vcf, 'w'), vcf_reader)
+    vcf_reader = VCF(args.inputvcf)
+    vcf_writer = Writer(args.output_pass_vcf, vcf_reader, "w")
+    vcf_writer.write_header()
+    vcf_writer_filtered = Writer(args.output_fail_vcf, vcf_reader, "w")
+    vcf_writer_filtered.write_header()
+
     if args.nanopolish:
-        filter = NanoporeFilter(args.no_frameshifts)
+        filter = NanopolishFilter(args.no_frameshifts)
     elif args.medaka:
         filter = MedakaFilter(args.no_frameshifts)
     elif args.clair3:
-        filter = Clair3Filter(args.no_frameshifts)
+        filter = Clair3Filter(
+            args.no_frameshifts, args.min_depth,
+            args.min_qual_c3, args.min_frameshift_qual,
+            args.min_allele_freq
+        )
     else:
         print("Please specify a VCF type, i.e. --nanopolish or --medaka or --clair3\n")
         raise SystemExit
@@ -103,25 +150,36 @@ def go(args):
 
     group_variants = defaultdict(list)
     for v in variants:
-        indx = "%s-%s" % (v.CHROM, v.POS)
+        indx = f"{v.CHROM}-{v.POS}"
         group_variants[indx].append(v)
 
     for v in variants:
 
-        # if using medaka, we need to do a quick pre-filter to remove rubbish that we don't want adding to the mask
-        if args.medaka:
-            if v.INFO['DP'] <= 1:
+        # Pre-filter to remove rubbish that we don't want adding to the mask
+        try:
+            if v.INFO["DP"] <= 1:
+                print(f"Suppress variant {v.POS} due to low depth")
                 continue
+        except KeyError:
+            pass
+
+        # Completely skip RefCalls in clair3
+        if v.ALT == []:
+            print(f"skipping RefCall at {v.POS}")
+            continue
+
+        # No longer focused on medaka but keep the qual prefilter in
+        if args.medaka:
             if v.QUAL < 20:
                 continue
 
-        # now apply the filter to send variants to PASS or FAIL file
+        # Now apply the filter to send variants to PASS or FAIL file
         if filter.check_filter(v):
             vcf_writer.write_record(v)
         else:
             variant_passes = False
 
-            indx = "%s-%s" % (v.CHROM, v.POS)
+            indx = f"{v.CHROM}-{v.POS}"
             if len(group_variants[indx]) > 1:
                 for check_variant in group_variants[indx]:
                     if filter.check_filter(check_variant):
@@ -130,7 +188,7 @@ def go(args):
             if not variant_passes:
                 vcf_writer_filtered.write_record(v)
             else:
-                print ("Suppress variant %s\n" % (v.POS))
+                print (f"Suppress variant {v.POS}\n")
 
 def main():
     import argparse
@@ -140,6 +198,10 @@ def main():
     parser.add_argument('--medaka', action='store_true')
     parser.add_argument('--clair3', action='store_true')
     parser.add_argument('--no-frameshifts', action='store_true')
+    parser.add_argument("--min-depth", type=int)
+    parser.add_argument('--min-qual-c3', type=int, default=8)
+    parser.add_argument('--min-frameshift-qual', type=int, default=15)
+    parser.add_argument('--min-allele-freq', type=float, default=0.65)
     parser.add_argument('inputvcf')
     parser.add_argument('output_pass_vcf')
     parser.add_argument('output_fail_vcf')

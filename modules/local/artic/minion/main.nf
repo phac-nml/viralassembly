@@ -2,65 +2,74 @@ process ARTIC_MINION {
     label 'process_high'
     label 'error_retry'
     tag "$meta.id"
-    publishDir "${params.outdir}/consensus", pattern: "${sampleName}.consensus.fasta", mode: "copy"
-    publishDir "${params.outdir}/bam", pattern: "${sampleName}.*bam*", mode: "copy"
-    publishDir "${params.outdir}/vcf", pattern: "${sampleName}.pass.vcf*", mode: "copy"
-    publishDir "${params.outdir}/vcf", pattern: "${sampleName}.fail.vcf", mode: "copy"
+    publishDir "${params.outdir}/consensus", pattern: "${meta.id}.consensus.fasta", mode: "copy"
+    publishDir "${params.outdir}/bam", pattern: "${meta.id}.*bam*", mode: "copy"
+    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.pass.vcf*", mode: "copy"
+    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.fail.vcf", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.2.4--pyh7cba7a3_1' :
-        'biocontainers/artic:1.2.4--pyh7cba7a3_1' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
+        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(fastq)
-    path fast5_dir
-    path sequencing_summary
-    path scheme
+    path reference
+    path primer_bed
+    path clair3_model_dir
 
     output:
-    tuple val(meta), path("${sampleName}.primertrimmed.rg.sorted.bam"), path("${sampleName}.primertrimmed.rg.sorted.bam.bai"), emit: bam
-    tuple val(meta), path("${sampleName}.pass.vcf.gz"), emit: vcf
-    tuple val(meta), path("${sampleName}.consensus.fasta"), emit: consensus
-    tuple val(meta), path("${sampleName}.fail.vcf"), emit: fail_vcf
-    path "${sampleName}*", emit: all
+    tuple val(meta), path("${meta.id}.primertrimmed.rg.sorted.bam"), path("${meta.id}.primertrimmed.rg.sorted.bam.bai"), emit: bam
+    tuple val(meta), path("${meta.id}.pass.vcf.gz"), emit: vcf
+    tuple val(meta), path("${meta.id}.consensus.fasta"), emit: consensus
+    tuple val(meta), path("${meta.id}.fail.vcf"), emit: fail_vcf
+    path "${meta.id}*", emit: all
     path "versions.yml", emit: versions
 
     script:
-    sampleName = "$meta.id"
-    // Setup args for medaka vs nanopolish
+    // Clair3 model is added conditonally if it's been set
+    //  as clair3 can detect the model from the fastq header
+    // Setup args list
     def argsList = []
-    if ( params.variant_caller == 'medaka' ) {
-        argsList.add("--medaka")
-        argsList.add("--medaka-model ${params.medaka_model}")
-    } else {
-        argsList.add("--fast5-directory $fast5_dir")
-        argsList.add("--sequencing-summary $sequencing_summary")
-    }
     if ( params.normalise ) {
         argsList.add("--normalise ${params.normalise}")
+    } else {
+        argsList.add("--normalise 0")
     }
     if ( params.no_frameshift ) {
         argsList.add("--no-frameshifts")
     }
+
+    if ( clair3_model_dir ) {
+        argsList.add("--model-dir ./")
+        argsList.add("--model ${clair3_model_dir}")
+    }
     def argsConfig = argsList.join(" ")
 
-    // Aligner
-    def alignerArg = "--minimap2"
-    if ( params.use_bwa ) {
-        alignerArg = "--bwa"
-    }
-
-    // Cmd
+    // Cmd to run
     """
     artic minion \\
         ${argsConfig} \\
-        ${alignerArg} \\
         --threads ${task.cpus} \\
+        --ref $reference \\
+        --bed $primer_bed \\
         --read-file $fastq \\
-        --scheme-version ${params.scheme_version} \\
-        ${params.scheme} \\
-        $sampleName
+        ${meta.id}
+
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        artic: \$(echo \$(artic --version 2>&1) | sed 's/artic //')
+    END_VERSIONS
+    """
+
+    stub:
+    """
+    touch ${meta.id}.primertrimmed.rg.sorted.bam
+    touch ${meta.id}.primertrimmed.rg.sorted.bam.bai
+    touch ${meta.id}.pass.vcf.gz
+    touch ${meta.id}.fail.vcf
+    touch ${meta.id}.consensus.fasta
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml

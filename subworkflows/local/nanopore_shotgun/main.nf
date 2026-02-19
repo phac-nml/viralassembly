@@ -8,29 +8,22 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // Other tools
-include { MINIMAP2_ALIGN            } from '../../modules/local/minimap2/main'
-include { LONGSHOT                  } from '../../modules/local/longshot/main'
-include { BCFTOOLS_NORM             } from '../../modules/local/bcftools/norm/main'
-include { BCFTOOLS_CONSENSUS        } from '../../modules/local/bcftools/consensus/main'
+include { MINIMAP2_ALIGN            } from '../../../modules/local/minimap2/main'
+include { LONGSHOT                  } from '../../../modules/local/longshot/main'
+include { BCFTOOLS_NORM             } from '../../../modules/local/bcftools/norm/main'
+include { BCFTOOLS_CONSENSUS        } from '../../../modules/local/bcftools/consensus/main'
 
 // Variant calling tools
-include { MEDAKA_CONSENSUS          } from '../../modules/local/nanopore_shotgun/main'
-include { MEDAKA_VARIANT            } from '../../modules/local/nanopore_shotgun/main'
-include { NANOPOLISH_VARIANTS       } from '../../modules/local/nanopore_shotgun/main'
-include { CLAIR3_VARIANTS           } from '../../modules/local/nanopore_shotgun/main'
+include { MEDAKA_CONSENSUS          } from '../../../modules/local/nanopore_shotgun/main'
+include { MEDAKA_VARIANT            } from '../../../modules/local/nanopore_shotgun/main'
+include { NANOPOLISH_VARIANTS       } from '../../../modules/local/nanopore_shotgun/main'
+include { CLAIR3_VARIANTS           } from '../../../modules/local/nanopore_shotgun/main'
 
 // Artic subcommands steps
-include { ZIP_AND_INDEX_VCF         } from '../../modules/local/artic_subcommands/main'
-include { CUSTOM_VCF_FILTER         } from '../../modules/local/artic_subcommands/main'
-include { CUSTOM_MAKE_DEPTH_MASK    } from '../../modules/local/artic_subcommands/main'
-include { ARTIC_MASK                } from '../../modules/local/artic_subcommands/main'
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    INITIALIZE CHANNELS FROM PARAMS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-ch_user_clair3_model = params.clair3_user_variant_model ? file(params.clair3_user_variant_model, checkIfExists: true) : []
+include { ZIP_AND_INDEX_VCF         } from '../../../modules/local/artic_subcommands/main'
+include { CUSTOM_VCF_FILTER         } from '../../../modules/local/artic_subcommands/main'
+include { CUSTOM_MAKE_DEPTH_MASK    } from '../../../modules/local/artic_subcommands/main'
+include { ARTIC_MASK                } from '../../../modules/local/artic_subcommands/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -45,10 +38,11 @@ workflow WF_NANOPORE_SHOTGUN {
     ch_reference    // channel: [ file(reference) ]
     ch_ref_fai      // channel: [ file(reference.fai) ]
     ch_refstats     // channel: [ file(refstats.txt) ]
+    ch_clair3_model // channel: [ file(clair3_model) ]
 
     main:
     // Version tracking
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Align
@@ -90,7 +84,7 @@ workflow WF_NANOPORE_SHOTGUN {
             ch_bam,
             ch_reference,
             ch_ref_fai,
-            ch_user_clair3_model
+            ch_clair3_model
         )
         ch_primary_vcf = CLAIR3_VARIANTS.out.vcf
         ch_versions = ch_versions.mix(CLAIR3_VARIANTS.out.versions)
@@ -160,7 +154,7 @@ workflow WF_NANOPORE_SHOTGUN {
 
     // Remove tabix index from vcf as it is not needed and won't match the normal artic steps as output
     CUSTOM_VCF_FILTER.out.pass_vcf
-        .map { it -> [ it[0], it[1] ] }
+        .map { meta, vcf, _tbi -> [ meta, vcf ] }
         .set { ch_pass_vcf }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //

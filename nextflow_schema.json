@@ -1,20 +1,21 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/phac-nml/viralassembly/master/nextflow_schema.json",
+    "$schema": "https://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/phac-nml/viralassembly/main/nextflow_schema.json",
     "title": "phac-nml/viralassembly pipeline parameters",
     "description": "Assemble and QC viral reads",
     "type": "object",
     "definitions": {
-        "input_data_option_choose_1": {
-            "title": "Input data option (choose 1)",
+        "input_output_options": {
+            "title": "Input/output options",
             "type": "object",
             "fa_icon": "fas fa-terminal",
-            "description": "Define where the pipeline should find input data using either an input samplesheet or an input directory.",
+            "description": "Define where the pipeline should find input data using either an input samplesheet or an input directory and where to save data.",
             "properties": {
                 "input": {
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
+                    "schema": "assets/schema_input.json",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.csv$",
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
@@ -23,169 +24,247 @@
                 },
                 "fastq_pass": {
                     "type": "string",
+                    "format": "directory-path",
+                    "pattern": "^\\S+$",
                     "description": "Path to directory containing either barcoded fastq files or individually named fastq files",
-                    "help_text": "Barcodes must be formatted as 'barcode##' to be found. Fastq files must end in '.fastq' or '.fastq.gz'",
                     "fa_icon": "fas fa-folder-open",
-                    "format": "directory-path"
+                    "help_text": "Barcodes must be formatted as 'barcode##' to be found. Fastq files must end in '.fastq' or '.fastq.gz'"
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "pattern": "^\\S+$",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
                 }
-            }
+            },
+            "required": ["outdir"]
         },
-        "important_input_values": {
-            "title": "Important input values",
+        "required_settings": {
+            "title": "Required Settings",
             "type": "object",
-            "fa_icon": "fas fa-sign-out-alt",
-            "description": "Important pipeline values for that are based on which variant caller is being used along with if any metadata is to be added",
+            "description": "Settings that are required to run the pipeline",
+            "default": "",
+            "fa_icon": "fas fa-sign-in-alt",
             "properties": {
                 "variant_caller": {
                     "type": "string",
-                    "enum": [
-                        "medaka",
-                        "nanopolish",
-                        "clair3"
-                    ],
-                    "fa_icon": "fas fa-code",
-                    "description": "Choose which variant caller to use. Options are 'medaka', 'clair3', and 'nanopolish'"
+                    "fa_icon": "fas fa-terminal",
+                    "description": "Choose which variant caller to use. Options are 'clair3', 'medaka', and 'nanopolish'",
+                    "default": "clair3",
+                    "enum": ["clair3", "medaka", "nanopolish"]
                 },
-                "metadata": {
+                "reference": {
                     "type": "string",
-                    "fa_icon": "fas fa-file-csv",
                     "format": "file-path",
+                    "exists": true,
                     "mimetype": "text/plain",
-                    "description": "Path to metadata TSV file containing at least columns 'sample' and 'barcode'"
-                },
-                "fast5_pass": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "fa_icon": "fas fa-folder",
-                    "description": "Path to directory containing fast5 files for nanopolish",
-                    "help_text": "Only for nanopolish"
-                },
-                "sequencing_summary": {
-                    "type": "string",
-                    "format": "file-path",
-                    "fa_icon": "fas fa-file-alt",
-                    "description": "Path to sequencing_summary file needed for nanopolish",
-                    "help_text": "Only for nanopolish"
+                    "pattern": "^\\S+\\.fn?a(sta)$",
+                    "description": "Path to reference genome fasta file",
+                    "fa_icon": "fas fa-font"
                 }
             },
-            "required": [
-                "variant_caller"
-            ]
+            "required": ["variant_caller", "reference"]
         },
-        "variant_model_settings": {
-            "title": "Variant model settings",
+        "amplicon_settings": {
+            "title": "Amplicon Settings",
             "type": "object",
-            "description": "Settings pertaining to the specific variant callers models. Be as accurate as possible for best results",
+            "description": "Settings required for running amplicon data",
+            "default": "",
+            "fa_icon": "fas fa-sign-in-alt",
+            "properties": {
+                "primer_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "description": "Path to 6 column (minimum) tab separated amplicon primer bed file with first column matching reference ID",
+                    "fa_icon": "fas fa-font"
+                }
+            }
+        },
+        "clair3_settings": {
+            "title": "Clair3 Settings",
+            "type": "object",
+            "description": "Settings pertaining to the clair3 variant calling workflow.",
+            "default": "",
+            "fa_icon": "fas fa-tools",
+            "properties": {
+                "clair3_model": {
+                    "type": "string",
+                    "default": "r1041_e82_400bps_sup_v420",
+                    "pattern": "^[A-Za-z0-9_\\-\\.]*$",
+                    "description": "Model to use in clair3. See clair3 docs for more info. Be as accurate as possible for best results!"
+                },
+                "clair3_local_model": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "description": "Path to local clair3 model folder"
+                },
+                "clair3_no_pool_split": {
+                    "type": "boolean",
+                    "description": "Pass to not split amplicon pools when running clair3"
+                },
+                "min_qual_clair3": {
+                    "type": "integer",
+                    "default": 8,
+                    "description": "Minimum clair3 variant quality to PASS variant to final consensus"
+                },
+                "min_frameshift_qual": {
+                    "type": "integer",
+                    "default": 15,
+                    "description": "Minimum clair3 frameshift (indel divisible by 3) variant quality to PASS variant to final consensus"
+                },
+                "min_allele_freq": {
+                    "type": "number",
+                    "default": 0.65,
+                    "description": "Minimum clair3 allele frequency to PASS variant to final consensus"
+                }
+            }
+        },
+        "medaka_settings": {
+            "title": "Medaka Settings (If using over clair3)",
+            "type": "object",
+            "description": "Settings pertaining to the medaka variant calling workflow if using medaka over clair3",
             "default": "",
             "fa_icon": "fas fa-tools",
             "properties": {
                 "medaka_model": {
                     "type": "string",
                     "default": "r941_min_hac_g507",
-                    "description": "Model to use in medaka. See medaka docs for more info"
+                    "pattern": "^[A-Za-z0-9_\\-\\.]*$",
+                    "description": "Model to use in medaka. See medaka docs for more info. Be as accurate as possible for best results!"
                 },
-                "clair3_model": {
-                    "type": "string",
-                    "default": "r941_prom_sup_g5014",
-                    "description": "Model to use in clair3. See clair3 docs for more info"
-                },
-                "clair3_user_variant_model": {
-                    "type": "string",
-                    "description": "Path to local clair3 model folder",
-                    "format": "directory-path"
-                },
-                "clair3_no_pool_split": {
+                "skip_longshot": {
                     "type": "boolean",
-                    "description": "Pass to not split amplicon pools when running clair3"
+                    "description": "If passed, skip running longshot with medaka pipeline",
+                    "fa_icon": "fas fa-forward"
+                }
+            }
+        },
+        "nanopolish_settings": {
+            "title": "Nanopolish Settings (If using over clair3)",
+            "type": "object",
+            "description": "Settings pertaining to the nanopolish variant calling workflow if using nanopolish over clair3. *NOTE*: nanopolish only works on R9 flowcells",
+            "default": "",
+            "fa_icon": "fas fa-tools",
+            "properties": {
+                "fast5_pass": {
+                    "type": "string",
+                    "format": "directoy-path",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "fa_icon": "fas fa-folder",
+                    "description": "Path to directory containing fast5 files REQUIRED for nanopolish"
+                },
+                "sequencing_summary": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "^\\S+$",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "fa_icon": "fas fa-file-alt",
+                    "description": "Path to sequencing_summary file REQUIRED for nanopolish"
                 }
             }
         },
         "read_filtering_options": {
-            "title": "Read filtering options",
+            "title": "Read Filtering Options",
             "type": "object",
-            "description": "Options pertaining to how to filter reads",
+            "description": "Options pertaining to which samples to drop and how to filter reads",
             "default": "",
             "fa_icon": "fas fa-filter",
             "properties": {
                 "min_reads": {
                     "type": "integer",
                     "default": 20,
+                    "minimum": 0,
                     "description": "Minimum reads required to run the sample after length filtering"
                 },
                 "min_length": {
                     "type": "integer",
                     "default": 200,
+                    "minimum": 0,
                     "description": "Minimum read length to keep"
                 },
                 "max_length": {
                     "type": "integer",
-                    "default": 3000,
+                    "default": 4000,
+                    "minimum": 100,
                     "description": "Maximum read length to keep"
                 }
             }
         },
-        "scheme_options": {
-            "title": "Scheme options",
+        "general_analysis_options": {
+            "title": "General Analysis Calling Options",
             "type": "object",
-            "description": "Options pertaining to the amplicon sequencing scheme. Scheme directories must include '*.scheme.bed' and '*.reference.fasta'",
-            "default": "",
-            "properties": {
-                "reference": {
-                    "type": "string",
-                    "description": "Path to local reference file to map to instead of using a primer scheme"
-                },
-                "scheme": {
-                    "type": "string",
-                    "default": "nCoV-2019",
-                    "description": "Name of the pathogen to look for a scheme to use"
-                },
-                "scheme_version": {
-                    "type": "string",
-                    "default": "freed_nml_test_V2",
-                    "description": "Name of the amplicon scheme"
-                },
-                "scheme_repo": {
-                    "type": "string",
-                    "default": "https://github.com/DarianHole/primer-schemes.git",
-                    "description": "URL to the online scheme git repo to download"
-                },
-                "local_scheme": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "Path to local scheme repo use instead of downloading"
-                }
-            }
-        },
-        "artic_minion_options": {
-            "title": "Artic minion options",
-            "type": "object",
-            "description": "Options pertaining to the steps in the artic minion pipeline",
+            "description": "Options pertaining to all variant calling methods",
             "default": "",
             "properties": {
                 "normalise": {
                     "type": "integer",
                     "default": 1000,
-                    "description": "Normalize coverage",
+                    "minimum": 0,
+                    "description": "Normalize coverage for each amplicon to this threshold",
                     "fa_icon": "fas fa-balance-scale"
+                },
+                "min_depth": {
+                    "type": "integer",
+                    "default": 20,
+                    "minimum": 0,
+                    "description": "Minimum depth to call a position. Positions lower are masked with an N"
                 },
                 "no_frameshift": {
                     "type": "boolean",
-                    "description": "If passed, skip detected frameshift variants"
+                    "description": "Filter out INDEL variants that are not divisible by 3 (likely frameshift but not necessarily)"
                 },
-                "use_bwa": {
-                    "type": "boolean",
-                    "description": "If passed, use BWA insead of minimap2 for read mapping"
-                },
-                "skip_longshot": {
-                    "type": "boolean",
-                    "description": "If passed, skip running longshot with medaka pipeline",
-                    "fa_icon": "fas fa-forward"
+                "metadata": {
+                    "type": "string",
+                    "fa_icon": "fas fa-file-csv",
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.tsv$",
+                    "description": "Path to metadata TSV file containing at least columns 'sample' and 'barcode'"
                 },
                 "use_artic_tool": {
                     "type": "boolean",
-                    "fa_icon": "fas fa-caret-right",
-                    "description": "Pass to run tool artic pipeline instead of the nextflow adaptation this pipeline uses",
-                    "help_text": "Clair3 always runs this"
+                    "description": "Pass to run tool artic pipeline instead of the nextflow adaptation this pipeline uses"
+                }
+            }
+        },
+        "qc_options": {
+            "title": "QC options",
+            "type": "object",
+            "description": "Options pertaining to QC outputs/stats",
+            "default": "",
+            "fa_icon": "fas fa-star",
+            "properties": {
+                "skip_qc": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-forward",
+                    "description": "If passed, skip running all QC and reporting steps"
+                },
+                "pcr_primer_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "description": "Path to 6 column (minimum) tab separated PCR primer bed file with first column matching reference ID to report mutations in these locations",
+                    "fa_icon": "fas fa-font"
+                },
+                "neg_control_threshold": {
+                    "type": "number",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Float threshold for a negative control sample to be considered contaminated"
+                },
+                "neg_ctrl_substrings": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_,\\-\\.]*$",
+                    "default": "neg,ntc,blank,water",
+                    "description": "Control prefixes separated by a ',' to determine which samples are negative controls"
                 }
             }
         },
@@ -203,36 +282,10 @@
                 "gff": {
                     "type": "string",
                     "format": "file-path",
-                    "description": "Path to gff3 formatted file to be used to build SnpEff database"
-                }
-            }
-        },
-        "qc_options": {
-            "title": "QC options",
-            "type": "object",
-            "description": "Options pertaining to QC outputs/stats",
-            "default": "",
-            "fa_icon": "fas fa-star",
-            "properties": {
-                "skip_qc": {
-                    "type": "boolean",
-                    "description": "If passed, skip running all QC and reporting steps",
-                    "fa_icon": "fas fa-forward"
-                },
-                "pcr_primer_bed": {
-                    "type": "string",
-                    "format": "file-path",
-                    "description": "Path to PCR Primer bed to check for any mutations occuring in defined regions"
-                },
-                "neg_control_threshold": {
-                    "type": "number",
-                    "default": 0.1,
-                    "description": "Float threshold for a negative control sample to be considered contaminated"
-                },
-                "neg_ctrl_substrings": {
-                    "type": "string",
-                    "default": "neg,ntc,blank",
-                    "description": "Control prefixes separated by a ',' to determine which samples are negative controls"
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.gff(\\.gz)?$",
+                    "description": "Path to GFF annotation file.",
+                    "fa_icon": "fas fa-file-invoice"
                 }
             }
         },
@@ -241,58 +294,51 @@
             "type": "object",
             "description": "Options pertaining to final report generation",
             "default": "",
-            "fa_icon": "fas fa-file-code",
             "properties": {
-                "custom_report": {
+                "multiqc_report": {
                     "type": "boolean",
-                    "description": "Create custom report instead of the MultiQC report (singularity not yet supported for custom reports)",
-                    "fa_icon": "fas fa-file-signature"
+                    "fa_icon": "fas fa-file-signature",
+                    "description": "Create MultiQC report instead of custom report"
                 },
                 "multiqc_config_overall": {
                     "type": "string",
-                    "default": "$projectDir/assets/multiqc_config_overall.yaml",
+                    "format": "file-path",
                     "description": "MultiQC overall run config yaml file",
-                    "format": "file-path"
+                    "hidden": true
                 },
                 "multiqc_config_sample": {
                     "type": "string",
-                    "default": "$projectDir/assets/multiqc_config_sample.yaml",
+                    "format": "file-path",
                     "description": "MultiQC sample config yaml file",
-                    "format": "file-path"
+                    "hidden": true
                 }
-            }
+            },
+            "fa_icon": "fas fa-file-code"
         },
         "generic_options": {
             "title": "Generic options",
             "type": "object",
-            "description": "Less common options for the pipeline, typically set in a config file.",
-            "help_text": "These options are generic and don't quite all under any other categories",
             "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
             "properties": {
-                "outdir": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
-                    "fa_icon": "fas fa-folder-open",
-                    "default": "results"
-                },
-                "cache": {
-                    "type": "string",
-                    "help_text": "Path to directory to store or find environments/containers",
-                    "fa_icon": "fas fa-folder",
-                    "format": "directory-path",
-                    "description": "Path to directory containing env/container shared store"
-                },
                 "help": {
                     "type": "boolean",
-                    "description": "Display help text.",
-                    "fa_icon": "fas fa-question-circle",
-                    "hidden": true
+                    "description": "Display help message and exit.",
+                    "fa_icon": "fas fa-question-circle"
                 },
                 "version": {
                     "type": "boolean",
                     "description": "Display version and exit.",
-                    "fa_icon": "fas fa-question-circle",
+                    "fa_icon": "fas fa-question-circle"
+                },
+                "publish_dir_mode": {
+                    "type": "string",
+                    "default": "copy",
+                    "description": "Method used to save pipeline results to output directory.",
+                    "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
+                    "fa_icon": "fas fa-copy",
+                    "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
                     "hidden": true
                 },
                 "monochrome_logs": {
@@ -301,59 +347,46 @@
                     "fa_icon": "fas fa-palette",
                     "hidden": true
                 },
-                "show_hidden_params": {
+                "validate_params": {
                     "type": "boolean",
-                    "hidden": true,
-                    "fa_icon": "fas fa-minus-square"
-                }
-            },
-            "required": [
-                "outdir"
-            ]
-        },
-        "resource_options": {
-            "title": "Resource options",
-            "type": "object",
-            "description": "Options pertaining to resource usage",
-            "default": "",
-            "fa_icon": "fas fa-cog",
-            "properties": {
-                "max_memory": {
-                    "type": "string",
-                    "default": "256.GB",
-                    "description": "Maximum memory to use in pipeline for a single process. Given as a string with int.GB"
+                    "description": "Boolean whether to validate parameters against the schema at runtime",
+                    "default": true,
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
                 },
-                "max_cpus": {
-                    "type": "integer",
-                    "default": 16,
-                    "description": "Maximum number of CPUs available to use for a single process"
-                },
-                "max_time": {
+                "trace_report_suffix": {
                     "type": "string",
-                    "description": "Maximum time available for a single process to run with",
-                    "default": "120.h"
+                    "fa_icon": "far calendar",
+                    "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
+                    "hidden": true
                 }
             }
         }
     },
     "allOf": [
         {
-            "$ref": "#/definitions/input_data_option_choose_1"
+            "$ref": "#/definitions/input_output_options"
         },
         {
-            "$ref": "#/definitions/important_input_values"
+            "$ref": "#/definitions/required_settings"
         },
         {
-            "$ref": "#/definitions/variant_model_settings"
+            "$ref": "#/definitions/amplicon_settings"
+        },
+        {
+            "$ref": "#/definitions/clair3_settings"
+        },
+        {
+            "$ref": "#/definitions/medaka_settings"
+        },
+        {
+            "$ref": "#/definitions/nanopolish_settings"
         },
         {
             "$ref": "#/definitions/read_filtering_options"
         },
         {
-            "$ref": "#/definitions/scheme_options"
-        },
-        {
-            "$ref": "#/definitions/artic_minion_options"
+            "$ref": "#/definitions/general_analysis_options"
         },
         {
             "$ref": "#/definitions/snpeff_options"
@@ -366,9 +399,6 @@
         },
         {
             "$ref": "#/definitions/generic_options"
-        },
-        {
-            "$ref": "#/definitions/resource_options"
         }
     ]
 }
