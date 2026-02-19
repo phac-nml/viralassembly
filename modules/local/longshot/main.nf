@@ -1,7 +1,6 @@
 process LONGSHOT {
     label 'process_medium'
     tag "$meta.id"
-    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.longshot.merged.vcf", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

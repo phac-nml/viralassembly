@@ -1,13 +1,11 @@
 process SNPEFF_DATABASE {
     label 'process_medium'
     label 'error_ignore' // If can't build we don't run snpeff
-    publishDir "${params.outdir}/snpeff/database", pattern: "snpeff_db", mode: "copy"
-    publishDir "${params.outdir}/snpeff/database", pattern: "snpeff.config", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/snpeff:5.2--hdfd78af_0' :
-        'biocontainers/snpeff:5.2--hdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/snpeff:5.4.0a--hdfd78af_0' :
+        'biocontainers/snpeff:5.4.0a--hdfd78af_0' }"
 
     input:
     val genome
@@ -34,23 +32,27 @@ process SNPEFF_DATABASE {
         mkdir -p snpeff_db/genomes/
         cd snpeff_db/genomes/
         ln -s ../../$reference ${genome}.fa
-        cd ../..
+        cd ../../
 
         # Setup gff
-        mkdir -p snpeff_db/${genome}
-        cd snpeff_db/${genome}
+        mkdir -p snpeff_db/${genome}/
+        cd snpeff_db/${genome}/
         ln -s ../../$gff genes.gff
-        cd ../..
+        cd ../../
+
+        # Create config
+        echo "${genome}.genome : ${genome}" > snpeff.config
 
         # Create database
-        echo "${genome}.genome : ${genome}" > snpeff.config
         snpEff \\
             -Xmx${avail_mem}M \\
             build \\
-            -v \\
             -config snpeff.config \\
             -dataDir ./snpeff_db \\
+            -noCheckCds \\
+            -noCheckProtein \\
             -gff3 \\
+            -v \\
             ${genome}
 
         # Versions #
@@ -115,13 +117,11 @@ process SNPEFF_DATABASE {
 process SNPEFF_ANNOTATE {
     tag "$meta.id"
     label 'process_medium'
-    publishDir "${params.outdir}/snpeff", pattern: "*.vcf", mode: "copy"
-    publishDir "${params.outdir}/snpeff", pattern: "*.csv", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/snpeff:5.2--hdfd78af_0' :
-        'biocontainers/snpeff:5.2--hdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/snpeff:5.4.0a--hdfd78af_0' :
+        'biocontainers/snpeff:5.4.0a--hdfd78af_0' }"
 
     input:
     tuple val(meta), path(vcf)
@@ -143,8 +143,8 @@ process SNPEFF_ANNOTATE {
         avail_mem = (task.memory.mega*0.8).intValue()
     }
     // Args for db and config
-    def snpeff_db_command = snpeff_db ? "-dataDir \${PWD}/${snpeff_db}" : ""
-    def config_command = config ? "-config \${PWD}/${config}" : ""
+    def snpeff_db_command = snpeff_db ? "-dataDir ${snpeff_db}" : ""
+    def config_command = config ? "-config ${config}" : ""
     """
     # Sporatic lock issue in tmp dir solution
     #  Partially from https://github.com/apache/arrow/pull/39115/files

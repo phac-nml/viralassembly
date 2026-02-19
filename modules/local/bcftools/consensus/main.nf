@@ -1,7 +1,6 @@
 process BCFTOOLS_CONSENSUS {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/consensus", pattern: "${meta.id}.consensus.fasta", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
