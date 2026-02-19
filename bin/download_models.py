@@ -58,7 +58,7 @@ def download_model(download_dir: Path, model: str) -> None:
     # Check if downloaded already and if not, setup, download, and extract
     final_model_path = Path(download_dir, model)
     if (final_model_path.exists()) and (len(list(final_model_path.iterdir())) > 0):
-        logger.info("Model {model} already downloaded, skipping")
+        logger.info(f"Model {model} already downloaded, skipping")
         return
 
     model_download_path = Path(download_dir, model_fname)
@@ -113,7 +113,7 @@ def main():
                 args.model
             )
         else:
-            logger.error("Given model {args.model} does not exist or has yet to be added to the list of available models")
+            logger.error(f"Given model {args.model} does not exist or has yet to be added to the list of available models")
             sys.exit(1)
 
     # Download all
