@@ -46,7 +46,9 @@ process CREATE_AMPLICON_BED {
     label 'process_single'
 
     conda "conda-forge::python=3.10.2"
-    container "quay.io/biocontainers/python:3.10.2"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/python:3.10.2' :
+        'biocontainers/python:3.10.2' }"
 
     input:
     path bed
