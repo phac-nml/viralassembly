@@ -265,8 +265,8 @@ nextflow_pipeline {
                 reference       = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
                 primer_bed      = "${projectDir}/test_data/nanopore/primer.bed"
                 metadata        = "${projectDir}/test_data/nanopore/metadata.tsv"
+                gff             = "${projectDir}/test_data/nanopore/MN908947.3.gff3"
                 multiqc_report  = true
-                skip_snpeff     = true
                 // To keep consistent results from downsampled input
                 min_length      = 600
                 max_length      = 1600
@@ -358,6 +358,19 @@ nextflow_pipeline {
             assert lines.size() == 169
             assert lines.contains("position,chrom,A,C,T,G,del,ins,total_reads,percentage_nonref,ref_base,variant_type,distribution")
             assert lines.contains("241,MN908947.3,0,0,318,0,27,0,345,100.0,C,T SNP,NA")
+
+            // SnpEff outputs
+            assert path("$launchDir/results/snpeff/sample1.ann.vcf").exists()
+            lines = path("$launchDir/results/snpeff/sample1.ann.vcf").readLines()
+            assert lines.size() == 88
+
+            assert path("$launchDir/results/snpeff/sample2.ann.vcf").exists()
+            lines = path("$launchDir/results/snpeff/sample2.ann.vcf").readLines()
+            assert lines.size() == 88
+
+            assert path("$launchDir/results/snpeff/reads_100.ann.vcf").exists()
+            lines = path("$launchDir/results/snpeff/reads_100.ann.vcf").readLines()
+            assert lines.size() == 19
 
             // Final Reports
             assert path("$launchDir/results/Overall-Run-MultiQC.report.html").exists()
