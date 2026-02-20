@@ -19,10 +19,10 @@ include { ARTIC_MAKE_DEPTH_MASK     } from '../../../modules/local/artic_subcomm
 include { ARTIC_MASK                } from '../../../modules/local/artic_subcommands/mask/main'
 
 // Variant calling tools
-include { MEDAKA_CONSENSUS          } from '../../../modules/local/nanopore_amplicon/main'
-include { MEDAKA_VARIANT            } from '../../../modules/local/nanopore_amplicon/main'
-include { NANOPOLISH_VARIANTS       } from '../../../modules/local/nanopore_amplicon/main'
-include { CLAIR3_VARIANTS           } from '../../../modules/local/nanopore_amplicon/main'
+include { MEDAKA_CONSENSUS          } from '../../../modules/local/nanopore_amplicon/medaka/main'
+include { MEDAKA_VARIANT            } from '../../../modules/local/nanopore_amplicon/medaka/main'
+include { NANOPOLISH_VARIANTS       } from '../../../modules/local/nanopore_amplicon/nanopolish/main'
+include { CLAIR3_VARIANTS           } from '../../../modules/local/nanopore_amplicon/clair3/main'
 
 // Other tools
 include { SPLIT_BED_BY_POOL         } from '../../../modules/local/custom/utils.nf'

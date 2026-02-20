@@ -14,10 +14,10 @@ include { BCFTOOLS_NORM             } from '../../../modules/local/bcftools/norm
 include { BCFTOOLS_CONSENSUS        } from '../../../modules/local/bcftools/consensus/main'
 
 // Variant calling tools
-include { MEDAKA_CONSENSUS          } from '../../../modules/local/nanopore_shotgun/main'
-include { MEDAKA_VARIANT            } from '../../../modules/local/nanopore_shotgun/main'
-include { NANOPOLISH_VARIANTS       } from '../../../modules/local/nanopore_shotgun/main'
-include { CLAIR3_VARIANTS           } from '../../../modules/local/nanopore_shotgun/main'
+include { MEDAKA_CONSENSUS          } from '../../../modules/local/nanopore_shotgun/medaka/main'
+include { MEDAKA_VARIANT            } from '../../../modules/local/nanopore_shotgun/medaka/main'
+include { NANOPOLISH_VARIANTS       } from '../../../modules/local/nanopore_shotgun/nanopolish/main'
+include { CLAIR3_VARIANTS           } from '../../../modules/local/nanopore_shotgun/clair3/main'
 
 // Artic subcommands steps
 include { ZIP_AND_INDEX_VCF         } from '../../../modules/local/artic_subcommands/zip_and_index/main'
