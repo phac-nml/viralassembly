@@ -20,10 +20,10 @@ include { NANOPOLISH_VARIANTS       } from '../../../modules/local/nanopore_shot
 include { CLAIR3_VARIANTS           } from '../../../modules/local/nanopore_shotgun/main'
 
 // Artic subcommands steps
-include { ZIP_AND_INDEX_VCF         } from '../../../modules/local/artic_subcommands/main'
-include { CUSTOM_VCF_FILTER         } from '../../../modules/local/artic_subcommands/main'
-include { CUSTOM_MAKE_DEPTH_MASK    } from '../../../modules/local/artic_subcommands/main'
-include { ARTIC_MASK                } from '../../../modules/local/artic_subcommands/main'
+include { ZIP_AND_INDEX_VCF         } from '../../../modules/local/artic_subcommands/zip_and_index/main'
+include { CUSTOM_VCF_FILTER         } from '../../../modules/local/artic_subcommands/vcf_filter/main'
+include { CUSTOM_MAKE_DEPTH_MASK    } from '../../../modules/local/artic_subcommands/make_depth_mask/main'
+include { ARTIC_MASK                } from '../../../modules/local/artic_subcommands/mask/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

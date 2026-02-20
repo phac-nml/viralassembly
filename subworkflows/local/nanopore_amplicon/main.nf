@@ -10,13 +10,13 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // Artic subcommands steps
-include { ARTIC_ALIGN_TRIM as ARTIC_ALIGN_TRIM_START    } from '../../../modules/local/artic_subcommands/main'
-include { ARTIC_ALIGN_TRIM as ARTIC_ALIGN_TRIM_PRIMERS  } from '../../../modules/local/artic_subcommands/main'
-include { ARTIC_VCF_MERGE           } from '../../../modules/local/artic_subcommands/main'
-include { ZIP_AND_INDEX_VCF         } from '../../../modules/local/artic_subcommands/main'
-include { CUSTOM_VCF_FILTER         } from '../../../modules/local/artic_subcommands/main'
-include { ARTIC_MAKE_DEPTH_MASK     } from '../../../modules/local/artic_subcommands/main'
-include { ARTIC_MASK                } from '../../../modules/local/artic_subcommands/main'
+include { ARTIC_ALIGN_TRIM as ARTIC_ALIGN_TRIM_START    } from '../../../modules/local/artic/align_trim/main'
+include { ARTIC_ALIGN_TRIM as ARTIC_ALIGN_TRIM_PRIMERS  } from '../../../modules/local/artic/align_trim/main'
+include { ARTIC_VCF_MERGE           } from '../../../modules/local/artic_subcommands/vcf_merge/main'
+include { ZIP_AND_INDEX_VCF         } from '../../../modules/local/artic_subcommands/zip_and_index/main'
+include { CUSTOM_VCF_FILTER         } from '../../../modules/local/artic_subcommands/vcf_filter/main'
+include { ARTIC_MAKE_DEPTH_MASK     } from '../../../modules/local/artic_subcommands/make_depth_mask/main'
+include { ARTIC_MASK                } from '../../../modules/local/artic_subcommands/mask/main'
 
 // Variant calling tools
 include { MEDAKA_CONSENSUS          } from '../../../modules/local/nanopore_amplicon/main'

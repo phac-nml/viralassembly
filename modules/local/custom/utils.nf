@@ -1,9 +1,13 @@
-// Custom Utility Modules
+/*
+    Custom Utility Modules
+        Modules focusing on quick single commands to make intermediate files including:
+            * GET_REF_STATS     - Creates intermediate files from the reference
+            * RENAME_FASTQ      - Renames barcodeXX fastqs to their sample name
+            * SPLIT_BED_BY_POOL - Splits amplicon bed based on the primer pool
+            * CREATE_TILING_BED - Creates bed file of the overall tiling region
+*/
 process GET_REF_STATS {
     label 'process_single'
-    publishDir "${params.outdir}/reference", pattern: "${reference}*", mode: "copy"
-    publishDir "${params.outdir}/reference", pattern: "refstats.txt", mode: "copy"
-    publishDir "${params.outdir}/reference", pattern: "genome.bed", mode: "copy"
 
     conda "bioconda::samtools=1.19.2 bioconda::htslib=1.19.1"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -45,7 +49,6 @@ process GET_REF_STATS {
     END_VERSIONS
     """
 }
-
 process RENAME_FASTQ {
     label 'process_single'
     tag "$meta.id"
@@ -88,10 +91,8 @@ process RENAME_FASTQ {
     END_VERSIONS
     """
 }
-
 process SPLIT_BED_BY_POOL {
     label 'process_single'
-    publishDir "${params.outdir}/bed", pattern: "*.bed", mode: "copy"
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
         ? 'https://depot.galaxyproject.org/singularity/coreutils:8.31--h14c3975_0'
@@ -114,7 +115,6 @@ process SPLIT_BED_BY_POOL {
     touch 2.bed
     """
 }
-
 process CREATE_TILING_BED {
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
         ? 'https://depot.galaxyproject.org/singularity/coreutils:8.31--h14c3975_0'

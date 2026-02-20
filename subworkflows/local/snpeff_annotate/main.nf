@@ -10,7 +10,7 @@
 */
 include { SNPEFF_DATABASE   } from '../../../modules/local/snpeff/main'
 include { SNPEFF_ANNOTATE   } from '../../../modules/local/snpeff/main'
-include { ZIP_AND_INDEX_VCF } from '../../../modules/local/artic_subcommands/main'
+include { ZIP_AND_INDEX_VCF } from '../../../modules/local/artic_subcommands/zip_and_index/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

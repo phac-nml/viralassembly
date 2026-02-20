@@ -54,7 +54,6 @@ process MEDAKA_CONSENSUS {
 process MEDAKA_VARIANT {
     label 'process_medium'
     tag "${meta.id}-${pool}"
-    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.${pool}.vcf", mode: "copy"
 
     conda "${moduleDir}/env-medaka.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -98,7 +97,6 @@ process NANOPOLISH_VARIANTS {
     label 'process_high'
     label 'error_retry'
     tag "${meta.id}-${pool}"
-    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.${pool}.vcf", mode: "copy"
 
     conda "${moduleDir}/env-nanopolish.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -161,7 +159,6 @@ process CLAIR3_VARIANTS {
     label 'process_medium'
     label 'error_retry'
     tag "${meta.id}-${pool}"
-    // publishDir "${params.outdir}/articMinionNextflow", pattern: "${meta.id}.${pool}.vcf", mode: "copy"
 
     conda "${moduleDir}/env-clair3.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
