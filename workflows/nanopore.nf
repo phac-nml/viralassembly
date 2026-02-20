@@ -190,7 +190,7 @@ workflow NANOPORE {
     //  Only run if we have one reference sequence for now
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ch_snpeff_csv = channel.empty()
-    if ( (! params.skip_snpeff) || (ch_reference.countFasta() == 1) ) {
+    if ( (! params.skip_snpeff) && (ch_reference.countFasta() == 1) ) {
         WF_SNPEFF_ANNOTATE(
             ch_vcf,
             ch_reference
@@ -204,7 +204,7 @@ workflow NANOPORE {
     // QC and Tracking Workflow
     //  This is a stop for segmented viruses at the moment
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    if ( (! params.skip_qc) || (ch_reference.countFasta() == 1) ) {
+    if ( (! params.skip_qc) && (ch_reference.countFasta() == 1) ) {
         //  Filtered out samples - might want to move this
         ch_filter_tracking = channel.empty()
         TRACK_INITIAL_FILTERED_SAMPLES(

@@ -504,7 +504,6 @@ nextflow_pipeline {
     test("Nanopore Amplicon Workflow No Pool Split with MultiQC") {
         tag "success"
         tag "amplicon"
-        tag "here"
 
         when {
             params {
@@ -720,6 +719,76 @@ nextflow_pipeline {
             // Pipeline info and tracking
             assert path("$launchDir/results/pipeline_info").exists()
             assert path("$launchDir/results/pipeline_info/software_versions.yml").exists()
+        }
+    }
+
+    //--- Test 8 ----------------------------------------------------------------------------
+    // Limited testing for the moment while working to add in an update to handle the segmented viruses well
+    test("Nanopore WGS Segmented Workflow") {
+        tag "success"
+        tag "wgs"
+        tag "segmented"
+
+        when {
+            params {
+                outdir          = "results"
+                fastq_pass      = "${projectDir}/test_data/nanopore_segmented/fastqs/"
+                reference       = "${projectDir}/test_data/nanopore_segmented/rvfv.reference.fasta"
+                clair3_model    = "r1041_e82_400bps_sup_v420"
+                // To keep consistent results from downsampled input
+                min_length      = 200
+                max_length      = 2000
+                min_qual_clair3 = 10
+                min_depth       = 15
+            }
+        }
+        then {
+            // Status
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+
+            //
+            // Channels and Files Exist
+            //
+            def lines = []
+            assert path("$launchDir/results").exists()
+
+            // Intermediate generated reference files
+            assert path("$launchDir/results/reference/rvfv.reference.fasta.fai").exists()
+            lines = path("$launchDir/results/reference/rvfv.reference.fasta.fai").text
+            assert lines.contains("NC_014395.1\t1690\t64\t70\t71")
+            assert lines.contains("NC_014396.1\t3885\t1843\t70\t71")
+            assert lines.contains("NC_014397.1\t6404\t5848\t70\t71")
+
+            assert path("$launchDir/results/reference/genome.bed").exists()
+            lines = path("$launchDir/results/reference/genome.bed").text
+            assert lines.contains("NC_014395.1\t0\t1690")
+            assert lines.contains("NC_014396.1\t0\t3885")
+            assert lines.contains("NC_014397.1\t0\t6404")
+
+            assert path("$launchDir/results/reference/refstats.txt").exists()
+            lines = path("$launchDir/results/reference/refstats.txt").text
+            assert lines.contains("NC_014395.1:1-1691")
+            assert lines.contains("NC_014396.1:1-3886")
+            assert lines.contains("NC_014397.1:1-6405")
+
+            // Sample Outputs
+            //  Fasta files
+            assert path("$launchDir/results/consensus/ERR14941536.consensus.fasta").exists()
+            assert path("$launchDir/results/consensus/ERR14941536.consensus.fasta").md5 == "f9d7a237b1c3d78ee7aef7116e767a1d"
+            lines = path("$launchDir/results/consensus/ERR14941536.consensus.fasta").readLines()
+            assert lines.contains(">ERR14941536 NC_014395.1")
+            assert lines.contains("ACACAAAGACCCCCTAGTGCTTATCAAGTATATCATGGATTACTTTCCTGTGATATCTGT")
+            assert lines.contains(">ERR14941536 NC_014396.1")
+            assert lines.contains("ACACAAAGACGGTGCATTAAATGTATGTTTTANTAACAATTCTAATCTCGGTTTTGGTGT")
+            assert lines.contains(">ERR14941536 NC_014397.1")
+            assert lines.contains("ACACAAAGGCGCCCAATCATGGATTCTATATTATCAAAACAGCTGGTTGACAAGACTGGT")
+            assert lines.size() == 204
+
+            //  VCF (just the fail one to not need to unzip the others)
+            assert path("$launchDir/results/vcf/ERR14941536.fail.vcf").exists()
+            lines = path("$launchDir/results/vcf/ERR14941536.fail.vcf").readLines()
+            assert lines.size() == 23
         }
     }
 }
