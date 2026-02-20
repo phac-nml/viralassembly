@@ -165,7 +165,7 @@ Current limitations include:
 1. Nanopore data only at this time
 2. Currently runs for viruses using a reference genome
    - Segmented viruses will exit before the QC section for now while looking into how to best report them
-3. SnpEff issues in running and database building/downloading
+3. SnpEff and database building/downloading can be finicky
    - Database building/downloading requires one of three things:
      - The reference ID is in the SnpEff database
        - This allows the database to be downloaded
