@@ -26,6 +26,7 @@ include { CLAIR3_VARIANTS           } from '../../../modules/local/nanopore_ampl
 
 // Other tools
 include { SPLIT_BED_BY_POOL         } from '../../../modules/local/custom/utils.nf'
+include { CREATE_TILING_BED         } from '../../../modules/local/custom/utils.nf'
 include { MINIMAP2_ALIGN            } from '../../../modules/local/minimap2/main'
 include { LONGSHOT                  } from '../../../modules/local/longshot/main'
 include { BCFTOOLS_NORM             } from '../../../modules/local/bcftools/norm/main'
@@ -52,7 +53,6 @@ workflow WF_NANOPORE_AMPLICON {
     ch_refstats     // channel: [ file(refstats.txt) ]
     ch_primer_bed   // channel: [ file(primer_bed) ]
     ch_amplicon_bed // channel: [ file(amplicon_bed) ]
-    ch_tiling_bed   // channel: [ file(tiling_bed) ]
     ch_clair3_model // channel: [ file(clair3_model) ]
 
     main:
@@ -146,7 +146,10 @@ workflow WF_NANOPORE_AMPLICON {
                 .map{ bed -> [ bed.baseName.replaceAll(~/\.bed$/, ''), file(bed) ] }
                 .set { ch_bed_pools }
         } else {
-            ch_tiling_bed
+            CREATE_TILING_BED(
+                ch_amplicon_bed
+            )
+            CREATE_TILING_BED.out.bed
                 .map { bed -> [ bed.baseName.replaceAll(~/\.bed$/, ''), file(bed) ] }
                 .set { ch_bed_pools }
         }
@@ -161,7 +164,8 @@ workflow WF_NANOPORE_AMPLICON {
             ch_trimmed_bams_w_pool,
             ch_reference,
             ch_ref_fai,
-            ch_clair3_model
+            ch_clair3_model,
+            params.clair3_no_pool_split
         )
         ch_tmp_vcfs = CLAIR3_VARIANTS.out.vcf
         ch_versions = ch_versions.mix(CLAIR3_VARIANTS.out.versions)
