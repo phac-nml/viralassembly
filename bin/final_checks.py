@@ -3,6 +3,7 @@
 import argparse
 import pandas as pd
 from Bio import SeqIO
+from collections import defaultdict
 
 def init_parser() -> argparse.ArgumentParser:
     """
@@ -82,7 +83,8 @@ def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
     """
     columns = list(df.columns)
     if any(x not in columns for x in needed_columns):
-        raise ValueError('Missing {} column(s) needed for validation'.format([x for x in needed_columns if x not in columns]))
+        missing_str = ', '.join([x for x in needed_columns if x not in columns])
+        raise ValueError(f'Missing {missing_str} column(s) needed for validation')
 
 def assess_control(row: pd.Series, threshold: float) -> str:
     """Assess control values to pass or fail them"""
@@ -96,12 +98,18 @@ def main() -> None:
     parser = init_parser()
     args = parser.parse_args()
     neg_ctrl_substrings = args.neg_ctrl_substrings.split(',')
-    reference = SeqIO.read(args.reference, "fasta")
-    genome_length = len(reference.seq)
+
+    # Get the length of the genome / segments for giving to failed samples
+    genome_lengths = defaultdict(dict)
+    with open(args.reference) as handle:
+        for record in SeqIO.parse(handle, "fasta"):
+            chrom = record.id
+            genome_lengths[chrom] = len(record.seq)
 
     # Fill these columns with 0 if they have no data
     numeric_columns = [
         'num_aligned_reads',
+        'num_segment_reads',
         'genome_completeness',
         'mean_sequencing_depth',
         'median_sequencing_depth',
@@ -115,7 +123,7 @@ def main() -> None:
 
     # Do stuff
     df = pd.read_csv(args.csv)
-    validate_df_columns(df, ['sample', 'num_aligned_reads', 'genome_completeness', 'mean_sequencing_depth', 'median_sequencing_depth', 'qc_pass'])
+    validate_df_columns(df, ['sample', 'num_aligned_reads', 'num_segment_reads', 'genome_completeness', 'mean_sequencing_depth', 'median_sequencing_depth', 'qc_pass'])
 
     # Adding in filtered out samples and give them back their metadata if available
     if args.filter_tracking:
@@ -127,7 +135,11 @@ def main() -> None:
             filter_df = filter_df.merge(metadata_df, on='sample', how='left').fillna(args.fill_str)
         # Fill important numeric columns with 0 before merging and checking controls
         filter_df[numeric_columns] = 0
-        filter_df['num_consensus_n'] = genome_length
+
+        # Going to have to copy / create rows for each segment
+        df_ref = pd.DataFrame(genome_lengths.items(), columns=['reference', 'num_consensus_n'])
+        filter_df = filter_df.merge(df_ref, how='cross')
+
         df = pd.concat([df, filter_df])
         df = df.reset_index(drop=True)
 
@@ -152,6 +164,10 @@ def main() -> None:
         # Add neg control columns as not available
         run_control_status = 'WARN'
         run_control_info = 'No negative controls found in run'
+
+    # Drop columns if we are not segmented
+    if (df['reference'].nunique() == 1):
+        df.drop(columns=['reference', 'num_segment_reads'], inplace=True)
 
     # Adding final columns and output
     df['run_status'] = run_control_status

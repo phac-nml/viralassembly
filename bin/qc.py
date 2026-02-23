@@ -8,7 +8,8 @@ import pandas as pd
 import vcf
 
 from Bio import SeqIO, SeqRecord
-from typing import Tuple
+from collections import defaultdict
+from typing import Tuple, Optional
 
 def init_parser() -> argparse.ArgumentParser:
     """
@@ -99,9 +100,10 @@ def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
     """
     columns = list(df.columns)
     if any(x not in columns for x in needed_columns):
-        raise ValueError('Missing {} column(s) needed for validation'.format([x for x in needed_columns if x not in columns]))
+        missing_str = ', '.join([x for x in needed_columns if x not in columns])
+        raise ValueError(f'Missing {missing_str} column(s) needed for validation'.format())
 
-def get_read_count(bam: str) -> int:
+def get_read_count(bam: str, chrom: Optional[str] = None) -> int:
     '''
     Purpose:
     --------
@@ -111,16 +113,20 @@ def get_read_count(bam: str) -> int:
     -----------
     bam - str
         Path to the primertrimmed bam file
+    chrom - None | str
+        Name of the segment/chromosome to get the stats for
 
     Returns:
     --------
     Integer number of aligned reads
     '''
     cmd = ['samtools', 'view', '-c', '-F0x900', bam]
+    if chrom:
+        cmd.append(chrom)
     read_count = subprocess.run(cmd, capture_output=True, check=True, text=True).stdout.strip('\n')
     return int(read_count)
 
-def parse_depth_bed(bed: str) -> Tuple[float, float]:
+def parse_depth_bed(bed: str) -> defaultdict:
     '''
     Purpose:
     --------
@@ -133,22 +139,27 @@ def parse_depth_bed(bed: str) -> Tuple[float, float]:
 
     Returns:
     --------
-    Float mean sequencing depth
-    Float median sequencing depth
+    depth_stats dict containing chrom as keys with median and mode underlying
     '''
-    depth = []
+    depth = defaultdict(list)
     with open(bed, 'r') as handle:
         reader = csv.DictReader(handle, delimiter='\t')
         for d in reader:
-            depth.append(int(d['depth']))
+            depth[d['chrom']].append(int(d['depth']))
 
     # Empty file return nothing
-    if depth == []:
-        return 0, 0
-    # Otherwise calc
-    mean_dep = round(statistics.mean(depth), 2)
-    median_dep = round(statistics.median(depth), 1)
-    return mean_dep, median_dep
+    depth_stats = defaultdict(dict)
+    for chrom, depth_list in depth.items():
+        if depth_list == []:
+            depth_stats[chrom]['mean'] = 0
+            depth_stats[chrom]['median'] = 0
+            continue
+        # Otherwise calc
+        mean_dep = round(statistics.mean(depth_list), 2)
+        median_dep = round(statistics.median(depth_list), 1)
+        depth_stats[chrom]['mean'] = mean_dep
+        depth_stats[chrom]['median'] = median_dep
+    return depth_stats
 
 def parse_consensus(fasta: SeqRecord) -> Tuple[int, float]:
     '''
@@ -179,7 +190,7 @@ def _create_variantpos_dict(var: str, var_range: range) -> dict:
         'range': var_range
     }
 
-def parse_vcf(vcf_file: str) -> Tuple[str, list, str, str, dict]:
+def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, str, dict]:
     '''
     Purpose:
     --------
@@ -189,6 +200,8 @@ def parse_vcf(vcf_file: str) -> Tuple[str, list, str, str, dict]:
     -----------
     vcf_file - str
         Path to input gzipped vcf file from args
+    chrom - str
+        Name of chrom to select variants from
 
     Returns:
     --------
@@ -215,6 +228,9 @@ def parse_vcf(vcf_file: str) -> Tuple[str, list, str, str, dict]:
     with open(vcf_file, 'rb') as handle:
         reader = vcf.Reader(handle)
         for record in reader:
+            # Only wanted chrom allowed
+            if record.CHROM != chrom:
+                continue
             # Odd issue previously - skip over Ns in vcf
             if str(record.ALT[0]).upper() == 'N':
                 continue
@@ -416,49 +432,69 @@ def main() -> None:
     parser = init_parser()
     args = parser.parse_args()
 
-    # Do something
-    num_reads = get_read_count(args.bam)
-    mean_dep, median_dep = parse_depth_bed(args.depth)
-    consensus = SeqIO.read(args.consensus, "fasta")
-    count_n, completeness = parse_consensus(consensus)
-    variants, variant_positions, frameshift_variants, var_count_dict = parse_vcf(args.vcf)
+    # Checks that Chrom in them already and output a dict or overall setting
+    #  Depth/Reads
+    depth_dict = parse_depth_bed(args.depth)
+    total_reads = get_read_count(args.bam)
 
-    # Optional inputs
+    # Optional inputs - out for now to reeval
+    # pcr_primer_overlap = 'NA'
+    # seq_primer_overlap = 'NA'
+    # if args.seq_bed:
+    #     seq_primer_overlap = check_primers(args.seq_bed, variant_positions)
+    # if args.pcr_bed:
+    #     pcr_primer_overlap = check_primers(args.pcr_bed, variant_positions)
+
+    # Per chrom/segment information and final output setup
+    final_out = []
+    with open(args.consensus) as handle:
+        for record in SeqIO.parse(handle, "fasta"):
+            # The chrom/segment is always after the sample name based on how the pipeline is setup
+            chrom = record.description.split(' ')[1]
+
+            # Reads
+            num_reads = get_read_count(args.bam, chrom)
+            count_n, completeness = parse_consensus(record)
+
+            # Variants
+            #  This isn't efficient as we're going to parse the file multiple times
+            #  Will maybe think of a good way to adjust this but I didn't want to restructure if for now
+            #  And its not an intensive/large file to parse
+            variants, variant_positions, frameshift_variants, var_count_dict = parse_vcf(args.vcf, chrom)
+
+            # Grade qc
+            mean_depth = depth_dict[chrom]['mean']
+            median_depth = depth_dict[chrom]['median']
+            qc_status = grade_qc(completeness, mean_depth, median_depth, frameshift_variants)
+
+            # Final Output
+            final_out.append({
+                'sample': args.sample,
+                'reference': chrom,
+                'num_aligned_reads': total_reads,
+                'num_segment_reads': num_reads,
+                'num_consensus_n': count_n,
+                'genome_completeness': completeness,
+                'mean_sequencing_depth': mean_depth,
+                'median_sequencing_depth': median_depth,
+                'total_variants': var_count_dict['total_variants'],
+                'num_snps': var_count_dict['num_snps'],
+                'num_deletions': var_count_dict['num_deletions'],
+                'num_deletion_sites': var_count_dict['num_deletion_sites'],
+                'num_insertions': var_count_dict['num_insertions'],
+                'num_insertion_sites': var_count_dict['num_insertion_sites'],
+                'variants': variants,
+                'possible_frameshift_variants': frameshift_variants,
+                'sequencing_primer_variants': '',
+                'diagnostic_primer_variants': '',
+                'qc_pass': qc_status,
+                'irida_id': args.irida_id
+            })
+
+    # Create and output final CSV
+    df = pd.DataFrame.from_dict(final_out)
     if args.metadata:
         metadata_df = parse_metadata(args.metadata, args.sample)
-    pcr_primer_overlap = 'NA'
-    seq_primer_overlap = 'NA'
-    if args.seq_bed:
-        seq_primer_overlap = check_primers(args.seq_bed, variant_positions)
-    if args.pcr_bed:
-        pcr_primer_overlap = check_primers(args.pcr_bed, variant_positions)
-
-    # Grade qc
-    qc_status = grade_qc(completeness, mean_dep, median_dep, frameshift_variants)
-
-    # Output
-    final = {
-        'sample': [args.sample],
-        'num_aligned_reads': [num_reads],
-        'num_consensus_n': [count_n],
-        'genome_completeness': [completeness],
-        'mean_sequencing_depth': [mean_dep],
-        'median_sequencing_depth': [median_dep],
-        'total_variants': [var_count_dict['total_variants']],
-        'num_snps': [var_count_dict['num_snps']],
-        'num_deletions': [var_count_dict['num_deletions']],
-        'num_deletion_sites': [var_count_dict['num_deletion_sites']],
-        'num_insertions': [var_count_dict['num_insertions']],
-        'num_insertion_sites': [var_count_dict['num_insertion_sites']],
-        'variants': [variants],
-        'possible_frameshift_variants': [frameshift_variants],
-        'sequencing_primer_variants': [seq_primer_overlap],
-        'diagnostic_primer_variants': [pcr_primer_overlap],
-        'qc_pass': [qc_status],
-        'irida_id': [args.irida_id]
-    }
-    df = pd.DataFrame.from_dict(final)
-    if args.metadata:
         df = df.merge(metadata_df, on='sample', how='left')
     df.to_csv(f'{args.sample}.qc.csv', index=False)
 
