@@ -1,5 +1,5 @@
 process SNPEFF_DATABASE {
-    label 'process_medium'
+    label 'process_small'
     label 'error_ignore' // If can't build we don't run snpeff
 
     conda "${moduleDir}/environment.yml"
@@ -8,12 +8,12 @@ process SNPEFF_DATABASE {
         'biocontainers/snpeff:5.4.0a--hdfd78af_0' }"
 
     input:
-    val genome
+    val ref_ids
     path reference
     path gff
 
     output:
-    path("snpeff_db"), emit: db
+    tuple val(genome), path("snpeff_db"), emit: db
     path("snpeff.config"), optional: true, emit: config
     path "versions.yml", emit: versions
 
@@ -25,6 +25,15 @@ process SNPEFF_DATABASE {
     } else {
         avail_mem = (task.memory.mega*0.8).intValue()
     }
+
+    // Some setup based on segmented virus compared to non
+    def segmented = ref_ids.size() > 1 ? true : false
+    def str_ref_ids = ref_ids.join(' ')
+    genome = str_ref_ids
+    if (segmented) {
+        genome = reference.name.split((/\./))[0]
+    }
+
     // Build with gff if that param is given
     if ( gff ) {
         """
@@ -63,8 +72,8 @@ process SNPEFF_DATABASE {
         """
     } else {
         """
-        # Check if we can find the reference name in the database
-        if \$(snpEff databases | grep -q "$genome" ); then
+        # Check if we can find the reference name in the database but only on non-segmented ones
+        if \$(snpEff databases | grep -q "$genome" ) && [ "$segmented" = "false" ]; then
             echo "Found $genome in snpEff database"
             snpEff \\
                 -Xmx${avail_mem}M \\
@@ -80,7 +89,9 @@ process SNPEFF_DATABASE {
 
             # Try to get gbk file
             mkdir -p "\$DIR"
-            wget "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=${genome}&rettype=gbwithparts&retmode=text" -O \$GENE_FILE
+            for ref_id in $str_ref_ids ; do
+                wget "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&id=\${ref_id}&rettype=gbwithparts&retmode=text" -O - >> \$GENE_FILE
+            done
 
             # Create database
             echo "${genome}.genome : ${genome}" > snpeff.config

@@ -30,11 +30,11 @@ workflow WF_SNPEFF_ANNOTATE {
     // Get reference id
     ch_reference.splitFasta( record: [ id: true ] )
         .map{ record -> record.id.toString() }
-        .first() // To turn to value channel for now
-        .set{ ch_ref_id_str }
+        .collect() // To collect segmented and turn to a value channel
+        .set{ ch_ref_ids }
 
     SNPEFF_DATABASE(
-        ch_ref_id_str,
+        ch_ref_ids,
         ch_reference,
         ch_gff
     )
@@ -42,7 +42,6 @@ workflow WF_SNPEFF_ANNOTATE {
 
     SNPEFF_ANNOTATE(
         ch_vcf,
-        ch_ref_id_str,
         SNPEFF_DATABASE.out.db,
         SNPEFF_DATABASE.out.config
             .ifEmpty([])

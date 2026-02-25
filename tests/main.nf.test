@@ -101,7 +101,6 @@ nextflow_pipeline {
                 input           = "${projectDir}/test_data/nanopore/input.csv"
                 reference       = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
                 clair3_model    = "r1041_e82_400bps_sup_v420"
-                skip_snpeff     = true
                 // To keep consistent results from downsampled input
                 min_length      = 600
                 max_length      = 1600
@@ -174,9 +173,15 @@ nextflow_pipeline {
             assert lines.contains("241,MN908947.3,0,0,318,0,27,0,345,100.0,C,T SNP,NA")
 
             // SnpEff outputs - to add
-            // assert path("$launchDir/results/snpeff/sample1.ann.vcf").exists()
-            // lines = path("$launchDir/results/snpeff/sample1.ann.vcf").readLines()
-            // assert lines.size() == 79
+            assert path("$launchDir/results/snpeff/sample1.ann.vcf").exists()
+            lines = path("$launchDir/results/snpeff/sample1.ann.vcf").readLines()
+            assert lines.size() == 77
+
+            assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()
+            lines = path("$launchDir/results/vcf/sample1.vcf.tsv").readLines()
+            assert lines.size() == 55
+            assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
+            assert lines.contains("MN908947.3\t28883\tN p.G204R\tmissense_variant\tG\tC\t38.02")
 
             // TSV of the VCF for reporting
             assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()
@@ -633,7 +638,6 @@ nextflow_pipeline {
             lines = path("$launchDir/results/vcf/sample1.vcf.tsv").readLines()
             assert lines.size() == 56
             assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
-            assert lines.contains("MN908947.3\t26270\tE p.T9I\tmissense_variant\tC\tT\t56.01")
 
             // Final Reports
             assert path("$launchDir/results/Overall-Run-MultiQC.report.html").exists()

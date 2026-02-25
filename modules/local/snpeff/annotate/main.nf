@@ -9,8 +9,7 @@ process SNPEFF_ANNOTATE {
 
     input:
     tuple val(meta), path(vcf)
-    val genome
-    path snpeff_db
+    tuple val(genome), path(snpeff_db)
     path config
 
     output:
@@ -27,7 +26,7 @@ process SNPEFF_ANNOTATE {
         avail_mem = (task.memory.mega*0.8).intValue()
     }
     // Args for db and config
-    def snpeff_db_command = snpeff_db ? "-dataDir ${snpeff_db}" : ""
+    def snpeff_db_command = snpeff_db ? "-dataDir \${PWD}/${snpeff_db}" : ""
     def config_command = config ? "-config ${config}" : ""
     """
     # Sporatic lock issue in tmp dir solution
@@ -44,7 +43,7 @@ process SNPEFF_ANNOTATE {
         -no-intergenic \\
         -no-intron \\
         -hgvs1LetterAa \\
-        ${genome} \\
+        $genome \\
         $vcf \\
         > ${meta.id}.ann.vcf
 
