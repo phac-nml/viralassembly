@@ -11,8 +11,13 @@ BARCODE_REGEX = re.compile(r'barcode(\d+)')
 
 def init_parser() -> argparse.ArgumentParser:
     """
-    Specify command line arguments
-    Returns command line parser with inputs
+    Purpose
+    -------
+    Parse CL inputs to be used in script
+
+    Returns
+    -------
+    argparse.ArgumentParser
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -40,8 +45,19 @@ def init_parser() -> argparse.ArgumentParser:
 
 def match_sample_barcode(barcode: str, metadata: str) -> Optional[str]:
     """
+    Purpose
+    -------
     Match the barcode given to the correct sample in the input metadata file
-        If match found, that is returned
+
+    Parameters
+    ----------
+    barcode: str
+        The detected barcode from the input sample name
+    metadata: str
+        Path to metadata file
+    Returns
+    -------
+    Str sample name if match found
         Otherwise None
     """
     with open(metadata) as tsv:

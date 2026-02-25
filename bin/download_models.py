@@ -40,7 +40,19 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def download_file(url: str, local_path: Path):
+def download_file(url: str, local_path: Path) -> None:
+    """
+    Purpose
+    -------
+    Download given URL to specific local path
+
+    Parameters
+    ----------
+    url: str
+        The URL to stream data from
+    local_path: Path
+        The path to save the streamed data
+    """
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
         with open(local_path, "wb") as f:
@@ -49,7 +61,18 @@ def download_file(url: str, local_path: Path):
 
 
 def download_model(download_dir: Path, model: str) -> None:
-    """Download model to the given directory based on the oxfordnanoportal model formatting"""
+    """
+    Purpose
+    -------
+    Download model to the given directory based on the oxfordnanoportal model formatting
+
+    Parameters
+    ----------
+    download_dir: path
+        The path to download the model to
+    model: str
+        The name of the model to download
+    """
     # All models follow the same format for the moment
     #  From https://github.com/nanoporetech/rerio/tree/master/clair3_models
     model_fname = f"{model}.tar.gz"

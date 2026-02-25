@@ -1,6 +1,6 @@
 # viralassembly
 
-A generic viral assembly and QC pipeline which utilises a re-implementation of the [artic pipeline](https://github.com/artic-network/fieldbioinformatics/tree/master/artic) to separate out the individual steps allowing greater control on tool versions along with how data is run through the processes. This pipeline can be used as a starting point for analyses on viruses without dedicated workflows already available.
+A generic viral assembly and QC pipeline which utilises a re-implementation of the [ARTIC pipeline](https://github.com/artic-network/fieldbioinformatics/tree/master/artic) to separate out the individual steps allowing greater control on tool versions along with how data is run through the processes. This pipeline can be used as a starting point for analyses on viruses without dedicated workflows already available.
 
 This pipeline is intended to be run on either Nanopore Amplicon Sequencing data or Basic Nanopore NGS Sequencing data that can utilize a reference genome for read mapping, variant calling, and other downstream analyses. It generates variant calls, consensus sequences, and quality control information based on the reference. To do this, there are three different variant callers that can be utilized which includes: `clair3`, `medaka`, and `nanopolish` (For R9.4.1 flowcells and below only). By default, `clair3` is used and highly recommended over the other two (as of December 2025). Their inclusion being for completeness with eventual removal from the workflow.
 
@@ -9,9 +9,6 @@ The goals of this pipeline are:
 1. Provide a generic viral pipeline for the NML Surviellance Platform IRIDA-Next
 2. Provide detailed and useful `Run` and `Sample` level final reports
 3. Allow the pipeline to be used on other viruses with or without amplicon schemes
-   - Due to the QC steps there is unfortunately a current limitation at working with segmented viruses
-     - The pipeline will automatically exit after assembly and not generate QC and Reports for these at this time
-     - This will hopefully be fully implemented at some point in the future
 
 ## Index
 

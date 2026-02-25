@@ -14,6 +14,9 @@ def init_parser() -> argparse.ArgumentParser:
     Purpose
     -------
     Parse CL inputs to be used in script
+
+    Returns
+    argparse.ArgumentParser
     '''
     parser = argparse.ArgumentParser()
     parser.add_argument(

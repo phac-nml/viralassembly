@@ -13,8 +13,13 @@ from typing import Tuple, Optional
 
 def init_parser() -> argparse.ArgumentParser:
     """
-    Specify command line arguments
-    Returns command line parser with inputs
+    Purpose
+    -------
+    Parse CL inputs to be used in script
+
+    Returns
+    -------
+    argparse.ArgumentParser
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -105,19 +110,19 @@ def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
 
 def get_read_count(bam: str, chrom: Optional[str] = None) -> int:
     '''
-    Purpose:
-    --------
+    Purpose
+    -------
     Get the number of aligned reads from given bamfile using samtools and subprocess
 
-    Parameters:
-    -----------
-    bam - str
+    Parameters
+    ----------
+    bam: str
         Path to the primertrimmed bam file
-    chrom - None | str
+    chrom: None | str
         Name of the segment/chromosome to get the stats for
 
-    Returns:
-    --------
+    Returns
+    -------
     Integer number of aligned reads
     '''
     cmd = ['samtools', 'view', '-c', '-F0x900', bam]
@@ -128,17 +133,17 @@ def get_read_count(bam: str, chrom: Optional[str] = None) -> int:
 
 def parse_depth_bed(bed: str) -> defaultdict:
     '''
-    Purpose:
-    --------
-    Calculate the mean and median sequencing depth from samtools depth bed file
+    Purpose
+    -------
+    Calculate the mean and median sequencing depth for each chrom from samtools depth bed file
 
-    Parameters:
-    -----------
-    bed - str
+    Parameters
+    ----------
+    bed: str
         Path to the input depth bed file from samtools depth
 
-    Returns:
-    --------
+    Returns
+    -------
     depth_stats dict containing chrom as keys with median and mode underlying
     '''
     depth = defaultdict(list)
@@ -163,17 +168,17 @@ def parse_depth_bed(bed: str) -> defaultdict:
 
 def parse_consensus(fasta: SeqRecord) -> Tuple[int, float]:
     '''
-    Purpose:
-    --------
+    Purpose
+    -------
     Parse consensus file to get the genome completeness and N count
 
     Parameters:
     -----------
-    fasta - SeqRecord
+    fasta: SeqRecord
         Bio SeqRecord of input consensus sequence
 
-    Returns:
-    --------
+    Returns
+    -------
     Integer number of Ns
     Float genome completeness calculated from the number of Ns
     '''
@@ -192,19 +197,19 @@ def _create_variantpos_dict(var: str, var_range: range) -> dict:
 
 def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, str, dict]:
     '''
-    Purpose:
-    --------
+    Purpose
+    -------
     Parse input VCF file to find variants and their locations
 
-    Parameters:
-    -----------
-    vcf_file - str
+    Parameters
+    ----------
+    vcf_file: str
         Path to input gzipped vcf file from args
-    chrom - str
+    chrom: str
         Name of chrom to select variants from
 
-    Returns:
-    --------
+    Returns
+    -------
     String of parsed variants to report
     List of variant-range dicts
     String of any potential frameshift variants (%3==0 check and snpeff ann check)
@@ -317,21 +322,23 @@ def range_overlap(r1: range, r2: range) -> bool:
     y1, y2 = r2.start, r2.stop
     return x1 <= y2 and y1 <= x2
 
-def check_primers(bed, variant_locations: list) -> str:
+def check_primers(bed: str, variant_locations: list, chrom: str) -> str:
     '''
-    Purpose:
-    --------
+    Purpose
+    -------
     Parse input bed file for any variant regions that overlap
 
-    Parameters:
-    -----------
-    bed - str
+    Parameters
+    ----------
+    bed: str
         Path to bed file
-    variant_locations - list[dict]
+    variant_locations: list[dict]
         List of variantpos dictionaries with variant and range keys
+    chrom: str
+        Name of the segment the variants are from
 
-    Returns:
-    --------
+    Returns
+    -------
     String of primer mutations found or string "none" if there are none
     '''
     if not variant_locations:
@@ -343,6 +350,9 @@ def check_primers(bed, variant_locations: list) -> str:
         for row in reader:
             # Bed file needs at least 4 rows (chrom, start, stop, name)
             if len(row) < 4:
+                continue
+            # Only check on the right chrom for variants
+            if row[0] != chrom:
                 continue
             # Set primer values, make sure start lower than stop for range
             start, stop, name = int(row[1]), int(row[2]), row[3]
@@ -361,20 +371,20 @@ def check_primers(bed, variant_locations: list) -> str:
 
 def parse_metadata(metadata: str, sample: str) -> pd.DataFrame:
     '''
-    Purpose:
-    --------
+    Purpose
+    -------
     Parse metadata file for given sample
 
-    Parameters:
-    -----------
-    metadata - str
+    Parameters
+    ----------
+    metadata: str
         Path to metadata file
-    sample - str
+    sample: str
         Sample name to look for
 
-    Returns:
-    --------
-    Dataframe containing the found sample
+    Returns
+    -------
+    DataFrame containing the found sample
     '''
     df = pd.read_csv(metadata, sep='\t')
     validate_df_columns(df, ['sample'])
@@ -384,28 +394,28 @@ def parse_metadata(metadata: str, sample: str) -> pd.DataFrame:
     elif len(df) > 1:
         raise RuntimeError(f'Sample {sample} exists more than once in the metadata file')
     else:
-        # Can probably return an empty df?
+        # Can return an empty df
         return df
 
 def grade_qc(completeness: float, mean_dep: float, median_dep: float, frameshift_vars: str) -> str:
     '''
-    Purpose:
-    --------
+    Purpose
+    -------
     Determine if the sample passes internal QC metrics
 
-    Parameters:
-    -----------
-    completeness - float
+    Parameters
+    ----------
+    completeness: float
         Genome completeness
-    mean_dep - float
+    mean_dep: float
         Mean sequencing depth
-    median_dep - float
+    median_dep: float
         Median sequencing depth
-    frameshift_vars - str
+    frameshift_vars: str
         String of any potential frameshift variants or "none" if there weren't any
 
-    Returns:
-    --------
+    Returns
+    -------
     String QC status
     '''
     qc_status = []
@@ -437,14 +447,6 @@ def main() -> None:
     depth_dict = parse_depth_bed(args.depth)
     total_reads = get_read_count(args.bam)
 
-    # Optional inputs - out for now to reeval
-    # pcr_primer_overlap = 'NA'
-    # seq_primer_overlap = 'NA'
-    # if args.seq_bed:
-    #     seq_primer_overlap = check_primers(args.seq_bed, variant_positions)
-    # if args.pcr_bed:
-    #     pcr_primer_overlap = check_primers(args.pcr_bed, variant_positions)
-
     # Per chrom/segment information and final output setup
     final_out = []
     with open(args.consensus) as handle:
@@ -461,6 +463,13 @@ def main() -> None:
             #  Will maybe think of a good way to adjust this but I didn't want to restructure if for now
             #  And its not an intensive/large file to parse
             variants, variant_positions, frameshift_variants, var_count_dict = parse_vcf(args.vcf, chrom)
+            # Optional primer checks, same as variants parsing multiple times for now
+            pcr_primer_overlap = 'NA'
+            seq_primer_overlap = 'NA'
+            if args.seq_bed:
+                seq_primer_overlap = check_primers(args.seq_bed, variant_positions, chrom)
+            if args.pcr_bed:
+                pcr_primer_overlap = check_primers(args.pcr_bed, variant_positions, chrom)
 
             # Grade qc
             mean_depth = depth_dict[chrom]['mean']
@@ -485,8 +494,8 @@ def main() -> None:
                 'num_insertion_sites': var_count_dict['num_insertion_sites'],
                 'variants': variants,
                 'possible_frameshift_variants': frameshift_variants,
-                'sequencing_primer_variants': '',
-                'diagnostic_primer_variants': '',
+                'sequencing_primer_variants': seq_primer_overlap,
+                'diagnostic_primer_variants': pcr_primer_overlap,
                 'qc_pass': qc_status,
                 'irida_id': args.irida_id
             })

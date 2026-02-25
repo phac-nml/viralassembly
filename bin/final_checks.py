@@ -7,8 +7,13 @@ from collections import defaultdict
 
 def init_parser() -> argparse.ArgumentParser:
     """
-    Specify command line arguments
-    Returns command line parser with inputs
+    Purpose
+    -------
+    Parse CL inputs to be used in script
+
+    Returns
+    -------
+    argparse.ArgumentParser
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -87,7 +92,7 @@ def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
         raise ValueError(f'Missing {missing_str} column(s) needed for validation')
 
 def assess_control(row: pd.Series, threshold: float) -> str:
-    """Assess control values to pass or fail them"""
+    """Assess control values to pass or fail them based on float threshold given"""
     if row['genome_completeness'] >= threshold:
         return f'Warning - Above {threshold}% genome completeness contamination threshold'
     return 'PASS'

@@ -6,8 +6,13 @@ from Bio import SeqIO, SeqRecord
 
 def init_parser() -> argparse.ArgumentParser:
     """
-    Specify command line arguments
-    Returns command line parser with inputs
+    Purpose
+    -------
+    Parse CL inputs to be used in script
+
+    Returns
+    -------
+    argparse.ArgumentParser
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(

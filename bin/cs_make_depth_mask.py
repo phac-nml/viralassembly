@@ -10,21 +10,21 @@ import os
 import pysam
 
 
-def collect_depths(bamfile, ref_name, min_depth, ignore_deletions):
+def collect_depths(bamfile: str, ref_name: str, min_depth: int, ignore_deletions: bool):
     """Collect read depth of coverage per reference position in a BAM file.
 
     Parameters
     ----------
-    bamfile : string
+    bamfile: string
         The BAM file that needs processing
 
-    ref_name : string
+    ref_name: string
         The name of the reference sequence to collect the depths for
 
-    min_depth : int
+    min_depth: int
         The minimum depth to report coverage for (0 will be reported if coverage < min_depth at a given position)
 
-    ignore_deletions : bool
+    ignore_deletions: bool
         If true, positional depth counts will ignore reads with reference deletions
 
     Returns

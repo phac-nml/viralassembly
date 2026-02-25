@@ -72,7 +72,7 @@ process CREATE_VARIANT_TSV {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        vcf_to_tsv.py: 0.1.0
+        vcf_to_tsv.py: 0.2.0
     END_VERSIONS
     """
 
@@ -84,7 +84,7 @@ process CREATE_VARIANT_TSV {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        vcf_to_tsv.py: 0.1.0
+        vcf_to_tsv.py: 0.2.0
     END_VERSIONS
     """
 }
