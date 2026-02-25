@@ -173,6 +173,14 @@ nextflow_pipeline {
             assert lines.contains("position,chrom,A,C,T,G,del,ins,total_reads,percentage_nonref,ref_base,variant_type,distribution")
             assert lines.contains("241,MN908947.3,0,0,318,0,27,0,345,100.0,C,T SNP,NA")
 
+            // SnpEff outputs - to add
+            // assert path("$launchDir/results/snpeff/sample1.ann.vcf").exists()
+            // lines = path("$launchDir/results/snpeff/sample1.ann.vcf").readLines()
+            // assert lines.size() == 79
+
+            // TSV of the VCF for reporting
+            assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()
+
             // Final Reports
             assert path("$launchDir/results/reportDashboard.html").exists()
 
@@ -394,6 +402,9 @@ nextflow_pipeline {
             assert path("$launchDir/results/snpeff/reads_100.ann.vcf").exists()
             lines = path("$launchDir/results/snpeff/reads_100.ann.vcf").readLines()
             assert lines.size() == 19
+
+            // TSV of the VCF for reporting
+            assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()
 
             // Final Reports
             assert path("$launchDir/results/Overall-Run-MultiQC.report.html").exists()
@@ -617,6 +628,13 @@ nextflow_pipeline {
             lines = path("$launchDir/results/snpeff/reads_100.ann.vcf").readLines()
             assert lines.size() == 19
 
+            // TSV of the VCF for reporting
+            assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()
+            lines = path("$launchDir/results/vcf/sample1.vcf.tsv").readLines()
+            assert lines.size() == 56
+            assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
+            assert lines.contains("MN908947.3\t26270\tE p.T9I\tmissense_variant\tC\tT\t56.01")
+
             // Final Reports
             assert path("$launchDir/results/Overall-Run-MultiQC.report.html").exists()
             assert path("$launchDir/results/sample_mqc/sample1.report.html").exists()
@@ -724,7 +742,7 @@ nextflow_pipeline {
 
     //--- Test 8 ----------------------------------------------------------------------------
     // Limited testing for the moment while working to add in an update to handle the segmented viruses well
-    test("Nanopore WGS Segmented Workflow") {
+    test("Nanopore WGS Segmented Workflow with SnpEff") {
         tag "success"
         tag "wgs"
         tag "segmented"
@@ -791,6 +809,14 @@ nextflow_pipeline {
             assert path("$launchDir/results/vcf/ERR14941536.fail.vcf").exists()
             lines = path("$launchDir/results/vcf/ERR14941536.fail.vcf").readLines()
             assert lines.size() == 21
+
+            // SnpEff and TSV
+            assert path("$launchDir/results/snpeff/ERR14941536.ann.vcf").exists()
+            assert path("$launchDir/results/vcf/ERR14941536.vcf.tsv").exists()
+            lines = path("$launchDir/results/vcf/ERR14941536.vcf.tsv").readLines()
+            assert lines.size() == 431
+            assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
+            assert lines.contains("NC_014395.1\t942\tNP p.A237A\tsynonymous_variant\tG\tA\t35.96")
 
             // Final QC File
             assert path("$launchDir/results/overall.qc.csv").exists()
