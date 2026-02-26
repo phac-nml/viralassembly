@@ -91,7 +91,7 @@ nextflow_pipeline {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
     //--- Test 5 ----------------------------------------------------------------------------
-    test("Nanopore WGS Workflow") {
+    test("Nanopore WGS Workflow with SnpEff") {
         tag "success"
         tag "wgs"
 
@@ -185,6 +185,14 @@ nextflow_pipeline {
 
             // TSV of the VCF for reporting
             assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()
+            lines = path("$launchDir/results/vcf/sample1.vcf.tsv").readLines()
+            assert lines.size() == 55
+            assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
+            // Check for some specific protein mutations
+            assert lines.any { it.contains("orf1ab p.P4715L") }
+            assert lines.any { it.contains("S p.S371P") }
+            assert lines.any { it.contains("N p.P13L") }
+            assert lines.any { it.contains("MN908947.3") }
 
             // Final Reports
             assert path("$launchDir/results/reportDashboard.html").exists()
@@ -292,6 +300,7 @@ nextflow_pipeline {
     test("Nanopore Amplicon Workflow with MultiQC") {
         tag "success"
         tag "amplicon"
+        tag "here"
 
         when {
             params {
@@ -408,8 +417,16 @@ nextflow_pipeline {
             lines = path("$launchDir/results/snpeff/reads_100.ann.vcf").readLines()
             assert lines.size() == 19
 
-            // TSV of the VCF for reporting
+            // TSV of the VCF for reporting - Not annotated as no SnpEff
             assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()
+            lines = path("$launchDir/results/vcf/sample1.vcf.tsv").readLines()
+            assert lines.size() == 56
+            assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
+            // Check for some specific protein mutations
+            assert lines.any { it.contains("orf1ab p.T4992I") }
+            assert lines.any { it.contains("S p.P681H") }
+            assert lines.any { it.contains("N p.P13L") }
+            assert lines.any { it.contains("MN908947.3") }
 
             // Final Reports
             assert path("$launchDir/results/Overall-Run-MultiQC.report.html").exists()
@@ -638,6 +655,11 @@ nextflow_pipeline {
             lines = path("$launchDir/results/vcf/sample1.vcf.tsv").readLines()
             assert lines.size() == 56
             assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
+            // Check for some specific protein mutations
+            assert lines.any { it.contains("orf1ab p.T4992I") }
+            assert lines.any { it.contains("S p.S371P") }
+            assert lines.any { it.contains("N p.P13L") }
+            assert lines.any { it.contains("MN908947.3") }
 
             // Final Reports
             assert path("$launchDir/results/Overall-Run-MultiQC.report.html").exists()
@@ -820,7 +842,11 @@ nextflow_pipeline {
             lines = path("$launchDir/results/vcf/ERR14941536.vcf.tsv").readLines()
             assert lines.size() == 431
             assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
-            assert lines.contains("NC_014395.1\t942\tNP p.A237A\tsynonymous_variant\tG\tA\t35.96")
+            // Check for entries with each Segment
+            assert lines.any { it.contains("RVFV_sM_gp1") }
+            assert lines.any { it.contains("NSs") }
+            assert lines.any { it.contains("RVFV_sL_gp1") }
+            assert lines.any { it.contains("NC_014397.1") }
 
             // Final QC File
             assert path("$launchDir/results/overall.qc.csv").exists()
