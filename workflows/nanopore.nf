@@ -30,6 +30,7 @@ include { FINAL_QC_CSV              } from '../modules/local/qc/main'
 include { WF_NANOPORE_AMPLICON      } from '../subworkflows/local/nanopore_amplicon'
 include { WF_NANOPORE_SHOTGUN       } from '../subworkflows/local/nanopore_shotgun'
 include { WF_SNPEFF_ANNOTATE        } from '../subworkflows/local/snpeff_annotate'
+include { WF_NEXTCLADE              } from '../subworkflows/local/nextclade'
 include { WF_CREATE_MULTIQC_REPORTS } from '../subworkflows/local/create_multiqc_reports'
 include { WF_CREATE_CUSTOM_REPORT   } from '../subworkflows/local/create_custom_report'
 
@@ -194,6 +195,15 @@ workflow NANOPORE {
         ch_vcf = WF_SNPEFF_ANNOTATE.out.vcf
         ch_snpeff_csv = WF_SNPEFF_ANNOTATE.out.csv
         ch_versions = ch_versions.mix(WF_SNPEFF_ANNOTATE.out.versions)
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Nextclade
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    if ( ! params.skip_nextclade && (params.virus_name || params.nextclade_dataset_name || params.nextclade_dataset_dir) ) {
+        WF_NEXTCLADE(
+            ch_consensus
+        )
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //

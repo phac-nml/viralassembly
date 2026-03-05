@@ -318,9 +318,90 @@
                     "type": "string",
                     "format": "file-path",
                     "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.gff3?(\\.gz)?$",
+                    "pattern": "^\\S+\\.gff(\\.gz)?$",
                     "description": "Path to GFF annotation file.",
                     "fa_icon": "fas fa-file-invoice"
+                }
+            }
+        },
+        "nextclade_options": {
+            "title": "Nextclade options",
+            "type": "object",
+            "description": "Options pertaining to running nextclade",
+            "default": "",
+            "properties": {
+                "skip_nextclade": {
+                    "type": "boolean",
+                    "description": "If passed, skips running Nextclade",
+                    "fa_icon": "fas fa-forward"
+                },
+                "nextclade_dataset_dir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "mimetype": "text/plain",
+                    "description": "Path to local nextclade dataset.",
+                    "fa_icon": "fas fa-file-invoice"
+                },
+                "nextclade_dataset_name": {
+                    "type": "string",
+                    "description": "Name of the nextclade dataset to use."
+                },
+                "nextclade_dataset_tag": {
+                    "type": "string",
+                    "description": "Tag for the nextclade dataset to use."
+                },
+                "virus_name": {
+                    "type": "string",
+                    "description": "Virus name to be used in nextclade process",
+                    "pattern": "(?i)^(covid|rsv_a|rsv_b|mpox|ebola|sudan|measles|dengue|yfv|hmpv|rubella|mumps)$"
+                },
+                "nextclade_covid_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset for SARS-COV-2"
+                },
+                "nextclade_rsv_a_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset for Respiratory Syncytial Virus A"
+                },
+                "nextclade_rsv_b_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset for Respiratory Syncytial Virus B"
+                },
+                "nextclade_mpox_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset Monkeypox Virus"
+                },
+                "nextclade_ebola_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset for Ebola Virus"
+                },
+                "nextclade_sudan_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset for Sudan Virus"
+                },
+                "nextclade_measles_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset Measles Virus"
+                },
+                "nextclade_dengue_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset Dengue Virus"
+                },
+                "nextclade_yfv_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset for Yellow Fever Virus"
+                },
+                "nextclade_hmpv_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset for Human Metapneumovirus"
+                },
+                "nextclade_rubella_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset for Rubella Virus"
+                },
+                "nextclade_mumps_dataset": {
+                    "type": "string",
+                    "description": "Preset nextclade dataset for Mumps Virus"
                 }
             }
         },
@@ -425,6 +506,9 @@
         },
         {
             "$ref": "#/definitions/snpeff_options"
+        },
+        {
+            "$ref": "#/definitions/nextclade_options"
         },
         {
             "$ref": "#/definitions/qc_options"
