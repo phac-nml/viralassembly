@@ -1,8 +1,7 @@
 /*
-    Subworkflow to annotate VCF file using SnpEFF
-        1. Checks if a database is available
-        2. If it is downloads it, otherwise attempts to make it from NCBI refseq genbank file
-        3. Annotates VCF file using downloaded or made DB
+    Subworkflow to run nextclade on consensus files
+        1. Gets the nextstrain or custom dataset to use
+        2. Analyzes sequences to identify mutations and assess sequence quality
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
