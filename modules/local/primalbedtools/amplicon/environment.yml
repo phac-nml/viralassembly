@@ -1,0 +1,6 @@
+name: primalbedtools
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::primalbedtools=1.0.0

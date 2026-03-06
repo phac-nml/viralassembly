@@ -8,9 +8,9 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { SNPEFF_DATABASE   } from '../../../modules/local/snpeff/main'
-include { SNPEFF_ANNOTATE   } from '../../../modules/local/snpeff/main'
-include { ZIP_AND_INDEX_VCF } from '../../../modules/local/artic_subcommands/main'
+include { SNPEFF_DATABASE   } from '../../../modules/local/snpeff/database/main'
+include { SNPEFF_ANNOTATE   } from '../../../modules/local/snpeff/annotate/main'
+include { ZIP_AND_INDEX_VCF } from '../../../modules/local/artic_subcommands/zip_and_index/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -30,11 +30,11 @@ workflow WF_SNPEFF_ANNOTATE {
     // Get reference id
     ch_reference.splitFasta( record: [ id: true ] )
         .map{ record -> record.id.toString() }
-        .first() // To turn to value channel for now
-        .set{ ch_ref_id_str }
+        .collect() // To collect segmented and turn to a value channel
+        .set{ ch_ref_ids }
 
     SNPEFF_DATABASE(
-        ch_ref_id_str,
+        ch_ref_ids,
         ch_reference,
         ch_gff
     )
@@ -42,7 +42,6 @@ workflow WF_SNPEFF_ANNOTATE {
 
     SNPEFF_ANNOTATE(
         ch_vcf,
-        ch_ref_id_str,
         SNPEFF_DATABASE.out.db,
         SNPEFF_DATABASE.out.config
             .ifEmpty([])

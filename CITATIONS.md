@@ -20,6 +20,10 @@
 
   > Quinlan AR, Hall IM. BEDTools: a flexible suite of utilities for comparing genomic features. Bioinformatics. 2010 Mar 15;26(6):841-2. doi: 10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed Central PMCID: PMC2832824.
 
+- [Clair3](https://github.com/HKU-BAL/Clair3)
+
+  > Zheng, Z.; Li, S.; Su, J.; Leung, A. W.-S.; Lam, T.-W.; Luo, R. Symphonizing Pileup and Full-Alignment for Deep Learning-Based Long-Read Variant Calling. Nature Computational Science 2022, 2 (12), 797–803. https://doi.org/10.1038/s43588-022-00387-x.
+
 - [Chopper](https://academic.oup.com/bioinformatics/article/39/5/btad311/7160911?login=false)
 
   > Wouter De Coster, Rosa Rademakers, NanoPack2: population-scale evaluation of long-read sequencing data, Bioinformatics, Volume 39, Issue 5, May 2023, btad311, https://doi.org/10.1093/bioinformatics/btad311
@@ -30,6 +34,8 @@
 
   > Edge, P., Bansal, V. Longshot enables accurate variant calling in diploid genomes from single-molecule long read sequencing. Nat Commun 10, 4660 (2019). https://doi.org/10.1038/s41467-019-12493-y
 
+- [Medaka](https://github.com/nanoporetech/medaka)
+
 - [Minimap2](https://academic.oup.com/bioinformatics/article/34/18/3094/4994778)
 
   > Heng Li, Minimap2: pairwise alignment for nucleotide sequences, Bioinformatics, Volume 34, Issue 18, September 2018, Pages 3094–3100, https://doi.org/10.1093/bioinformatics/bty191
@@ -37,6 +43,22 @@
 - [MultiQC](https://www.ncbi.nlm.nih.gov/pubmed/27312411/)
 
   > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
+
+- [Nanopolish](https://github.com/jts/nanopolish)
+
+  > Loman, Nicholas J., Joshua Quick, and Jared T. Simpson. “A complete bacterial genome assembled de novo using only nanopore sequencing data.” Nature methods 12.8 (2015): 733-735.
+
+- [Nanostat](https://github.com/wdecoster/nanostat?tab=readme-ov-file)
+
+  > Wouter De Coster, Svenn D’Hert, Darrin T Schultz, Marc Cruts, Christine Van Broeckhoven, NanoPack: visualizing and processing long-read sequencing data, Bioinformatics, Volume 34, Issue 15, August 2018, Pages 2666–2669, https://doi.org/10.1093/bioinformatics/bty149
+
+- [PrimalBedTools](https://github.com/ChrisgKent/primalbedtools)
+
+- [Pysam](https://github.com/pysam-developers/pysam)
+
+[Python](https://github.com/python/)
+
+> Python Software Foundation. Python Language Reference, version 3.10. Available at http://www.python.org
 
 - [Qualimap](https://academic.oup.com/bioinformatics/article/28/20/2678/206551)
 

@@ -278,24 +278,28 @@ Use `--version` to see version information
 
 ### Schemes and Reference
 
-Amplicon schemes are a highly targeted approach to sequencing focusing on a specific target genome. If using an amplicon scheme with this pipeline, a primer bed file is required along with the reference fasta file. This primer file will be used to trim the BAM file so that variants in primer regions are not masked out by the primers themselves.
+Amplicon schemes are a highly targeted approach to sequencing focusing on a specific target genome. If using an amplicon scheme with this pipeline, a 7 column primer bed file is required along with the reference fasta file. This primer file will be used to trim the BAM file so that variants in primer regions are not masked out by the primers themselves.
 
-A primer bed file titled should be organized to fit the following specifications:
+A primer bed file titled should be organized to fit the following specifications based on using the [ARTIC/Primalbedtols v3.0.0 specs](https://github.com/artic-network/primerscheme-specs/blob/20816ff7cd53bdfaab7a605dee06de1c80be759f/pdf/primerscheme.pdf) which is minimally:
 
-- Minimum of 6 columns
+- Minimum of 7 columns
+- Chrom
+- Start
+- End
 - Primer pairs with names containing `_LEFT` and `_RIGHT`
 - Primer pool numbers (1, 2, 3, etc.)
 - Primer direction (+ / -)
+- Primer Sequence
 
 Example primer file format:
 
-| MN908947.3 | 30    | 54   | nCoV-2019_1_LEFT  | 1           | +         |
-| ---------- | ----- | ---- | ----------------- | ----------- | --------- |
-| MN908947.3 | 1183  | 1205 | nCoV-2019_1_RIGHT | 1           | -         |
-| MN908947.3 | 1100  | 1128 | nCoV-2019_2_LEFT  | 2           | +         |
-| MN908947.3 | 2244  | 2266 | nCoV-2019_2_RIGHT | 2           | -         |
-| ...        | ...   | ...  | ...               | ...         | ...       |
-| REF ID     | Start | Stop | Primer Name       | Primer Pool | Direction |
+| MN908947.3 | 30    | 54   | nCoV-2019_1_LEFT  | 1           | +         | ATCCCGATTT |
+| ---------- | ----- | ---- | ----------------- | ----------- | --------- | ---------- |
+| MN908947.3 | 1183  | 1205 | nCoV-2019_1_RIGHT | 1           | -         | TTAAGCGCGC |
+| MN908947.3 | 1100  | 1128 | nCoV-2019_2_LEFT  | 2           | +         | AGGGTCAGCA |
+| MN908947.3 | 2244  | 2266 | nCoV-2019_2_RIGHT | 2           | -         | CCTAAGCTAG |
+| ...        | ...   | ...  | ...               | ...         | ...       | CCCTAGAAA  |
+| REF ID     | Start | Stop | Primer Name       | Primer Pool | Direction | Primer Seq |
 
 ### Metadata
 

@@ -3,10 +3,11 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-// Utils / Custom checks
+// Utils / Custom checks / Primer Validate
 include { GET_REF_STATS             } from '../modules/local/custom/utils.nf'
-include { CREATE_AMPLICON_BED       } from '../modules/local/custom/utils.nf'
 include { RENAME_FASTQ              } from '../modules/local/custom/utils.nf'
+include { PRIMALBEDTOOLS_VALIDATE   } from '../modules/local/primalbedtools/validate/main.nf'
+include { PRIMALBEDTOOLS_AMPLICON   } from '../modules/local/primalbedtools/amplicon/main.nf'
 include { TRACK_FILTERED_SAMPLES as TRACK_INITIAL_FILTERED_SAMPLES } from '../modules/local/custom/filtering.nf'
 include { TRACK_FILTERED_SAMPLES as TRACK_SIZE_FILTERED_SAMPLES    } from '../modules/local/custom/filtering.nf'
 
@@ -63,11 +64,15 @@ workflow NANOPORE {
     ch_amplicon_bed = channel.empty()
     if ( params.primer_bed ) {
         // Amplicon information
-        CREATE_AMPLICON_BED(
+        PRIMALBEDTOOLS_VALIDATE(
+            ch_primer_bed,
+            ch_reference
+        )
+        PRIMALBEDTOOLS_AMPLICON(
             ch_primer_bed
         )
-        ch_amplicon_bed = CREATE_AMPLICON_BED.out.amplicon_bed
-        ch_versions = ch_versions.mix(CREATE_AMPLICON_BED.out.versions)
+        ch_amplicon_bed = PRIMALBEDTOOLS_AMPLICON.out.bed
+        ch_versions = ch_versions.mix(PRIMALBEDTOOLS_AMPLICON.out.versions)
     }
 
     // Reference stats and files for various processes
@@ -161,7 +166,6 @@ workflow NANOPORE {
             GET_REF_STATS.out.refstats,
             ch_primer_bed,
             ch_amplicon_bed,
-            CREATE_AMPLICON_BED.out.tiling_bed,
             ch_clair3_model
         )
         ch_consensus = WF_NANOPORE_AMPLICON.out.consensus
@@ -183,10 +187,9 @@ workflow NANOPORE {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // SnpEff annotation
-    //  Only run if we have one reference sequence for now
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ch_snpeff_csv = channel.empty()
-    if ( (! params.skip_snpeff) || (ch_reference.countFasta() == 1) ) {
+    if (! params.skip_snpeff) {
         WF_SNPEFF_ANNOTATE(
             ch_vcf,
             ch_reference
@@ -200,7 +203,7 @@ workflow NANOPORE {
     // QC and Tracking Workflow
     //  This is a stop for segmented viruses at the moment
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    if ( (! params.skip_qc) || (ch_reference.countFasta() == 1) ) {
+    if (! params.skip_qc) {
         //  Filtered out samples - might want to move this
         ch_filter_tracking = channel.empty()
         TRACK_INITIAL_FILTERED_SAMPLES(

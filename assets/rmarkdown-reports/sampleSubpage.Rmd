@@ -124,8 +124,8 @@ if (file.exists(var_f)) {
         scrollX = FALSE
     ))
 } else {
-  variants <- data.frame(matrix(ncol = 4, nrow = 0))
-  colv <- c("Pos", "Ref", "Alt", "Qual")
+  variants <- data.frame(matrix(ncol = 5, nrow = 0))
+  colv <- c("Chrom", "Pos", "Ref", "Alt", "Qual")
   colnames(variants) <- colv
   ddt <- variants %>%
     DT::datatable(rownames = FALSE)

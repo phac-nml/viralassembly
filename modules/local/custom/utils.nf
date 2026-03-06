@@ -1,4 +1,11 @@
-// Custom Utility Modules
+/*
+    Custom Utility Modules
+        Modules focusing on quick single commands to make intermediate files including:
+            * GET_REF_STATS     - Creates intermediate files from the reference
+            * RENAME_FASTQ      - Renames barcodeXX fastqs to their sample name
+            * SPLIT_BED_BY_POOL - Splits amplicon bed based on the primer pool
+            * CREATE_TILING_BED - Creates bed file of the overall tiling region
+*/
 process GET_REF_STATS {
     label 'process_single'
 
@@ -39,46 +46,6 @@ process GET_REF_STATS {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-    END_VERSIONS
-    """
-}
-process CREATE_AMPLICON_BED {
-    label 'process_single'
-
-    conda "conda-forge::python=3.10.2"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/python:3.10.2' :
-        'biocontainers/python:3.10.2' }"
-
-    input:
-    path bed
-
-    output:
-    path "amplicon.bed", emit: amplicon_bed
-    path "tiling_region.bed", emit: tiling_bed
-    path "versions.yml", emit: versions
-
-    script:
-    """
-    primers_to_amplicons.py \\
-        --bed $bed
-
-    # Versions #
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version | sed 's/Python //g')
-    END_VERSIONS
-    """
-
-    stub:
-    """
-    touch amplicon.bed
-    touch tiling_region.bed
-
-    # Versions #
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        python: \$(python --version | sed 's/Python //g')
     END_VERSIONS
     """
 }
@@ -127,7 +94,9 @@ process RENAME_FASTQ {
 process SPLIT_BED_BY_POOL {
     label 'process_single'
 
-    container "biocontainers/coreutils:8.31--h14c3975_0"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://depot.galaxyproject.org/singularity/coreutils:8.31--h14c3975_0'
+        : 'biocontainers/coreutils:8.31--h14c3975_0' }"
 
     input:
     path bed
@@ -137,12 +106,44 @@ process SPLIT_BED_BY_POOL {
 
     script:
     """
-    awk -F'\t' -v OFS='\t' 'NR>0{print \$1, \$2, \$3, \$4, \$5, \$6 > \$5".bed"}' $bed
+    awk -F'\t' -v OFS='\t' 'NR>0{print \$1, \$2, \$3, \$4, \$5 > \$5".bed"}' $bed
     """
 
     stub:
     """
     touch 1.bed
     touch 2.bed
+    """
+}
+process CREATE_TILING_BED {
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://depot.galaxyproject.org/singularity/coreutils:8.31--h14c3975_0'
+        : 'biocontainers/coreutils:8.31--h14c3975_0' }"
+
+    input:
+    path amplicon_bed
+
+    output:
+    path "tiling_region.bed", emit: bed
+
+    script:
+    """
+    awk -F '\t' '
+    {
+        chr = \$1
+        if (!(chr in min) || \$2 < min[chr]) min[chr] = \$2
+        if (!(chr in max) || \$3 > max[chr]) max[chr] = \$3
+    }
+    END {
+        for (chr in min) {
+            print chr "\t" min[chr] "\t" max[chr]
+        }
+    }
+    ' $amplicon_bed > tiling_region.bed
+    """
+
+    stub:
+    """
+    touch tiling_region.bed
     """
 }

@@ -59,7 +59,7 @@
                     "format": "file-path",
                     "exists": true,
                     "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)$",
+                    "pattern": "^\\S+\\.fn?a(sta)?$",
                     "description": "Path to reference genome fasta file",
                     "fa_icon": "fas fa-font"
                 }
