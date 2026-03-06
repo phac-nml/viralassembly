@@ -318,7 +318,7 @@
                     "type": "string",
                     "format": "file-path",
                     "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.gff?(\\.gz)?$",
+                    "pattern": "^\\S+\\.gff3?(\\.gz)?$",
                     "description": "Path to GFF annotation file.",
                     "fa_icon": "fas fa-file-invoice"
                 }

@@ -87,7 +87,7 @@ workflow PIPELINE_INITIALISATION {
         (params.nextclade_dataset_dir && params.virus_name) ||
         (params.nextclade_dataset_name && params.virus_name))) {
             log.error("Please pass only one of the following to run nextclade: `--nextclade_dataset_name', '--nextclade_dataset_dir', or 'virus_name'")
-            System.exit(1)   
+            System.exit(1)
     }
 
     //

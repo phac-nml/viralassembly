@@ -34,7 +34,7 @@ workflow WF_NEXTCLADE {
         )
         ch_versions = ch_versions.mix(NEXTCLADE_DATASETGET.out.versions)
     }
-    ch_nextclade_dataset = params.nextclade_dataset_dir ? 
+    ch_nextclade_dataset = params.nextclade_dataset_dir ?
         Channel.value(file(params.nextclade_dataset_dir, type: 'dir', checkIfExists: true)) : NEXTCLADE_DATASETGET.out.dataset
 
     NEXTCLADE_RUN(
