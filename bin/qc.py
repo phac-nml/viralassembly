@@ -472,8 +472,8 @@ def main() -> None:
                 pcr_primer_overlap = check_primers(args.pcr_bed, variant_positions, chrom)
 
             # Grade qc
-            mean_depth = depth_dict[chrom]['mean']
-            median_depth = depth_dict[chrom]['median']
+            mean_depth = depth_dict[chrom].get('mean', 0)
+            median_depth = depth_dict[chrom].get('median', 0)
             qc_status = grade_qc(completeness, mean_depth, median_depth, frameshift_variants)
 
             # Final Output
