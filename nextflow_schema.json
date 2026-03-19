@@ -530,6 +530,9 @@
             "$ref": "#/definitions/nextclade_options"
         },
         {
+            "$ref": "#/definitions/virus_specific_options"
+        },
+        {
             "$ref": "#/definitions/qc_options"
         },
         {
