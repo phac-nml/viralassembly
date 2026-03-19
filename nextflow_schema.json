@@ -59,7 +59,7 @@
                     "format": "file-path",
                     "exists": true,
                     "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)$",
+                    "pattern": "^\\S+\\.fn?a(sta)?$",
                     "description": "Path to reference genome fasta file",
                     "fa_icon": "fas fa-font"
                 }
@@ -402,6 +402,25 @@
                 "nextclade_mumps_dataset": {
                     "type": "string",
                     "description": "Preset nextclade dataset for Mumps Virus"
+                }
+            }
+        },
+        "virus_specific_options": {
+            "title": "Virus specific options",
+            "type": "object",
+            "description": "Options pertaining to running virus specific workflow options",
+            "default": "",
+            "properties": {
+                "skip_pangolin": {
+                    "type": "boolean",
+                    "description": "If passed, skips running pangolin for Covid",
+                    "fa_icon": "fas fa-forward"
+                },
+                "pango_database": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "fa_icon": "fas fa-folder-open",
+                    "description": "Path to pangolin datadir."
                 }
             }
         },

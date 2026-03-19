@@ -44,6 +44,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     ch_reference        // channel: [ path(reference) ]
     ch_amplicon_bed     // channel: [ path(amplicon_bed) ] || empty
     ch_overall_qc_csv   // channel: [ path(qc_csv) ]
+    ch_pangolin_report  // channel: [ val(meta), path(csv) ]
     ch_versions         // channel: [ path(versions) ]
 
     main:
@@ -160,6 +161,9 @@ workflow WF_CREATE_MULTIQC_REPORTS {
             .collect{ _meta, csv -> csv }
             .ifEmpty([]),
         ch_overall_qc_csv,
+        ch_pangolin_report
+            .collect{ _meta, csv -> csv }
+            .ifEmpty([]),
         CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml
     )
 }

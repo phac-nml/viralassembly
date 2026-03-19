@@ -19,7 +19,7 @@ process SAMTOOLS_DEPTH {
     echo -e "chrom\tpos\tdepth" \\
         > ${meta.id}.depth.bed
     samtools depth \\
-        -a \\
+        -aa \\
         $bam \\
         >> ${meta.id}.depth.bed
 

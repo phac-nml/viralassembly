@@ -51,6 +51,7 @@ process MULTIQC_OVERALL {
     path nanostat_data
     path snpeff_csvs
     path qc_csv
+    path pangolin_report
     path versions_yml
 
     output:
