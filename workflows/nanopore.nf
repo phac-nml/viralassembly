@@ -214,7 +214,7 @@ workflow NANOPORE {
     // Virus specific tools
     //  More viruses to be added later
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    ch_pangolin_report = Channel.empty
+    ch_pangolin_report = channel.empty()
     if ( params.virus_name == 'covid' ) {
         WF_VIRUS_COVID(
             ch_consensus
