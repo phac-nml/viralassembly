@@ -14,12 +14,15 @@ nextflow.enable.dsl = 2
     VIRUS PARAMETER VALUES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+// Check for user supplied nextclade dataset name
 boolean user_set_nextclade_dataset_name = params.nextclade_dataset_name != null
-params.nextclade_dataset_name  = params.nextclade_dataset_name ?: getVirusAttribute('nextclade_dataset_name')
+
+// Define nextclade dataset name and tag
+params.nextclade_dataset_name  = params.nextclade_dataset_name ?:
+    getVirusAttribute('nextclade_dataset_name')
 params.nextclade_dataset_tag   = params.nextclade_dataset_tag ?:
     (user_set_nextclade_dataset_name ? null : getVirusAttribute('nextclade_dataset_tag'))
 
-println "Nextclade Name: ${params.nextclade_dataset_name} ==== Tag: ${params.nextclade_dataset_tag}"
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
