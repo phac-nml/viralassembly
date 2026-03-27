@@ -6,8 +6,8 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { PANGOLIN_UPDATEDATA } from '../../../../modules/local/pangolin/updatedata/main'
-include { PANGOLIN_RUN        } from '../../../../modules/local/pangolin/run/main'
+include { PANGOLIN_UPDATEDATA } from '../../../../modules/nf-core/pangolin/updatedata/main'
+include { PANGOLIN_RUN        } from '../../../../modules/nf-core/pangolin/run/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN SUBWORKFLOW

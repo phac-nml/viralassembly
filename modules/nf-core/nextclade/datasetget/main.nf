@@ -3,13 +3,12 @@ process NEXTCLADE_DATASETGET {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/nextclade:3.9.1--h9ee0642_0' :
-        'biocontainers/nextclade:3.9.1--h9ee0642_0' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/93/936786744b34cf016b948026a6b4e9489011424e15c28dfb2f7d03c31bb4afb5/data' :
+        'community.wave.seqera.io/library/nextclade:3.11.0--155203da8341cfe6' }"
 
     input:
-    val name
+    val dataset
     val tag
-    val virus
 
     output:
     path "$prefix"     , emit: dataset
@@ -19,7 +18,6 @@ process NEXTCLADE_DATASETGET {
     task.ext.when == null || task.ext.when
 
     script:
-    def dataset = name ? name : (virus ? params."nextclade_${virus}_dataset" : null)
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${dataset}"
     def version = tag ? "--tag ${tag}" : ''

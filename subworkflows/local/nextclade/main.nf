@@ -7,8 +7,8 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { NEXTCLADE_DATASETGET  } from '../../../modules/local/nextclade/datasetget/main'
-include { NEXTCLADE_RUN         } from '../../../modules/local/nextclade/run/main'
+include { NEXTCLADE_DATASETGET  } from '../../../modules/nf-core/nextclade/datasetget/main'
+include { NEXTCLADE_RUN         } from '../../../modules/nf-core/nextclade/run/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN SUBWORKFLOW
@@ -25,12 +25,10 @@ workflow WF_NEXTCLADE {
     if (! params.nextclade_dataset_dir ) {
         ch_dataset_name = params.nextclade_dataset_name ? params.nextclade_dataset_name : ''
         ch_dataset_tag = params.nextclade_dataset_tag ? params.nextclade_dataset_tag : ''
-        ch_virus_name = params.virus_name ? params.virus_name : ''
 
         NEXTCLADE_DATASETGET(
             ch_dataset_name,
-            ch_dataset_tag,
-            ch_virus_name
+            ch_dataset_tag
         )
         ch_versions = ch_versions.mix(NEXTCLADE_DATASETGET.out.versions)
     }

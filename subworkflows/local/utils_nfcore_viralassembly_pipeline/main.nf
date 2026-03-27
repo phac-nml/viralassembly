@@ -72,20 +72,9 @@ workflow PIPELINE_INITIALISATION {
         }
     }
 
-    // Virus Name
-    if (params.virus_name) {
-        def viruses = ['covid','rsv_a','rsv_b','mpox','ebola','sudan','measles','dengue','yfv','hmpv','rubella','mumps']
-        if ( !viruses.contains(params.virus_name) ) {
-            log.error("Invalid value for --virus_name: '${params.virus_name}'. Allowed values: covid, rsv_a, rsv_b, mpox, ebola, sudan, measles, dengue, yfv, hmpv, rubella, mumps")
-            System.exit(1)
-        }
-    }
-
     // Multiple Nextclade Inputs
     if (! params.skip_nextclade && (
-        (params.nextclade_dataset_dir && params.nextclade_dataset_name) ||
-        (params.nextclade_dataset_dir && params.virus_name) ||
-        (params.nextclade_dataset_name && params.virus_name))) {
+        (params.nextclade_dataset_dir && params.nextclade_dataset_name))) {
             log.error("Please pass only one of the following to run nextclade: `--nextclade_dataset_name', '--nextclade_dataset_dir', or 'virus_name'")
             System.exit(1)
     }

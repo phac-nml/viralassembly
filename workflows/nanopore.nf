@@ -204,7 +204,7 @@ workflow NANOPORE {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Nextclade
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    if ( ! params.skip_nextclade && (params.virus_name || params.nextclade_dataset_name || params.nextclade_dataset_dir) ) {
+    if ( ! params.skip_nextclade && (params.nextclade_dataset_name || params.nextclade_dataset_dir) ) {
         WF_NEXTCLADE(
             ch_consensus
         )

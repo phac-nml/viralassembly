@@ -324,10 +324,10 @@
                 }
             }
         },
-        "nextclade_options": {
-            "title": "Nextclade options",
+        "virus_nextclade_options": {
+            "title": "Virus name Nextclade options",
             "type": "object",
-            "description": "Options pertaining to running nextclade",
+            "description": "Options pertaining to running nextclade using the virus_name parameter",
             "default": "",
             "properties": {
                 "skip_nextclade": {
@@ -353,55 +353,7 @@
                 "virus_name": {
                     "type": "string",
                     "description": "Virus name to be used in nextclade process",
-                    "pattern": "(?i)^(covid|rsv_a|rsv_b|mpox|ebola|sudan|measles|dengue|yfv|hmpv|rubella|mumps)$"
-                },
-                "nextclade_covid_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset for SARS-COV-2"
-                },
-                "nextclade_rsv_a_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset for Respiratory Syncytial Virus A"
-                },
-                "nextclade_rsv_b_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset for Respiratory Syncytial Virus B"
-                },
-                "nextclade_mpox_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset Monkeypox Virus"
-                },
-                "nextclade_ebola_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset for Ebola Virus"
-                },
-                "nextclade_sudan_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset for Sudan Virus"
-                },
-                "nextclade_measles_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset Measles Virus"
-                },
-                "nextclade_dengue_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset Dengue Virus"
-                },
-                "nextclade_yfv_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset for Yellow Fever Virus"
-                },
-                "nextclade_hmpv_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset for Human Metapneumovirus"
-                },
-                "nextclade_rubella_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset for Rubella Virus"
-                },
-                "nextclade_mumps_dataset": {
-                    "type": "string",
-                    "description": "Preset nextclade dataset for Mumps Virus"
+                    "pattern": "(?i)^(covid|rsv_a|rsv_b|mpox|ebola|sudan|measles|dengue|yfv|hmpv|vzv|rubella|mumps|wnv)$"
                 }
             }
         },
@@ -527,7 +479,7 @@
             "$ref": "#/definitions/snpeff_options"
         },
         {
-            "$ref": "#/definitions/nextclade_options"
+            "$ref": "#/definitions/virus_nextclade_options"
         },
         {
             "$ref": "#/definitions/virus_specific_options"
