@@ -333,7 +333,7 @@
         "nextclade_options": {
             "title": "Virus name Nextclade options",
             "type": "object",
-            "description": "Options pertaining to running nextclade using the virus_name parameter",
+            "description": "Options pertaining to pulling & running nextclade",
             "default": "",
             "properties": {
                 "skip_nextclade": {
