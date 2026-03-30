@@ -7,7 +7,7 @@
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { validateParameters; paramsHelp; paramsSummaryLog } from 'plugin/nf-validation'
+include { validateParameters        } from 'plugin/nf-schema'
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NFCORE_PIPELINE     } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
@@ -32,14 +32,6 @@ workflow PIPELINE_INITIALISATION {
         outdir,
         workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1
     )
-
-    //
-    // Help
-    //
-    if (params.help) {
-        log.info paramsHelp("nextflow run phac-nml/viralassembly -profile <profile> --input samplesheet.csv --outdir <OUTDIR> <--reference REF || --scheme SCHEME>")
-        exit 0
-    }
 
     //
     // Check config provided to the pipeline
@@ -75,7 +67,7 @@ workflow PIPELINE_INITIALISATION {
     // Multiple Nextclade Inputs
     if (! params.skip_nextclade && (
         (params.nextclade_dataset_dir && params.nextclade_dataset_name))) {
-            log.error("Please pass only one of the following to run nextclade: `--nextclade_dataset_name', '--nextclade_dataset_dir', or 'virus_name'")
+            log.error("Please pass only one of the following to run nextclade: `--nextclade_dataset_name', '--nextclade_dataset_dir', or '--virus_name'")
             System.exit(1)
     }
 

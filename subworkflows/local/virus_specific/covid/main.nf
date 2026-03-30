@@ -15,7 +15,7 @@ include { PANGOLIN_RUN        } from '../../../../modules/nf-core/pangolin/run/m
 */
 workflow WF_VIRUS_COVID {
     take:
-    ch_consensus        // channel: [ val(meta), path(consensus), path(bam) ]
+    ch_consensus        // channel: [ val(meta), path(consensus) ]
 
     main:
     ch_versions = Channel.empty()

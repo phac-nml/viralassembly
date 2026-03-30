@@ -1,10 +1,10 @@
 {
-    "$schema": "https://json-schema.org/draft-07/schema",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/phac-nml/viralassembly/main/nextflow_schema.json",
     "title": "phac-nml/viralassembly pipeline parameters",
     "description": "Assemble and QC viral reads",
     "type": "object",
-    "definitions": {
+    "$defs": {
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",
@@ -36,6 +36,12 @@
                     "pattern": "^\\S+$",
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
+                },
+                "virus_name": {
+                    "type": "string",
+                    "description": "Virus name that sets virus specific processes and nextclade runs",
+                    "$comment": "Currently, this virus name option is set to run nextclade with the predefined dataset according to the named virus.\n Additionally, it currently runs the COVID virus specific subworkflow. Future use will possibly include more predefined options.",
+                    "pattern": "(?i)^(covid|rsv_a|rsv_b|mpox|ebola|sudan|measles|dengue|yfv|hmpv|vzv|rubella|mumps|wnv)$"
                 }
             },
             "required": ["outdir"]
@@ -324,7 +330,7 @@
                 }
             }
         },
-        "virus_nextclade_options": {
+        "nextclade_options": {
             "title": "Virus name Nextclade options",
             "type": "object",
             "description": "Options pertaining to running nextclade using the virus_name parameter",
@@ -349,11 +355,6 @@
                 "nextclade_dataset_tag": {
                     "type": "string",
                     "description": "Tag for the nextclade dataset to use."
-                },
-                "virus_name": {
-                    "type": "string",
-                    "description": "Virus name to be used in nextclade process",
-                    "pattern": "(?i)^(covid|rsv_a|rsv_b|mpox|ebola|sudan|measles|dengue|yfv|hmpv|vzv|rubella|mumps|wnv)$"
                 }
             }
         },
@@ -452,46 +453,46 @@
     },
     "allOf": [
         {
-            "$ref": "#/definitions/input_output_options"
+            "$ref": "#/$defs/input_output_options"
         },
         {
-            "$ref": "#/definitions/required_settings"
+            "$ref": "#/$defs/required_settings"
         },
         {
-            "$ref": "#/definitions/amplicon_settings"
+            "$ref": "#/$defs/amplicon_settings"
         },
         {
-            "$ref": "#/definitions/clair3_settings"
+            "$ref": "#/$defs/clair3_settings"
         },
         {
-            "$ref": "#/definitions/medaka_settings"
+            "$ref": "#/$defs/medaka_settings"
         },
         {
-            "$ref": "#/definitions/nanopolish_settings"
+            "$ref": "#/$defs/nanopolish_settings"
         },
         {
-            "$ref": "#/definitions/read_filtering_options"
+            "$ref": "#/$defs/read_filtering_options"
         },
         {
-            "$ref": "#/definitions/general_analysis_options"
+            "$ref": "#/$defs/general_analysis_options"
         },
         {
-            "$ref": "#/definitions/snpeff_options"
+            "$ref": "#/$defs/snpeff_options"
         },
         {
-            "$ref": "#/definitions/virus_nextclade_options"
+            "$ref": "#/$defs/nextclade_options"
         },
         {
-            "$ref": "#/definitions/virus_specific_options"
+            "$ref": "#/$defs/virus_specific_options"
         },
         {
-            "$ref": "#/definitions/qc_options"
+            "$ref": "#/$defs/qc_options"
         },
         {
-            "$ref": "#/definitions/report_generation_options"
+            "$ref": "#/$defs/report_generation_options"
         },
         {
-            "$ref": "#/definitions/generic_options"
+            "$ref": "#/$defs/generic_options"
         }
     ]
 }

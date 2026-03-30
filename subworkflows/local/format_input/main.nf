@@ -8,7 +8,7 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { fromSamplesheet } from 'plugin/nf-validation'
+include { samplesheetToList } from 'plugin/nf-schema'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -54,7 +54,7 @@ workflow FORMAT_INPUT {
     else {
         // Using the samplesheet, were adding fastq_2 just as a thingy for now
         def processedIDs = [] as Set
-        channel.fromSamplesheet("input")
+        Channel.fromList(samplesheetToList(params.input, "assets/schema_input.json"))
             .map { meta, fastq_1, fastq_2 ->
                 // Meta ID assignment
                 if (!meta.id) {
