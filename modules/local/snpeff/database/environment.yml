@@ -1,6 +1,6 @@
-name: artic
+name: snpeff
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::artic=1.7.4
+  - bioconda::snpeff=5.4

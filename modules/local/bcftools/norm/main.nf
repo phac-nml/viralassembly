@@ -1,7 +1,6 @@
 process BCFTOOLS_NORM {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.pass.norm.vcf.gz", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

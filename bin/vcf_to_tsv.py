@@ -9,8 +9,13 @@ import vcf
 
 def init_parser() -> argparse.ArgumentParser:
     '''
-    Specify command line arguments
-    Returns command line parser with inputs
+    Purpose
+    -------
+    Parse CL inputs to be used in script
+
+    Returns
+    -------
+    argparse.ArgumentParser
     '''
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -45,11 +50,26 @@ def init_parser() -> argparse.ArgumentParser:
 
 def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict:
     """
+    Purpose
+    -------
     Process variant and create dictionary for entry
     Remove duplicated variants
+
+    Parameters
+    ----------
+    var: vcf record
+        Genome completeness
+    annotated: bool
+        True if the data was annotated with SnpEff
+    variants_analyzed: list
+        Keep track of the variants analyzed to not repeat the same ones
+
+    Returns
+    -------
+    dict of parsed variant
     """
     # Check if seen before - if not add it to list and continue on
-    variant_str = f'{var.REF}{var.POS}{var.ALT[0]}' # Only first alt allele, shouldn't have more than one with the process currently
+    variant_str = f'{var.CHROM}:{var.REF}{var.POS}{var.ALT[0]}' # Only first alt allele, shouldn't have more than one with the process currently
     if variant_str in variants_analyzed:
         return {}
     variants_analyzed.append(variant_str)
@@ -57,6 +77,7 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
     # Non-annotated we just need the info in TSV format
     if not annotated:
         out = {
+            'Chrom': str(var.CHROM),
             'Pos': int(var.POS),
             'Ref': str(var.REF),
             'Alt': str(var.ALT[0]),
@@ -69,6 +90,7 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
     var_ann = var.INFO.get('ANN', '')
     if not var_ann:
         out = {
+            'Chrom': str(var.CHROM),
             'Pos': int(var.POS),
             'Variant': '',
             'Consequence': '',
@@ -89,6 +111,7 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
         pro_var = f'{gene} {prot}'
     consequence = ann_list[1]
     out = {
+        'Chrom': str(var.CHROM),
         'Pos': int(var.POS),
         'Variant': pro_var,
         'Consequence': consequence,
@@ -99,7 +122,18 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
     return out
 
 def write_outfile(outfile: str, variants: list) -> None:
-    """Write output file to given location"""
+    """
+    Purpose
+    -------
+    Write output variants to given file
+
+    Parameters
+    ----------
+    outfile: str
+        Name of the outfile to write to
+    variants: list
+        List of variants to write to the output file
+    """
     columns = variants[0].keys()
     header = '\t'.join(columns)
     with open(outfile, 'w') as f:
@@ -118,6 +152,7 @@ def main() -> None:
     # Load in VCF and parse
     vcf_reader = vcf.Reader(filename=args.vcf)
     variants = []
+
     # To fix out of range issue from pyvcf on empty files
     try:
         for var in vcf_reader:
@@ -134,8 +169,6 @@ def main() -> None:
 
     if variants != []:
         write_outfile(outfile, variants)
-    else:
-        print("No Variants")
 
 if __name__ == '__main__':
     main()

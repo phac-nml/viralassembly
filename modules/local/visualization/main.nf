@@ -1,14 +1,13 @@
 // Visualization Modules
 //  Custom scripts are versioned here
 process CREATE_READ_VARIATION_CSV {
-    label 'process_high_memory'
+    label 'process_medium'
     tag "$meta.id"
-    publishDir "${params.outdir}/variation_csvs", pattern: "*.csv", mode: "copy"
 
     conda "${moduleDir}/env-artic.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
-        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.8.5--pyhdfd78af_0' :
+        'biocontainers/artic:1.8.5--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(bam), path(bai)
@@ -51,8 +50,8 @@ process CREATE_VARIANT_TSV {
 
     conda "${moduleDir}/env-artic.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
-        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.8.5--pyhdfd78af_0' :
+        'biocontainers/artic:1.8.5--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(vcf)
@@ -73,7 +72,7 @@ process CREATE_VARIANT_TSV {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        vcf_to_tsv.py: 0.1.0
+        vcf_to_tsv.py: 0.2.0
     END_VERSIONS
     """
 
@@ -85,7 +84,7 @@ process CREATE_VARIANT_TSV {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        vcf_to_tsv.py: 0.1.0
+        vcf_to_tsv.py: 0.2.0
     END_VERSIONS
     """
 }
@@ -191,8 +190,8 @@ process CREATE_AMPLICON_COMPLETENESS {
 
     conda "${moduleDir}/env-artic.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
-        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.8.5--pyhdfd78af_0' :
+        'biocontainers/artic:1.8.5--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(consensus)
@@ -231,7 +230,6 @@ process CREATE_AMPLICON_COMPLETENESS {
 }
 process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
     label 'process_medium'
-    publishDir "${params.outdir}", pattern: "reportDashboard.html", mode: "copy"
 
     conda "${moduleDir}/env-custom-report.yml"
     container "docker.io/darianhole/measeq-report:latest"

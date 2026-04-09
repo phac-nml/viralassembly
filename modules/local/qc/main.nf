@@ -4,12 +4,11 @@
 process MAKE_SAMPLE_QC_CSV {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/sample_csvs", pattern: "*.csv", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
-        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.8.5--pyhdfd78af_0' :
+        'biocontainers/artic:1.8.5--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(consensus), path(bam), path(bai), path(depth_bed), path(vcf)
@@ -66,12 +65,11 @@ process MAKE_SAMPLE_QC_CSV {
 }
 process FINAL_QC_CSV {
     label 'process_single'
-    publishDir "${params.outdir}", pattern: "overall.qc.csv", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
-        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.8.5--pyhdfd78af_0' :
+        'biocontainers/artic:1.8.5--pyhdfd78af_0' }"
 
     input:
     path combined_csv
