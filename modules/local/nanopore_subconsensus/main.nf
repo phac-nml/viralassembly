@@ -1,6 +1,6 @@
 /*
     Variant calling at the subconsensus level for nanopore data
-        Includes some post processing scripts to reformat vcfs
+        Includes some post processing scripts to reformat/simplify vcfs
 */
 process CLAIRSTO_VARIANTS {
     label 'process_medium'
@@ -9,7 +9,6 @@ process CLAIRSTO_VARIANTS {
     ? 'exit' 
     : 'retry' }
     tag "${meta.id}"
-    publishDir "${params.outdir}/subconsensus", pattern: "${meta.id}-clairS-out/*vcf.gz", mode: "copy"
 
     // conda: No functional conda environment currently
     container 'docker://hkubal/clairs-to:v0.4.2'
@@ -21,8 +20,8 @@ process CLAIRSTO_VARIANTS {
 
     output:
     tuple val(meta),
-          path("${meta.id}-clairS-out/snv.vcf.gz"), path("${meta.id}-clairS-out/snv.vcf.gz.tbi"),
-          path("${meta.id}-clairS-out/indel.vcf.gz"), path("${meta.id}-clairS-out/indel.vcf.gz.tbi"), emit: vcf
+          path("${meta.id}-clairSTO-out/snv.vcf.gz"), path("${meta.id}-clairSTO-out/snv.vcf.gz.tbi"),
+          path("${meta.id}-clairSTO-out/indel.vcf.gz"), path("${meta.id}-clairSTO-out/indel.vcf.gz.tbi"), emit: vcf
     path "versions.yml", emit: versions
 
     script:
@@ -43,12 +42,10 @@ process CLAIRSTO_VARIANTS {
         --ref_fn $reference \\
         --threads ${task.cpus} \\
         --platform ${params.clairS_model} \\
-        --output_dir "${meta.id}-clairS-out" \\
+        --output_dir "${meta.id}-clairSTO-out" \\
         -s ${meta.id} \\
-        --snv_min_af 0.1 \\
-        --indel_min_af 0.15 \\
-        --min_coverage 5 \\
-        --qual 5 \\
+        --chunk_size 1000 \\
+        --threads 6 \\
         --include_all_ctgs \\
         --disable_verdic \\
 
@@ -71,7 +68,7 @@ process CLAIRSTO_VARIANTS {
     """
 }
 
-// combine the indels and snvs
+// combine the indels and snvs into a single VCF
 process CAT_VCF {
     label 'process_single'
     tag "$meta.id"
@@ -117,11 +114,11 @@ process DEDUP_VCFS {
     input:
     tuple val(meta),
           path(cat_vcf), path(cat_index),
-          path(pass_vcf), path(pass_index)
+          path(pass_vcf)
 
     output:
     // dedup_vcfs/0000.vcf	for records private to	sample-cat.vcf.gz
-    tuple val(meta), path("dedup_vcfs/0000.vcf"), emit: dedup_vcf
+    tuple val(meta), path("dedup_vcfs/0000.vcf"), emit: vcf
 
     script:
     """
@@ -139,7 +136,8 @@ process DEDUP_VCFS {
 process FIX_VCF {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/subconsensus", pattern: "*.vcf.gz", mode: "copy"
+    publishDir "${params.outdir}/vcf", pattern: "*.vcf.gz", mode: "copy"
+    publishDir "${params.outdir}/vcf", pattern: "*.vcf.gz.tbi", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

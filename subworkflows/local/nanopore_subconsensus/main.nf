@@ -5,14 +5,11 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-// Other tools
 include { CLAIRSTO_VARIANTS            } from '../../../modules/local/nanopore_subconsensus/main'
+include { CAT_VCF                      } from '../../../modules/local/nanopore_subconsensus/main'
+include { DEDUP_VCFS                   } from '../../../modules/local/nanopore_subconsensus/main'
+include { FIX_VCF                      } from '../../../modules/local/nanopore_subconsensus/main'
 
-// Artic subcommands steps
-include { ZIP_AND_INDEX_VCF         } from '../../../modules/local/artic_subcommands/main'
-
-
-// add the python scripts later
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN SUBWORKFLOW
@@ -38,37 +35,31 @@ workflow WF_NANOPORE_SUBCONSENSUS {
         ch_reference,
         ch_ref_fai
     )
-    ch_primary_vcf = CLAIRSTO_VARIANTS.out.vcf
     ch_versions = ch_versions.mix(CLAIRSTO_VARIANTS.out.versions)
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Vcf reformatting
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    //combine indels and snvs
-    //CAT_VCF(
-    //    CLAIRSTO_VARIANTS.out.primary_vcf
-    //)
-    //join to main vcf and remove duplicates
-    //DEDUP_VCFS(
-    //    CAT_VCF.out.vcf
-    //       .join(ch_con_vcf, by: [0])
-    //)
-    //adjust filters and qual scores
-    //FIX_VCF(
-    //    DEDUP_VCFS.out.vcf
-    //)
-    //ch_complete_vcf = FIX_VCF.out.vcf
+    // Combine indels and snvs (printed to different vcfs)
+    CAT_VCF(
+        CLAIRSTO_VARIANTS.out.vcf
+    )
 
-    // do i need this?
+    // Remove consensus variants
+    DEDUP_VCFS(
+        CAT_VCF.out.vcf
+           .join(ch_con_vcf, by: [0])
+    )
+    ch_primary_vcf = DEDUP_VCFS.out.vcf
 
-    //ZIP_AND_INDEX_VCF(
-    //    ch_primary_vcf
-    //)
-    //ch_versions = ch_versions.mix(ZIP_AND_INDEX_VCF.out.versions)
+    // Adjust filters and qual scores for viral minor variants
+    FIX_VCF(
+        DEDUP_VCFS.out.vcf
+    )
+    ch_complete_vcf = FIX_VCF.out.vcf
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     emit:
-    //vcf = ch_complete_vcf just produce the vcf for now
-    vcf = ch_primary_vcf
+    vcf = ch_complete_vcf
     versions = ch_versions
 }

@@ -181,6 +181,21 @@ workflow NANOPORE {
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // subconsensus variants, optional
+    //  Run before SnpEff to use unannotated VCF
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    if ( params.subconsensus ) {
+        WF_NANOPORE_SUBCONSENSUS(
+            ch_bam,
+            ch_reference,
+            GET_REF_STATS.out.fai,
+            ch_vcf // major variants from the main pipeline
+        )
+        ch_min_vcf = WF_NANOPORE_SUBCONSENSUS.out.vcf
+        ch_versions = ch_versions.mix(WF_NANOPORE_SUBCONSENSUS.out.versions)
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // SnpEff annotation
     //  Only run if we have one reference sequence for now
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
@@ -193,20 +208,6 @@ workflow NANOPORE {
         ch_vcf = WF_SNPEFF_ANNOTATE.out.vcf
         ch_snpeff_csv = WF_SNPEFF_ANNOTATE.out.csv
         ch_versions = ch_versions.mix(WF_SNPEFF_ANNOTATE.out.versions)
-    }
-    
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    // subconsensus variants, optional
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    if ( params.subconsensus ) {
-        WF_NANOPORE_SUBCONSENSUS(
-            ch_bam,
-            ch_reference,
-            GET_REF_STATS.out.fai,
-            ch_vcf // major variants from the main pipeline
-        )
-        ch_min_vcf = WF_NANOPORE_SUBCONSENSUS.out.vcf
-        ch_versions = ch_versions.mix(WF_NANOPORE_SUBCONSENSUS.out.versions)
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
