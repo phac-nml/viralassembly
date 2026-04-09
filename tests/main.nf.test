@@ -1,7 +1,7 @@
 // Main Tests File
 nextflow_pipeline {
 
-    name "Full Pipeline NF-Tests for MeaSeq"
+    name "Full Pipeline NF-Tests for ViralAssembly"
     script "main.nf"
 
     //--- Test 1 ----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ nextflow_pipeline {
             assert workflow.failed
 
             // Message
-            assert workflow.stderr.contains("* Missing required parameter: --reference")
+            assert workflow.stderr.contains("* Missing required parameter(s): reference")
         }
     }
 
@@ -81,7 +81,7 @@ nextflow_pipeline {
             assert workflow.failed
 
             // Message
-            assert workflow.stderr.any { it.contains("* --clair3_model: \'this_is_not_a_model\' is not a valid choice") }
+            assert workflow.stderr.any { it.contains("* --clair3_model (this_is_not_a_model): Expected any of") }
         }
     }
 
@@ -101,6 +101,8 @@ nextflow_pipeline {
                 input           = "${projectDir}/test_data/nanopore/input.csv"
                 reference       = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
                 clair3_model    = "r1041_e82_400bps_sup_v420"
+                nextclade_dataset_name = "nextstrain/sars-cov-2/wuhan-hu-1/orfs"
+                nextclade_dataset_tag = "2026-01-06--14-59-32Z"
                 // To keep consistent results from downsampled input
                 min_length      = 600
                 max_length      = 1600
@@ -182,6 +184,20 @@ nextflow_pipeline {
             assert lines.size() == 55
             assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
             assert lines.contains("MN908947.3\t28883\tN p.G204R\tmissense_variant\tG\tC\t38.02")
+
+            // Nextclade outputs
+            assert path("$launchDir/results/nextclade/nextstrain/sars-cov-2/wuhan-hu-1/orfs/reference.fasta").exists()
+            assert path("$launchDir/results/nextclade/nextstrain/sars-cov-2/wuhan-hu-1/orfs/reference.fasta").md5 == "c7ce05f28e4ec0322c96f24e064ef55c"
+
+            assert path("$launchDir/results/nextclade/sample1.csv").exists()
+            lines = path("$launchDir/results/nextclade/sample1.csv").readLines()
+            assert lines.size() == 2
+            assert path("$launchDir/results/nextclade/sample1.csv").md5 == "8c9f91ed8da006f3210b34234cdc365f"
+
+            assert path("$launchDir/results/nextclade/reads_100.csv").exists()
+            lines = path("$launchDir/results/nextclade/reads_100.csv").readLines()
+            assert lines.size() == 2
+            assert path("$launchDir/results/nextclade/reads_100.csv").md5 == "9acc20bcf6ce68da206799368d5efb66"
 
             // TSV of the VCF for reporting
             assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()
@@ -549,6 +565,7 @@ nextflow_pipeline {
                 gff             = "${projectDir}/test_data/nanopore/MN908947.3.gff3"
                 clair3_no_pool_split = true
                 multiqc_report  = true
+                virus_name = "covid"
                 // To keep consistent results from downsampled input
                 min_length      = 600
                 max_length      = 1600
@@ -649,6 +666,20 @@ nextflow_pipeline {
             assert path("$launchDir/results/snpeff/reads_100.ann.vcf").exists()
             lines = path("$launchDir/results/snpeff/reads_100.ann.vcf").readLines()
             assert lines.size() == 19
+
+            // Nextclade outputs
+            assert path("$launchDir/results/nextclade/nextstrain/sars-cov-2/wuhan-hu-1/orfs/reference.fasta").exists()
+            assert path("$launchDir/results/nextclade/nextstrain/sars-cov-2/wuhan-hu-1/orfs/reference.fasta").md5 == "c7ce05f28e4ec0322c96f24e064ef55c"
+
+            assert path("$launchDir/results/nextclade/sample1.csv").exists()
+            lines = path("$launchDir/results/nextclade/sample1.csv").readLines()
+            assert lines.size() == 2
+            assert path("$launchDir/results/nextclade/sample1.csv").md5 == "66a4537bd4f1d826e4e8e15ec5b2537c"
+
+            assert path("$launchDir/results/nextclade/reads_100.csv").exists()
+            lines = path("$launchDir/results/nextclade/reads_100.csv").readLines()
+            assert lines.size() == 2
+            assert path("$launchDir/results/nextclade/reads_100.csv").md5 == "9acc20bcf6ce68da206799368d5efb66"
 
             // TSV of the VCF for reporting
             assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()

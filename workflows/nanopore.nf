@@ -31,6 +31,8 @@ include { FINAL_QC_CSV              } from '../modules/local/qc/main'
 include { WF_NANOPORE_AMPLICON      } from '../subworkflows/local/nanopore_amplicon'
 include { WF_NANOPORE_SHOTGUN       } from '../subworkflows/local/nanopore_shotgun'
 include { WF_SNPEFF_ANNOTATE        } from '../subworkflows/local/snpeff_annotate'
+include { WF_NEXTCLADE              } from '../subworkflows/local/nextclade'
+include { WF_VIRUS_COVID            } from '../subworkflows/local/virus_specific/covid'
 include { WF_CREATE_MULTIQC_REPORTS } from '../subworkflows/local/create_multiqc_reports'
 include { WF_CREATE_CUSTOM_REPORT   } from '../subworkflows/local/create_custom_report'
 
@@ -200,6 +202,28 @@ workflow NANOPORE {
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Nextclade
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    if ( ! params.skip_nextclade && (params.nextclade_dataset_name || params.nextclade_dataset_dir) ) {
+        WF_NEXTCLADE(
+            ch_consensus
+        )
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Virus specific tools
+    //  More viruses to be added later
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    ch_pangolin_report = channel.empty()
+    if ( params.virus_name == 'covid' ) {
+        WF_VIRUS_COVID(
+            ch_consensus
+        )
+        ch_pangolin_report = WF_VIRUS_COVID.out.pangolin_report
+        ch_versions = ch_versions.mix(WF_VIRUS_COVID.out.versions)
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // QC and Tracking Workflow
     //  This is a stop for segmented viruses at the moment
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
@@ -265,6 +289,7 @@ workflow NANOPORE {
                 ch_reference,
                 ch_amplicon_bed,
                 FINAL_QC_CSV.out.csv,
+                ch_pangolin_report,
                 ch_versions
             )
         } else {
