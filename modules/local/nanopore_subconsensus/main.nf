@@ -148,7 +148,7 @@ process FIX_VCF {
     tuple val(meta), path(dedup_vcf)
 
     output:
-    tuple val(meta), path("${meta.id}-minorvar.vcf.gz"), path("${meta.id}-minorvar.vcf.gz.tbi"),  emit: vcf
+    tuple val(meta), path("${meta.id}-minorvar.vcf.gz"),  emit: vcf
 
     script:
     """

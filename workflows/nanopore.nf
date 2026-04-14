@@ -27,11 +27,15 @@ include { SAMTOOLS_DEPTH            } from '../modules/local/samtools/depth/main
 include { MAKE_SAMPLE_QC_CSV        } from '../modules/local/qc/main'
 include { FINAL_QC_CSV              } from '../modules/local/qc/main'
 
+// SnpEff related
+include { SNPEFF_DATABASE   } from '../modules/local/snpeff/database/main'
+
 // Subworkflows
 include { WF_NANOPORE_AMPLICON      } from '../subworkflows/local/nanopore_amplicon'
 include { WF_NANOPORE_SHOTGUN       } from '../subworkflows/local/nanopore_shotgun'
 include { WF_NANOPORE_SUBCONSENSUS       } from '../subworkflows/local/nanopore_subconsensus'
 include { WF_SNPEFF_ANNOTATE        } from '../subworkflows/local/snpeff_annotate'
+include { WF_SNPEFF_ANNOTATE as   WF_SNPEFF_ANNOTATE_MIN    } from '../subworkflows/local/snpeff_annotate'
 include { WF_NEXTCLADE              } from '../subworkflows/local/nextclade'
 include { WF_VIRUS_COVID            } from '../subworkflows/local/virus_specific/covid'
 include { WF_CREATE_MULTIQC_REPORTS } from '../subworkflows/local/create_multiqc_reports'
@@ -192,6 +196,7 @@ workflow NANOPORE {
     // subconsensus variants, optional
     //  Run before SnpEff to use unannotated VCF
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    ch_min_vcf = channel.empty()
     if ( params.subconsensus ) {
         WF_NANOPORE_SUBCONSENSUS(
             ch_bam,
@@ -201,20 +206,56 @@ workflow NANOPORE {
         )
         ch_min_vcf = WF_NANOPORE_SUBCONSENSUS.out.vcf
         ch_versions = ch_versions.mix(WF_NANOPORE_SUBCONSENSUS.out.versions)
-    }
-
+    }        
+    
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // SnpEff annotation
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    ch_snpeff_csv = channel.empty()
+
+    ch_snpeff_csv = channel.empty() 
+    ch_snpeff_db = channel.empty()
+    ch_snpeff_config = channel.empty()
+
     if (! params.skip_snpeff) {
+
+        // Get reference id
+        ch_reference.splitFasta( record: [ id: true ] )
+        .map{ record -> record.id.toString() }
+        .collect() // To collect segmented and turn to a value channel
+        .set{ ch_ref_ids }
+
+        // Use gff if provided:
+        ch_gff = params.gff ? file(params.gff, type: 'file', checkIfExists: true) : []
+
+        SNPEFF_DATABASE(
+            ch_ref_ids,
+            ch_reference,
+            ch_gff
+        )
+        ch_versions = ch_versions.mix(SNPEFF_DATABASE.out.versions)
+        ch_snpeff_db = SNPEFF_DATABASE.out.db
+        ch_snpeff_config = SNPEFF_DATABASE.out.config
+
         WF_SNPEFF_ANNOTATE(
             ch_vcf,
-            ch_reference
+            ch_snpeff_db,    
+            ch_snpeff_config,
+            "Major"
         )
         ch_vcf = WF_SNPEFF_ANNOTATE.out.vcf
         ch_snpeff_csv = WF_SNPEFF_ANNOTATE.out.csv
         ch_versions = ch_versions.mix(WF_SNPEFF_ANNOTATE.out.versions)
+    
+        if ( params.subconsensus ) {
+            WF_SNPEFF_ANNOTATE_MIN(
+                ch_min_vcf,
+                ch_snpeff_db,    
+                ch_snpeff_config,
+                "Minor"
+            )
+            ch_min_vcf = WF_SNPEFF_ANNOTATE_MIN.out.vcf
+            ch_min_snpeff_csv = WF_SNPEFF_ANNOTATE_MIN.out.csv
+        }
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //

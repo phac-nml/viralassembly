@@ -1,3 +1,9 @@
+/*
+    Module to create database to annotate VCF file using SnpEFF
+        1. Checks if a database is available
+        2. If it is downloads it, otherwise attempts to make it from NCBI refseq genbank file
+*/
+
 process SNPEFF_ANNOTATE {
     tag "$meta.id"
     label 'process_medium'
@@ -11,6 +17,7 @@ process SNPEFF_ANNOTATE {
     tuple val(meta), path(vcf)
     tuple val(genome), path(snpeff_db)
     path config
+    val level
 
     output:
     tuple val(meta), path("*.ann.vcf"), emit: vcf
@@ -28,6 +35,15 @@ process SNPEFF_ANNOTATE {
     // Args for db and config
     def snpeff_db_command = snpeff_db ? "-dataDir \${PWD}/${snpeff_db}" : ""
     def config_command = config ? "-config ${config}" : ""
+
+    // Sample name adjustment for minor variants
+    def sample_name
+    if (level == "Minor") {
+        sample_name = "${meta.id}_minvar"
+    } else {
+        sample_name = "${meta.id}"
+    }
+
     """
     # Sporatic lock issue in tmp dir solution
     #  Partially from https://github.com/apache/arrow/pull/39115/files
@@ -37,7 +53,7 @@ process SNPEFF_ANNOTATE {
     # Run command
     snpEff \\
         -Xmx${avail_mem}M \\
-        -csvStats ${meta.id}.csv \\
+        -csvStats ${sample_name}.csv \\
         $snpeff_db_command \\
         $config_command \\
         -no-intergenic \\
@@ -45,7 +61,7 @@ process SNPEFF_ANNOTATE {
         -hgvs1LetterAa \\
         $genome \\
         $vcf \\
-        > ${meta.id}.ann.vcf
+        > ${sample_name}.ann.vcf
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
