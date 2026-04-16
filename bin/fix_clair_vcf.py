@@ -25,7 +25,8 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    with open(args.input, "r") as vcf_in, open(args.output, "w") as vcf_out:
+    with open(args.input, "r", encoding='utf-8', errors='replace') as vcf_in, \
+         open(args.output, "w", encoding='ascii', errors='replace') as vcf_out: # Ensure ASCII encoding for output otherwise downstream issues parsing
         for line in vcf_in:
             # Write header lines, but skip irrelevant filter definitions
             if line.startswith("#"):
@@ -69,13 +70,24 @@ def main():
 
     # Compress the output VCF with bcftools
     compressed_vcf = f"{args.output}.gz"
-    subprocess.run(["bcftools", "view", args.output, "--output-type", "z", "--output-file", compressed_vcf], check=True)
+    result = subprocess.run(
+        ["bcftools", "view", args.output, "--output-type", "z", "--output-file", compressed_vcf],
+        check=True,
+        capture_output=True,
+        text=True
+    )
+    if result.stderr:
+        print(f"bcftools warning: {result.stderr}")
 
     # Index it
-    subprocess.run(
-    ["tabix", "-p", "vcf", compressed_vcf],
-    check=True
+    result = subprocess.run(
+        ["tabix", "-f", "-p", "vcf", compressed_vcf],
+        check=True,
+        capture_output=True,
+        text=True
     )
+    if result.stderr:
+        print(f"tabix warning: {result.stderr}")
 
     print(f"Compressed VCF saved as {compressed_vcf}")
 
