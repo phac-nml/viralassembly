@@ -210,13 +210,16 @@ workflow NANOPORE {
     
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // SnpEff annotation
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //    
 
     ch_snpeff_csv = channel.empty() 
     ch_snpeff_db = channel.empty()
     ch_snpeff_config = channel.empty()
 
     if (! params.skip_snpeff) {
+
+        // Store original VCF as fallback if SnpEff fails, which is common
+        ch_vcf_original = ch_vcf
 
         // Get reference id
         ch_reference.splitFasta( record: [ id: true ] )
@@ -242,7 +245,11 @@ workflow NANOPORE {
             ch_snpeff_config,
             "Major"
         )
+        // Mix annotated VCF with original, if SnpEff failed the original vcf will be used in reports (otherwise reports never run if SnpEff fails)
         ch_vcf = WF_SNPEFF_ANNOTATE.out.vcf
+            .mix(ch_vcf_original)
+            .groupTuple()
+            .map { meta, vcfs -> [meta, vcfs.find { it.name.endsWith('.ann.vcf.gz') } ?: vcfs[0]] }
         ch_snpeff_csv = WF_SNPEFF_ANNOTATE.out.csv
         ch_versions = ch_versions.mix(WF_SNPEFF_ANNOTATE.out.versions)
     
