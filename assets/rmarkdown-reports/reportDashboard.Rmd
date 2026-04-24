@@ -8,6 +8,7 @@ output:
 params:
     summary_df: 'overall.qc.csv'
     run_amplicons: FALSE
+    min_allele_freq: 0.65
 ---
 
 <!-- Style updates mostly to make sure the caption boxes are all matching -->
@@ -272,6 +273,7 @@ for ( samplev in summary_df$sample ) {
   # Assign data to subpage_env
   assign("sample_df", sample_df, subpage_env)
   assign("sample", samplev, subpage_env)
+  assign("min_allele_freq", params$min_allele_freq, subpage_env)
 
   # Knit sample subpage using the subpage_env and add result to out vector
   subpages = c(subpages, knitr::knit_child('sampleSubpage.Rmd', envir = subpage_env))
