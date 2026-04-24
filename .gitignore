@@ -12,3 +12,4 @@ slurm*
 .nf-test/
 lint_log.txt
 lint_results.md
+.Rhistory

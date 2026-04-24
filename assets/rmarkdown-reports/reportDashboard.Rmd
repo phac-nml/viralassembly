@@ -182,22 +182,47 @@ Row {data-height=500}
 ### **Table 1.** All Samples Data Summary
 ```{r, data_table, echo=FALSE, error=TRUE}
 # Create an interactive table of all samples with the different qc statuses highlighted
-df <- select(summary_df, sample, mean_sequencing_depth, median_sequencing_depth, num_aligned_reads, total_variants, num_snps, num_deletions, num_deletion_sites, num_insertions, num_insertion_sites, genome_completeness, qc_pass)
-df <- df %>%
-  rename(
-    "Sample" = sample,
-    "Mean Depth" = mean_sequencing_depth,
-    "Median Depth" = median_sequencing_depth,
-    "Total Aligned Reads" = num_aligned_reads,
-    "Variant Count" = total_variants,
-    "# SNPs" = num_snps,
-    "# Del" = num_deletions,
-    "# Del Sites" = num_deletion_sites,
-    "# Ins" = num_insertions,
-    "# Ins Sites" = num_insertion_sites,
-    "Genome Completeness" = genome_completeness,
-    "QC Pass" = qc_pass
-  )
+df <- summary_df %>% 
+  select(any_of(c('sample', 'qc_pass', 'mean_sequencing_depth', 'median_sequencing_depth', 
+                  'num_aligned_reads', 'total_variants', 'num_snps', 'num_deletions', 
+                  'num_deletion_sites', 'num_insertions', 'num_insertion_sites', 
+                  'genome_completeness', 'minor_snps', 'minor_indels')))
+
+if ("minor_snps" %in% colnames(df)) {
+    df <- df %>%
+    rename(
+      "Sample" = sample,
+      "QC Pass" = qc_pass,
+      "Mean Depth" = mean_sequencing_depth,
+      "Median Depth" = median_sequencing_depth,
+      "Total Aligned Reads" = num_aligned_reads,
+      "Variant Count" = total_variants,
+      "# SNPs" = num_snps,
+      "# Del" = num_deletions,
+      "# Del Sites" = num_deletion_sites,
+      "# Ins" = num_insertions,
+      "# Ins Sites" = num_insertion_sites,
+      "Genome Completeness" = genome_completeness,
+      "# Subconsensus SNPs" = minor_snps,
+      "# Subconsensus Indels" = minor_indels
+    )
+} else {
+  df <- df %>%
+    rename(
+      "Sample" = sample,
+      "Mean Depth" = mean_sequencing_depth,
+      "Median Depth" = median_sequencing_depth,
+      "Total Aligned Reads" = num_aligned_reads,
+      "Variant Count" = total_variants,
+      "# SNPs" = num_snps,
+      "# Del" = num_deletions,
+      "# Del Sites" = num_deletion_sites,
+      "# Ins" = num_insertions,
+      "# Ins Sites" = num_insertion_sites,
+      "Genome Completeness" = genome_completeness,
+      "QC Pass" = qc_pass
+    )
+}
 
 # Add color to table
 df$completeness_int_color <- add_pass_value_int(df, 'QC Pass')

@@ -245,7 +245,7 @@ workflow NANOPORE {
             ch_snpeff_config,
             "Major"
         )
-        // Mix annotated VCF with original, if SnpEff failed the original vcf will be used in reports (otherwise reports never run if SnpEff fails)
+        // If SnpEff failed the original vcf will be used in reports, otherwise reports never run if SnpEff fails (common issue)
         ch_vcf = WF_SNPEFF_ANNOTATE.out.vcf
             .mix(ch_vcf_original)
             .groupTuple()
@@ -254,6 +254,8 @@ workflow NANOPORE {
         ch_versions = ch_versions.mix(WF_SNPEFF_ANNOTATE.out.versions)
     
         if ( params.subconsensus ) {
+            // Store original VCF as fallback if SnpEff fails, which is common
+            ch_minvcf_original = ch_min_vcf
             WF_SNPEFF_ANNOTATE_MIN(
                 ch_min_vcf,
                 ch_snpeff_db,    
@@ -261,6 +263,9 @@ workflow NANOPORE {
                 "Minor"
             )
             ch_min_vcf = WF_SNPEFF_ANNOTATE_MIN.out.vcf
+                .mix(ch_minvcf_original)
+                .groupTuple()
+                .map { meta, vcfs -> [meta, vcfs.find { it.name.endsWith('.ann.vcf.gz') } ?: vcfs[0]] }
             ch_min_snpeff_csv = WF_SNPEFF_ANNOTATE_MIN.out.csv
         }
     }
@@ -313,11 +318,16 @@ workflow NANOPORE {
         )
         ch_versions = ch_versions.mix(SAMTOOLS_DEPTH.out.versions)
 
+        // Pass minor vcf to qc or create dummy channel if not running subconsensus
+        ch_min_vcf_for_qc = params.subconsensus ? ch_min_vcf
+            : ch_consensus.map { meta, consensus -> [meta, []] }
+
         MAKE_SAMPLE_QC_CSV(
             ch_consensus
                 .join(ch_bam, by: [0])
                 .join(SAMTOOLS_DEPTH.out.bed, by: [0])
-                .join(ch_vcf, by: [0]),
+                .join(ch_vcf, by: [0])
+                .join(ch_min_vcf_for_qc, by: [0]),
             ch_primer_bed,
             ch_metadata,
             ch_pcr_primer_bed
