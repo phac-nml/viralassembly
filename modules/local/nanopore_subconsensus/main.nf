@@ -136,8 +136,6 @@ process DEDUP_VCFS {
 process FIX_VCF {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/vcf", pattern: "*.vcf.gz", mode: "copy"
-    publishDir "${params.outdir}/vcf", pattern: "*.vcf.gz.tbi", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
