@@ -43,7 +43,6 @@ process CLAIRSTO_VARIANTS {
         --threads ${task.cpus} \\
         --platform ${params.clairS_model} \\
         --output_dir "${meta.id}-clairSTO-out" \\
-        -s ${meta.id} \\
         --chunk_size 1000 \\
         --threads 6 \\
         --include_all_ctgs \\
@@ -153,5 +152,39 @@ process FIX_VCF {
     fix_clair_vcf.py \\
         -i $dedup_vcf \\
         -o ${meta.id}-minorvar.vcf
+    """
+}
+
+// combine the indels and snvs into a single VCF
+process CAT_PASS_VCF {
+    label 'process_single'
+    tag "$meta.id"
+
+    conda "${moduleDir}/environment.yml"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
+        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
+
+    input:
+    tuple val(meta),
+          path(min_vcf),
+          path(maj_vcf)
+
+    output:
+    tuple val(meta), path("${meta.id}-full.vcf.gz")
+
+    script:
+    """
+    real_min=\$(readlink -f $min_vcf)
+    real_maj=\$(readlink -f $maj_vcf)
+
+    # Concatenate minor and major VCFs, then filter for PASS only
+    bcftools concat \\
+        -a --output-type z \\
+        -O z \\
+        -o ${meta.id}-cat.vcf.gz \\
+        \$real_min \$real_maj
+
+    bcftools view --output-type z -f PASS ${meta.id}-cat.vcf.gz > ${meta.id}-full.vcf.gz
     """
 }

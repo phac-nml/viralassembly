@@ -9,6 +9,7 @@ include { CLAIRSTO_VARIANTS            } from '../../../modules/local/nanopore_s
 include { CAT_VCF                      } from '../../../modules/local/nanopore_subconsensus/main'
 include { DEDUP_VCFS                   } from '../../../modules/local/nanopore_subconsensus/main'
 include { FIX_VCF                      } from '../../../modules/local/nanopore_subconsensus/main'
+include { CAT_PASS_VCF                      } from '../../../modules/local/nanopore_subconsensus/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -56,10 +57,16 @@ workflow WF_NANOPORE_SUBCONSENSUS {
     FIX_VCF(
         DEDUP_VCFS.out.vcf
     )
-    ch_complete_vcf = FIX_VCF.out.vcf
+    ch_complete_min_vcf = FIX_VCF.out.vcf
+
+    // Publish a joined VCF with passing minor and major variants
+    CAT_PASS_VCF(
+        FIX_VCF.out.vcf
+           .join(ch_con_vcf, by: [0])
+    )
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     emit:
-    vcf = ch_complete_vcf
+    vcf = ch_complete_min_vcf
     versions = ch_versions
 }
