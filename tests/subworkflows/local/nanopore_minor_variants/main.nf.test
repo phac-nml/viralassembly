@@ -1,15 +1,15 @@
 nextflow_workflow {
 
-    name "Test subconsensus subworkflow"
-    script "subworkflows/local/nanopore_subconsensus/main.nf"
-    workflow "WF_NANOPORE_SUBCONSENSUS" 
+    name "Test minor variants subworkflow"
+    script "subworkflows/local/nanopore_minor_variants/main.nf"
+    workflow "WF_NANOPORE_MINOR_VARIANTS"
 
-    test("Subconsensus subworkflow test") {
-        tag "subconsensus"
+    test("Minor variants subworkflow test") {
+        tag "minor_variants"
 
         when {
             params {
-                outdir = "results/subcon_tests/"
+                outdir = "results/minor_variant_tests/"
             }
             workflow {
                 """
@@ -25,9 +25,9 @@ nextflow_workflow {
             assert workflow.success
 
             //Check for output vcf
-            assert path("$launchDir/results/subcon_tests/vcf/sample1-minorvar.vcf.gz").exists()
+            assert path("$launchDir/results/minor_variant_tests/vcf/sample1-minorvar.vcf.gz").exists()
             // Read gzipped vcf
-            def lines = path("$launchDir/results/subcon_tests/vcf/sample1-minorvar.vcf.gz").linesGzip
+            def lines = path("$launchDir/results/minor_variant_tests/vcf/sample1-minorvar.vcf.gz").linesGzip
             assert lines.size() == 65
             // Check for a specific snp and indel:
             assert lines.any { it.contains("5386") }

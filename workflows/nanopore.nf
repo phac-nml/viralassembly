@@ -33,7 +33,7 @@ include { SNPEFF_DATABASE   } from '../modules/local/snpeff/database/main'
 // Subworkflows
 include { WF_NANOPORE_AMPLICON      } from '../subworkflows/local/nanopore_amplicon'
 include { WF_NANOPORE_SHOTGUN       } from '../subworkflows/local/nanopore_shotgun'
-include { WF_NANOPORE_SUBCONSENSUS       } from '../subworkflows/local/nanopore_subconsensus'
+include { WF_NANOPORE_MINOR_VARIANTS       } from '../subworkflows/local/nanopore_minor_variants'
 include { WF_SNPEFF_ANNOTATE        } from '../subworkflows/local/snpeff_annotate'
 include { WF_SNPEFF_ANNOTATE as   WF_SNPEFF_ANNOTATE_MIN    } from '../subworkflows/local/snpeff_annotate'
 include { WF_NEXTCLADE              } from '../subworkflows/local/nextclade'
@@ -193,21 +193,21 @@ workflow NANOPORE {
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    // subconsensus variants, optional
+    //  Call Minor variants (i.e. AF below consensus level), optional
     //  Run before SnpEff to use unannotated VCF
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ch_min_vcf = channel.empty()
-    if ( params.subconsensus ) {
-        WF_NANOPORE_SUBCONSENSUS(
+    if ( params.minor_variants ) {
+        WF_NANOPORE_MINOR_VARIANTS(
             ch_bam,
             ch_reference,
             GET_REF_STATS.out.fai,
             ch_vcf // major variants from the main pipeline
         )
-        ch_min_vcf = WF_NANOPORE_SUBCONSENSUS.out.vcf
-        ch_versions = ch_versions.mix(WF_NANOPORE_SUBCONSENSUS.out.versions)
-    }        
-    
+        ch_min_vcf = WF_NANOPORE_MINOR_VARIANTS.out.vcf
+        ch_versions = ch_versions.mix(WF_NANOPORE_MINOR_VARIANTS.out.versions)
+    }
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // SnpEff annotation
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //    
@@ -253,7 +253,7 @@ workflow NANOPORE {
         ch_snpeff_csv = WF_SNPEFF_ANNOTATE.out.csv
         ch_versions = ch_versions.mix(WF_SNPEFF_ANNOTATE.out.versions)
     
-        if ( params.subconsensus ) {
+        if ( params.minor_variants ) {
             // Store original VCF as fallback if SnpEff fails, which is common
             ch_minvcf_original = ch_min_vcf
             WF_SNPEFF_ANNOTATE_MIN(
@@ -318,8 +318,8 @@ workflow NANOPORE {
         )
         ch_versions = ch_versions.mix(SAMTOOLS_DEPTH.out.versions)
 
-        // Pass minor vcf to qc or create dummy channel if not running subconsensus
-        ch_min_vcf_for_qc = params.subconsensus ? ch_min_vcf
+        // Pass minor vcf to qc or create dummy channel if not running minor_variants
+        ch_min_vcf_for_qc = params.minor_variants ? ch_min_vcf
             : ch_consensus.map { meta, consensus -> [meta, []] }
 
         MAKE_SAMPLE_QC_CSV(

@@ -1,22 +1,22 @@
 /*
-    Subworkflow to run pipeline steps for subconsensus nanopore data
+    Subworkflow to run pipeline steps for calling minor variants from nanopore data
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { CLAIRSTO_VARIANTS            } from '../../../modules/local/nanopore_subconsensus/main'
-include { CAT_VCF                      } from '../../../modules/local/nanopore_subconsensus/main'
-include { DEDUP_VCFS                   } from '../../../modules/local/nanopore_subconsensus/main'
-include { FIX_VCF                      } from '../../../modules/local/nanopore_subconsensus/main'
-include { CAT_PASS_VCF                      } from '../../../modules/local/nanopore_subconsensus/main'
+include { CLAIRSTO_VARIANTS            } from '../../../modules/local/nanopore_minor_variants/main'
+include { CAT_VCF                      } from '../../../modules/local/nanopore_minor_variants/main'
+include { DEDUP_VCFS                   } from '../../../modules/local/nanopore_minor_variants/main'
+include { FIX_VCF                      } from '../../../modules/local/nanopore_minor_variants/main'
+include { CAT_PASS_VCF                      } from '../../../modules/local/nanopore_minor_variants/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN SUBWORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow WF_NANOPORE_SUBCONSENSUS {
+workflow WF_NANOPORE_MINOR_VARIANTS {
     take:
     ch_bam       // channel: [ val(meta), file(bam) ]
     ch_reference    // channel: [ file(reference) ]

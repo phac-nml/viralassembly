@@ -204,8 +204,8 @@ if ("minor_snps" %in% colnames(df)) {
       "# Ins" = num_insertions,
       "# Ins Sites" = num_insertion_sites,
       "Genome Completeness" = genome_completeness,
-      "# Subconsensus SNPs" = minor_snps,
-      "# Subconsensus Indels" = minor_indels
+      "# Minor SNPs" = minor_snps,
+      "# Minor Indels" = minor_indels
     )
 } else {
   df <- df %>%

@@ -1,5 +1,5 @@
 /*
-    Variant calling at the subconsensus level for nanopore data
+    Variant calling at the subconsensus level (i.e. minor variants) from nanopore data
         Includes some post processing scripts to reformat/simplify vcfs
 */
 process CLAIRSTO_VARIANTS {
@@ -145,13 +145,13 @@ process FIX_VCF {
     tuple val(meta), path(dedup_vcf)
 
     output:
-    tuple val(meta), path("${meta.id}-minorvar.vcf.gz"),  emit: vcf
+    tuple val(meta), path("${meta.id}-minor.vcf.gz"),  emit: vcf
 
     script:
     """
     fix_clair_vcf.py \\
         -i $dedup_vcf \\
-        -o ${meta.id}-minorvar.vcf
+        -o ${meta.id}-minor.vcf
     """
 }
 
