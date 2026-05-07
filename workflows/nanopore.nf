@@ -194,7 +194,6 @@ workflow NANOPORE {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     //  Call Minor variants (i.e. AF below consensus level), optional
-    //  Run before SnpEff to use unannotated VCF
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ch_min_vcf = channel.empty()
     if ( params.minor_variants ) {
@@ -202,7 +201,7 @@ workflow NANOPORE {
             ch_bam,
             ch_reference,
             GET_REF_STATS.out.fai,
-            ch_vcf // major variants from the main pipeline
+            ch_vcf // major variants from the main pipeline required for deduplication of vcfs
         )
         ch_min_vcf = WF_NANOPORE_MINOR_VARIANTS.out.vcf
         ch_versions = ch_versions.mix(WF_NANOPORE_MINOR_VARIANTS.out.versions)
@@ -218,7 +217,8 @@ workflow NANOPORE {
 
     if (! params.skip_snpeff) {
 
-        // Store original VCF as fallback if SnpEff fails, which is common
+        // Store original VCF as fallback if SnpEff fails
+        // Pipeline robust for typical snpeff issues but annotation files can be problematic
         ch_vcf_original = ch_vcf
 
         // Get reference id
@@ -245,7 +245,7 @@ workflow NANOPORE {
             ch_snpeff_config,
             "Major"
         )
-        // If SnpEff failed the original vcf will be used in reports, otherwise reports never run if SnpEff fails (common issue)
+        // If SnpEff failed the original vcf will be used in reports, otherwise reports never run if SnpEff fails
         ch_vcf = WF_SNPEFF_ANNOTATE.out.vcf
             .mix(ch_vcf_original)
             .groupTuple()

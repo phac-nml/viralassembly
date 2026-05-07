@@ -444,6 +444,8 @@ def grade_qc(completeness: float, mean_dep: float, median_dep: float, frameshift
 
 def count_minor_variants(vcf_file: str, chrom: str) -> Tuple[int, int]:
     """
+    Purpose
+    -------
     Small function to count passing SNPs and indels in the minor VCF file.
 
     Parameters
@@ -547,6 +549,7 @@ def main() -> None:
                 'irida_id': args.irida_id
             }
 
+            # Conditionally add the minor variant data
             if args.min_vcf:
                 sample_data['minor_snps'] = minor_snps
                 sample_data['minor_indels'] = minor_indels

@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
 Script for adapting ClairS-TO VCF for viral minor variants.
-Restores the quality scores from the sample field to the quality field for failed variants (automatically set to zero).
+Restores the quality scores from the sample field to the quality field for failed variants (automatically set to zero when a filter is failed).
 Removes irrelevant filters (VariantCluster, MultiHap, NoAncestry) from the FILTER column.
-Applies LowQual filter if GQ is below 5.
+Applies LowQual filter if GQ is below 5 or <quality>.
+Reliant on bcftools for compression and indexing.
+
 """
 
 import argparse
@@ -12,7 +14,7 @@ import subprocess
 # Parse command-line arguments
 def parse_arguments():
     parser = argparse.ArgumentParser(
-        description="Replace QUAL with GQ from sample field and remove irrelevant filters from VCF."
+        description="Replace QUAL with GQ from sample field and remove filters not applicable to viruses from VCF."
     )
     parser.add_argument(
         "-i", "--input", required=True, help="Path to the input VCF file."
@@ -20,13 +22,16 @@ def parse_arguments():
     parser.add_argument(
         "-o", "--output", required=True, help="Path to the output VCF file."
     )
+    parser.add_argument(
+        "-q", "--quality", required=False, default=5, type=int, help="Minimum quality score to pass a variant."
+    )
     return parser.parse_args()
 
-def main():
+def main() -> None:
     args = parse_arguments()
 
     with open(args.input, "r", encoding='utf-8', errors='replace') as vcf_in, \
-         open(args.output, "w", encoding='ascii', errors='replace') as vcf_out: # Ensure ASCII encoding for output otherwise downstream issues parsing
+         open(args.output, "w", encoding='ascii', errors='replace') as vcf_out: # Ensure ASCII encoding for output otherwise downstream issues parsing the vcf
         for line in vcf_in:
             # Write header lines, but skip irrelevant filter definitions
             if line.startswith("#"):
@@ -48,12 +53,12 @@ def main():
             filter_col = fields[6]
             irrelevant_filters = {"VariantCluster", "MultiHap", "NoAncestry", "LowQual"}
             filters = [
-                filter for filter in filter_col.split(";") 
-                if filter not in irrelevant_filters
+                filt for filt in filter_col.split(";") 
+                if filt not in irrelevant_filters
             ]
 
-            # Add LowQual back in if GQ is below 5 (it gets added if any filter is triggered regardless if the GQ)
-            if float(gq_value) < 5:
+            # Add LowQual back in if GQ is below args.quality (Default 5) (it gets added if any filter is triggered regardless of the GQ)
+            if float(gq_value) < args.quality:
                 if "LowQual" not in filters:
                     filters.append("LowQual")
 

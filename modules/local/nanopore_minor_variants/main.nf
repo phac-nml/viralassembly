@@ -1,16 +1,13 @@
 /*
     Variant calling at the subconsensus level (i.e. minor variants) from nanopore data
-        Includes some post processing scripts to reformat/simplify vcfs
+        Includes some post processing scripts to reformat vcfs
 */
 process CLAIRSTO_VARIANTS {
     label 'process_medium'
-    maxRetries    = 2
-    errorStrategy { task.exitStatus == 64 
-    ? 'exit' 
-    : 'retry' }
+    label 'error_retry'
     tag "${meta.id}"
 
-    // conda: No functional conda environment currently
+    // Only Docker container available - no conda or singularity support
     container 'docker://hkubal/clairs-to:v0.4.2'
 
     input:
@@ -90,7 +87,7 @@ process CAT_VCF {
     real_snv=\$(readlink -f $snv_vcf)
     real_indel=\$(readlink -f $indel_vcf)
 
-    # Need to use absolute paths in bcftools command
+    # Need to use absolute paths in bcftools command because links were causing errors.
     bcftools concat \\
         --output-type z \\
         -a -o ${meta.id}-cat.vcf.gz \\
@@ -114,9 +111,9 @@ process DEDUP_VCFS {
     tuple val(meta),
           path(cat_vcf), path(cat_index),
           path(pass_vcf)
-
+             
     output:
-    // dedup_vcfs/0000.vcf	for records private to	sample-cat.vcf.gz
+    // dedup_vcfs/0000.vcf - records private to sample-cat.vcf.gz (unique to ClairS-TO)
     tuple val(meta), path("dedup_vcfs/0000.vcf"), emit: vcf
 
     script:
@@ -151,11 +148,12 @@ process FIX_VCF {
     """
     fix_clair_vcf.py \\
         -i $dedup_vcf \\
-        -o ${meta.id}-minor.vcf
+        -o ${meta.id}-minor.vcf \\
+        -q ${params.min_qual_clairS}
     """
 }
 
-// combine the indels and snvs into a single VCF
+// combine the major and minor snps/indels into a single VCF
 process CAT_PASS_VCF {
     label 'process_single'
     tag "$meta.id"
@@ -178,7 +176,7 @@ process CAT_PASS_VCF {
     real_min=\$(readlink -f $min_vcf)
     real_maj=\$(readlink -f $maj_vcf)
 
-    # Concatenate minor and major VCFs, then filter for PASS only
+    # Concatenate minor and major VCFs, then filter for PASS only (failing minor variants are printed for filter visibility)
     bcftools concat \\
         -a --output-type z \\
         -O z \\

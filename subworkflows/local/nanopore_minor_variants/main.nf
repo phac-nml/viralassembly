@@ -18,7 +18,7 @@ include { CAT_PASS_VCF                      } from '../../../modules/local/nanop
 */
 workflow WF_NANOPORE_MINOR_VARIANTS {
     take:
-    ch_bam       // channel: [ val(meta), file(bam) ]
+    ch_bam       // channel: [ val(meta), file(bam), file(bai) ]
     ch_reference    // channel: [ file(reference) ]
     ch_ref_fai      // channel: [ file(reference.fai) ]
     ch_con_vcf          // channel: [  val(meta), file(vcf) ]
@@ -41,12 +41,12 @@ workflow WF_NANOPORE_MINOR_VARIANTS {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Vcf reformatting
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    // Combine indels and snvs (printed to different vcfs)
+    // Combine indels and snvs (printed to different vcfs by clairsto)
     CAT_VCF(
         CLAIRSTO_VARIANTS.out.vcf
     )
 
-    // Remove consensus variants
+    // Remove consensus variants for readability of minor vcf
     DEDUP_VCFS(
         CAT_VCF.out.vcf
            .join(ch_con_vcf, by: [0])

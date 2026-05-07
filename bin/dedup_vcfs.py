@@ -17,7 +17,7 @@ def init_parser() -> argparse.ArgumentParser:
     Command-line argument parsing.
     """
     parser = argparse.ArgumentParser(description=(
-        "Scrip parses a Medaka VCF and a ClairS-TO VCF to remove redundant variants."
+        "Script parses a Consensus VCF and a ClairS-TO VCF to remove redundant variants."
         "Input: a Medaka consensus VCF and a ClairS-TO minor variant VCF."
         "Output: VCF containing minor variants unique to ClairS-TO."
     ))
@@ -25,11 +25,11 @@ def init_parser() -> argparse.ArgumentParser:
     parser.add_argument("--clairs-vcf", required=True, help="Path to the Clairs-to VCF file.")
     return parser
 
-def split_mnv_to_snvs(record):
+def split_mnv_to_snvs(record: pysam.VariantRecord) -> list:
     """
     Splits a multi-nucleotide variant (MNV) VCF entry into single-nucleotide variants (SNVs).
-    Expects input as records of a Medaka VCF supplied from pysam.VariantFile.
-    Returns VCFs records one by one.
+    Expects input as records of a VCF supplied from pysam.VariantFile.
+    Returns VCF records in list.
     """
     snvs = []
     ref = record.ref
@@ -41,7 +41,7 @@ def split_mnv_to_snvs(record):
         return snvs
     
     # Iterate over bases of the variant and print as individual records 
-        # (zip produces pairs of ref-alt and enumerate indexes and returns tuples)
+        # (zip produces pairs of ref-alt enumerate indexes and returns tuples)
     for i, (ref_base, alt_base) in enumerate(zip(ref, alt)):
         snv = record.copy()
         snv.pos = record.pos + i
@@ -51,7 +51,7 @@ def split_mnv_to_snvs(record):
 
     return snvs
 
-def process_vcf(medaka_vcf, clairs_vcf):
+def process_vcf(medaka_vcf: str, clairs_vcf: str) -> None:
     """
     Processes the Medaka VCF to split MNVs into SNVs.
     Deduplicates VCFs using bcftools isec
@@ -71,7 +71,7 @@ def process_vcf(medaka_vcf, clairs_vcf):
     # Split MNVs into SNVs in the medaka vcf
     with pysam.VariantFile(medaka_vcf, 'r') as vcf_reader, pysam.VariantFile(split_vcf, 'w', header=vcf_reader.header) as vcf_writer:
         for record in vcf_reader:
-            # find and split MNVs but make sure they aren't indels, print everything else
+            # find and split MNVs but make sure they aren't indels, print everything else as is
             if len(record.ref) == len(record.alts[0]) and len(record.ref) > 1:
                 snvs = split_mnv_to_snvs(record)
                 for snv in snvs:
