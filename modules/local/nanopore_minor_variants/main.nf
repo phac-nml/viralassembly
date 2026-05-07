@@ -67,6 +67,7 @@ process CLAIRSTO_VARIANTS {
 // combine the indels and snvs into a single VCF
 process CAT_VCF {
     label 'process_single'
+    label 'error_retry'
     tag "$meta.id"
 
     conda "${moduleDir}/environment.yml"
@@ -100,6 +101,7 @@ process CAT_VCF {
 // compare with main vcf and remove duplicates
 process DEDUP_VCFS {
     label 'process_single'
+    label 'error_retry'
     tag "$meta.id"
 
     conda "${moduleDir}/environment.yml"
@@ -111,7 +113,7 @@ process DEDUP_VCFS {
     tuple val(meta),
           path(cat_vcf), path(cat_index),
           path(pass_vcf)
-             
+
     output:
     // dedup_vcfs/0000.vcf - records private to sample-cat.vcf.gz (unique to ClairS-TO)
     tuple val(meta), path("dedup_vcfs/0000.vcf"), emit: vcf
@@ -131,6 +133,7 @@ process DEDUP_VCFS {
 // fix filters and quality scores
 process FIX_VCF {
     label 'process_single'
+    label 'error_retry'
     tag "$meta.id"
 
     conda "${moduleDir}/environment.yml"
@@ -156,6 +159,7 @@ process FIX_VCF {
 // combine the major and minor snps/indels into a single VCF
 process CAT_PASS_VCF {
     label 'process_single'
+    label 'error_retry'
     tag "$meta.id"
 
     conda "${moduleDir}/environment.yml"
