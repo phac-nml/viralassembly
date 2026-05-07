@@ -49,7 +49,7 @@ workflow WF_NANOPORE_MINOR_VARIANTS {
     // Remove consensus variants for readability of minor vcf
     DEDUP_VCFS(
         CAT_VCF.out.vcf
-           .join(ch_con_vcf, by: [0])
+            .join(ch_con_vcf, by: [0])
     )
     ch_primary_vcf = DEDUP_VCFS.out.vcf
 
@@ -62,7 +62,7 @@ workflow WF_NANOPORE_MINOR_VARIANTS {
     // Publish a joined VCF with passing minor and major variants
     CAT_PASS_VCF(
         FIX_VCF.out.vcf
-           .join(ch_con_vcf, by: [0])
+            .join(ch_con_vcf, by: [0])
     )
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //

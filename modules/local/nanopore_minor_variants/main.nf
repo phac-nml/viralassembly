@@ -17,8 +17,11 @@ process CLAIRSTO_VARIANTS {
 
     output:
     tuple val(meta),
-          path("${meta.id}-clairSTO-out/snv.vcf.gz"), path("${meta.id}-clairSTO-out/snv.vcf.gz.tbi"),
-          path("${meta.id}-clairSTO-out/indel.vcf.gz"), path("${meta.id}-clairSTO-out/indel.vcf.gz.tbi"), emit: vcf
+        path("${meta.id}-clairSTO-out/snv.vcf.gz"),
+        path("${meta.id}-clairSTO-out/snv.vcf.gz.tbi"),
+        path("${meta.id}-clairSTO-out/indel.vcf.gz"),
+        path("${meta.id}-clairSTO-out/indel.vcf.gz.tbi"),
+        emit: vcf
     path "versions.yml", emit: versions
 
     script:
@@ -76,9 +79,7 @@ process CAT_VCF {
         'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta),
-          path(snv_vcf), path(snv_index),
-          path(indel_vcf), path(indel_index)
+    tuple val(meta), path(snv_vcf), path(snv_index), path(indel_vcf), path(indel_index)
 
     output:
     tuple val(meta), path("${meta.id}-cat.vcf.gz"), path("${meta.id}-cat.vcf.gz.tbi"), emit: vcf
@@ -92,8 +93,7 @@ process CAT_VCF {
     bcftools concat \\
         --output-type z \\
         -a -o ${meta.id}-cat.vcf.gz \\
-        -O z \$real_snv \$real_indel \\
-        
+        -O z \$real_snv \$real_indel
     tabix -p vcf ${meta.id}-cat.vcf.gz
     """
 }
@@ -111,8 +111,8 @@ process DEDUP_VCFS {
 
     input:
     tuple val(meta),
-          path(cat_vcf), path(cat_index),
-          path(pass_vcf)
+        path(cat_vcf), path(cat_index),
+        path(pass_vcf)
 
     output:
     // dedup_vcfs/0000.vcf - records private to sample-cat.vcf.gz (unique to ClairS-TO)
@@ -169,8 +169,8 @@ process CAT_PASS_VCF {
 
     input:
     tuple val(meta),
-          path(min_vcf),
-          path(maj_vcf)
+        path(min_vcf),
+        path(maj_vcf)
 
     output:
     tuple val(meta), path("${meta.id}-full.vcf.gz")

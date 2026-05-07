@@ -33,15 +33,15 @@ def split_mnv_to_snvs(record: pysam.VariantRecord) -> list:
     """
     snvs = []
     ref = record.ref
-    alt = record.alts[0]  
-    
+    alt = record.alts[0]
+
     # Redundant check for indels
     if len(ref) != len(alt):
         print(f"Skipping non-substitution variant at {record.chrom}:{record.pos} (REF={ref}, ALT={alt}).")
         return snvs
-    
-    # Iterate over bases of the variant and print as individual records 
-        # (zip produces pairs of ref-alt enumerate indexes and returns tuples)
+
+    # Iterate over bases of the variant and print as individual records
+    # (zip produces pairs of ref-alt enumerate indexes and returns tuples)
     for i, (ref_base, alt_base) in enumerate(zip(ref, alt)):
         snv = record.copy()
         snv.pos = record.pos + i

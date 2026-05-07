@@ -36,7 +36,7 @@ def main() -> None:
             # Write header lines, but skip irrelevant filter definitions
             if line.startswith("#"):
                 if any(line.startswith(f"##FILTER=<ID={warn}") for warn in ["VariantCluster", "MultiHap", "NoAncestry", "NonSomatic", "Realignment"]):
-                    continue  
+                    continue
                 vcf_out.write(line)
                 continue
 
@@ -53,7 +53,7 @@ def main() -> None:
             filter_col = fields[6]
             irrelevant_filters = {"VariantCluster", "MultiHap", "NoAncestry", "LowQual"}
             filters = [
-                filt for filt in filter_col.split(";") 
+                filt for filt in filter_col.split(";")
                 if filt not in irrelevant_filters
             ]
 
@@ -67,7 +67,7 @@ def main() -> None:
                 fields[6] = "PASS"
             else:
                 fields[6] = ";".join(filters)
-        
+
             # Write the modified fields to the output
             vcf_out.write("\t".join(fields) + "\n")
 
@@ -98,3 +98,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    

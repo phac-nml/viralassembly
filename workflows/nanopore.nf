@@ -209,9 +209,9 @@ workflow NANOPORE {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // SnpEff annotation
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //    
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-    ch_snpeff_csv = channel.empty() 
+    ch_snpeff_csv = channel.empty()
     ch_snpeff_db = channel.empty()
     ch_snpeff_config = channel.empty()
 
@@ -241,7 +241,7 @@ workflow NANOPORE {
 
         WF_SNPEFF_ANNOTATE(
             ch_vcf,
-            ch_snpeff_db,    
+            ch_snpeff_db,
             ch_snpeff_config,
             "Major"
         )
@@ -252,13 +252,13 @@ workflow NANOPORE {
             .map { meta, vcfs -> [meta, vcfs.find { it.name.endsWith('.ann.vcf.gz') } ?: vcfs[0]] }
         ch_snpeff_csv = WF_SNPEFF_ANNOTATE.out.csv
         ch_versions = ch_versions.mix(WF_SNPEFF_ANNOTATE.out.versions)
-    
+
         if ( params.minor_variants ) {
             // Store original VCF as fallback if SnpEff fails, which is common
             ch_minvcf_original = ch_min_vcf
             WF_SNPEFF_ANNOTATE_MIN(
                 ch_min_vcf,
-                ch_snpeff_db,    
+                ch_snpeff_db,
                 ch_snpeff_config,
                 "Minor"
             )

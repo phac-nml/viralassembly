@@ -61,10 +61,10 @@ process SNPEFF_ANNOTATE {
         -hgvs1LetterAa \\
         $genome \\
         $vcf \\
-        > ${sample_name}.ann.vcf    
-    
+        > ${sample_name}.ann.vcf
+
     # Versions #
-    unset _JAVA_OPTIONS 
+    unset _JAVA_OPTIONS
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         snpeff: \$(echo \$(snpEff -version 2>&1) | cut -f 2 -d ' ')

@@ -183,10 +183,10 @@ Row {data-height=500}
 ### **Table 1.** All Samples Data Summary
 ```{r, data_table, echo=FALSE, error=TRUE}
 # Create an interactive table of all samples with the different qc statuses highlighted
-df <- summary_df %>% 
-  select(any_of(c('sample', 'qc_pass', 'mean_sequencing_depth', 'median_sequencing_depth', 
-                  'num_aligned_reads', 'total_variants', 'num_snps', 'num_deletions', 
-                  'num_deletion_sites', 'num_insertions', 'num_insertion_sites', 
+df <- summary_df %>%
+  select(any_of(c('sample', 'qc_pass', 'mean_sequencing_depth', 'median_sequencing_depth',
+                  'num_aligned_reads', 'total_variants', 'num_snps', 'num_deletions',
+                  'num_deletion_sites', 'num_insertions', 'num_insertion_sites',
                   'genome_completeness', 'minor_snps', 'minor_indels')))
 
 if ("minor_snps" %in% colnames(df)) {
