@@ -25,9 +25,9 @@ nextflow_workflow {
             assert workflow.success
 
             //Check for output vcf
-            assert path("$launchDir/results/minor_variant_tests/vcf/sample1-minorvar.vcf.gz").exists()
+            assert path("$launchDir/results/minor_variant_tests/vcf/sample1-minor.vcf.gz").exists()
             // Read gzipped vcf
-            def lines = path("$launchDir/results/minor_variant_tests/vcf/sample1-minorvar.vcf.gz").linesGzip
+            def lines = path("$launchDir/results/minor_variant_tests/vcf/sample1-minor.vcf.gz").linesGzip
             assert lines.size() == 65
             // Check for a specific snp and indel:
             assert lines.any { it.contains("5386") }
