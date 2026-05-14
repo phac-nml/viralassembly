@@ -14,14 +14,25 @@ nextflow.enable.dsl = 2
     VIRUS PARAMETER VALUES
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-// Check for user supplied nextclade dataset name
-boolean user_set_nextclade_dataset_name = params.nextclade_dataset_name != null
+// Check for user supplied nextclade dataset name and tag
+boolean user_set_nextclade_dataset_name = params.containsKey('nextclade_dataset_name')
+boolean user_set_nextclade_dataset_tag = params.containsKey('nextclade_dataset_tag')
 
+// Error out if tag is provided without a name
+if (user_set_nextclade_dataset_tag && !user_set_nextclade_dataset_name) {
+    log.error "--nextclade_dataset_tag can only be used with --nextclade_dataset_name"
+    System.exit(1)
+}
 // Define nextclade dataset name and tag
-params.nextclade_dataset_name  = params.nextclade_dataset_name ?:
+params.nextclade_dataset_name = user_set_nextclade_dataset_name ?
+    params.nextclade_dataset_name :
     getVirusAttribute('nextclade_dataset_name')
-params.nextclade_dataset_tag   = params.nextclade_dataset_tag ?:
-    (user_set_nextclade_dataset_name ? null : getVirusAttribute('nextclade_dataset_tag'))
+params.nextclade_dataset_tag  = user_set_nextclade_dataset_tag  ?
+    params.nextclade_dataset_tag :
+    (user_set_nextclade_dataset_name ?
+        null :
+        getVirusAttribute('nextclade_dataset_tag')
+    )
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
