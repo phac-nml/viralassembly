@@ -40,7 +40,7 @@ def main() -> None:
                 vcf_out.write(line)
                 continue
 
-            # Process variants, strip any white space and tab is seperater
+            # Process variants, strip any white space and tab is seperator
             fields = line.strip().split("\t")
 
             # Replace QUAL with GQ

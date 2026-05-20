@@ -51,7 +51,6 @@ workflow WF_NANOPORE_MINOR_VARIANTS {
         CAT_VCF.out.vcf
             .join(ch_con_vcf, by: [0])
     )
-    ch_primary_vcf = DEDUP_VCFS.out.vcf
 
     // Adjust filters and qual scores for viral minor variants
     FIX_VCF(

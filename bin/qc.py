@@ -516,8 +516,6 @@ def main() -> None:
 
             # Minor variants (if provided)
             if args.min_vcf:
-                minor_snps = 0
-                minor_indels = 0
                 minor_snps, minor_indels = count_minor_variants(args.min_vcf, chrom)
 
             # Grade qc

@@ -37,11 +37,9 @@ process SNPEFF_ANNOTATE {
     def config_command = config ? "-config ${config}" : ""
 
     // Sample name adjustment for minor variants
-    def sample_name
+    def sample_name = "${meta.id}"
     if (level == "Minor") {
         sample_name = "${meta.id}_minvar"
-    } else {
-        sample_name = "${meta.id}"
     }
 
     """

@@ -214,6 +214,8 @@ workflow NANOPORE {
     ch_snpeff_csv = channel.empty()
     ch_snpeff_db = channel.empty()
     ch_snpeff_config = channel.empty()
+    // Use gff if provided:
+    ch_gff = params.gff ? file(params.gff, type: 'file', checkIfExists: true) : []
 
     if (! params.skip_snpeff) {
 
@@ -223,12 +225,9 @@ workflow NANOPORE {
 
         // Get reference id
         ch_reference.splitFasta( record: [ id: true ] )
-        .map{ record -> record.id.toString() }
-        .collect() // To collect segmented and turn to a value channel
-        .set{ ch_ref_ids }
-
-        // Use gff if provided:
-        ch_gff = params.gff ? file(params.gff, type: 'file', checkIfExists: true) : []
+            .map{ record -> record.id.toString() }
+            .collect() // To collect segmented and turn to a value channel
+            .set{ ch_ref_ids }
 
         SNPEFF_DATABASE(
             ch_ref_ids,

@@ -47,7 +47,7 @@ process CLAIRSTO_VARIANTS {
         --chunk_size 1000 \\
         --threads 6 \\
         --include_all_ctgs \\
-        --disable_verdic \\
+        --disable_verdict \\
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
@@ -126,8 +126,8 @@ process DEDUP_VCFS {
 
     #Need to use absolute paths in bcftools command
     dedup_vcfs.py \\
-        --medaka-vcf \$real_pass \\
-        --clairs-vcf \$real_cat
+        --consensus-vcf \$real_pass \\
+        --clairSTO-vcf \$real_cat
     """
 }
 
