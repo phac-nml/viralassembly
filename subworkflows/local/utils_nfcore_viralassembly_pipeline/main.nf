@@ -71,6 +71,15 @@ workflow PIPELINE_INITIALISATION {
             System.exit(1)
     }
 
+    // Skip nextlade while providing a nextclade dataset name or directory
+    if ( params.skip_nextclade && params.nextclade_dataset_name ) {
+        log.error("Remove '--skip_nextclade' to run nextclade or remove '--nextclade_dataset_name' to skip netxclade.")
+        System.exit(1)
+    } else if ( params.skip_nextclade && params.nextclade_dataset_dir ) {
+        log.error("Remove '--skip_nextclade' to run nextclade or remove '--nextclade_dataset_dir' to skip netxclade.")
+        System.exit(1)
+    }
+
     //
     // Summarize and Validate Params
     //
