@@ -28,10 +28,10 @@ process CLAIR3_VARIANTS {
         --model_path=$model \\
         --output="${meta.id}-out" \\
         --min_coverage=5 \\
-        --haploid_precise \\
+        --haploid_sensitive \\
         --enable_long_indel \\
         --include_all_ctgs \\
-        --chunk_size=10000 \\
+        --chunk_size=5000 \\
         --no_phasing_for_fa
 
     gunzip ${meta.id}-out/merge_output.vcf.gz

@@ -20,6 +20,8 @@ process ARTIC_ALIGN_TRIM {
     def argsList = []
     if ( params.normalise ) {
         argsList.add("--normalise ${params.normalise}")
+    } else {
+        argsList.add("--normalise 0")
     }
     outName = "${meta.id}.trimmed.rg.sorted.bam"
     // Start mode = Trim to start of primers instead of ends

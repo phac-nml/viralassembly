@@ -173,6 +173,17 @@ def go(args):
             if v.QUAL < 20:
                 continue
 
+        # Clair3 prefilter for lowqual and low AF reads to not mask them
+        if args.clair3:
+            if v.QUAL < 2:
+                print(f"Skipping LowQual of {v.QUAL} at {v.POS}")
+                continue
+            # Skip really low AF to help not get a lot of Ns with noisy data
+            allele_freq = v.format("AF")[0][0]
+            if allele_freq < args.min_mask_freq:
+                print(f"Skipping LowAF of {allele_freq} at {v.POS}")
+                continue
+
         # Now apply the filter to send variants to PASS or FAIL file
         if filter.check_filter(v):
             vcf_writer.write_record(v)
@@ -198,10 +209,11 @@ def main():
     parser.add_argument('--medaka', action='store_true')
     parser.add_argument('--clair3', action='store_true')
     parser.add_argument('--no-frameshifts', action='store_true')
-    parser.add_argument("--min-depth", type=int)
-    parser.add_argument('--min-qual-c3', type=int, default=8)
+    parser.add_argument("--min-depth", type=int, default=10)
+    parser.add_argument('--min-qual-c3', type=int, default=7)
     parser.add_argument('--min-frameshift-qual', type=int, default=15)
-    parser.add_argument('--min-allele-freq', type=float, default=0.65)
+    parser.add_argument('--min-allele-freq', type=float, default=0.60)
+    parser.add_argument('--min-mask-freq', type=float, default=0.25)
     parser.add_argument('inputvcf')
     parser.add_argument('output_pass_vcf')
     parser.add_argument('output_fail_vcf')

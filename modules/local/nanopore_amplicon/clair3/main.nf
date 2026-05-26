@@ -43,7 +43,7 @@ process CLAIR3_VARIANTS {
         --model_path="$model" \\
         --output="${meta.id}-out" \\
         --min_coverage=5 \\
-        --haploid_precise \\
+        --haploid_sensitive \\
         --enable_long_indel \\
         --include_all_ctgs \\
         --ref_pct_full=1 \\
