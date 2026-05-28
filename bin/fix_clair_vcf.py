@@ -9,7 +9,9 @@ Reliant on bcftools for compression and indexing.
 """
 
 import argparse
-import subprocess
+import pysam
+import gzip
+import os
 
 # Parse command-line arguments
 def parse_arguments():
@@ -27,74 +29,81 @@ def parse_arguments():
     )
     return parser.parse_args()
 
+def fix_non_ascii(input_vcf: str) -> str:
+    """
+    Reads in vcf and replaces non-ASCII with equivalent
+    Returns path to a temp clean vcf file
+    """
+    # Temp vcf
+    if input_vcf.endswith('.vcf.gz'):
+        vcf_fix = input_vcf.replace(".vcf.gz", "_clean.vcf")
+    else:
+        vcf_fix = input_vcf.replace(".vcf", "_clean.vcf")
+    
+    # Handle zipped files:
+    zip = input_vcf.endswith('.gz')
+    open_func = gzip.open if zip else open
+    read_mode = 'rt' if zip else 'r'
+
+    with open_func(input_vcf, read_mode, encoding='utf-8', errors='replace') as vcf_in, \
+    open(vcf_fix, 'w', encoding='ascii', errors='replace') as vcf_out:
+        for line in vcf_in:
+            cleaned = line.encode('ascii', 'replace').decode('ascii')
+            vcf_out.write(cleaned)
+    
+    return vcf_fix
+
 def main() -> None:
     args = parse_arguments()
 
-    with open(args.input, "r", encoding='utf-8', errors='replace') as vcf_in, \
-         open(args.output, "w", encoding='ascii', errors='replace') as vcf_out: # Ensure ASCII encoding for output otherwise downstream issues parsing the vcf
-        for line in vcf_in:
-            # Write header lines, but skip irrelevant filter definitions
-            if line.startswith("#"):
-                if any(line.startswith(f"##FILTER=<ID={warn}") for warn in ["VariantCluster", "MultiHap", "NoAncestry", "NonSomatic", "Realignment"]):
-                    continue
-                vcf_out.write(line)
-                continue
+    irrelevant_filters = {"VariantCluster", "MultiHap", "NoAncestry", "NonSomatic", "Realignment"}
 
-            # Process variants, strip any white space and tab is seperator
-            fields = line.strip().split("\t")
+    # Fix non-ASCII characters because ClairS headers
+    cleaned_vcf = fix_non_ascii(args.input)
 
-            # Replace QUAL with GQ
-            sample_column = fields[9]
-            # Info field split by : and gq is second (GT:GQ:DP:AF:AD:AU:CU:GU:TU)
-            gq_value = sample_column.split(":")[1]
-            fields[5] = gq_value
+    with pysam.VariantFile(cleaned_vcf, 'r') as vcf_in:
 
-            # Remove irrelevant filters from FILTER column
-            filter_col = fields[6]
-            irrelevant_filters = {"VariantCluster", "MultiHap", "NoAncestry", "LowQual"}
-            filters = [
-                filt for filt in filter_col.split(";")
-                if filt not in irrelevant_filters
-            ]
+        new_header = vcf_in.header.copy()
 
-            # Add LowQual back in if GQ is below args.quality (Default 5) (it gets added if any filter is triggered regardless of the GQ)
-            if float(gq_value) < args.quality:
-                if "LowQual" not in filters:
-                    filters.append("LowQual")
+        # Remove irrelevent filters (i.e. for euks/diploid)
+        for filter_id in irrelevant_filters:
+            if filter_id in new_header.filters:
+                new_header.filters.remove_header(filter_id)
 
-            # If no filters left set to PASS
-            if not filters:
-                fields[6] = "PASS"
-            else:
-                fields[6] = ";".join(filters)
+        output_file = args.output if args.output.endswith('.gz') else f"{args.output}.gz"
+        with pysam.VariantFile(output_file, 'wz', header=new_header) as vcf_out:
+            for record in vcf_in:
+                
+                # Grab Qscore from info field
+                gq_value = record.samples[0].get("GQ", 0)
 
-            # Write the modified fields to the output
-            vcf_out.write("\t".join(fields) + "\n")
+                # Return Qscore to Qual field as filter automatically sets to 0
+                record.qual = float(gq_value)
 
-    print(f"Updated VCF saved as {args.output}")
+                # Remove irrelevant filters
+                irrelevant_filters.add("LowQual")  # Add LowQual because we are using our own threshold to reset after removing irrelevant filters
+                current_filters = set(record.filter)
+                remaining_filters = current_filters - irrelevant_filters
 
-    # Compress the output VCF with bcftools
-    compressed_vcf = f"{args.output}.gz"
-    result = subprocess.run(
-        ["bcftools", "view", args.output, "--output-type", "z", "--output-file", compressed_vcf],
-        check=True,
-        capture_output=True,
-        text=True
-    )
-    if result.stderr:
-        print(f"bcftools warning: {result.stderr}")
+                # Add LowQual back if below threshold
+                if gq_value < args.quality:
+                    remaining_filters.add("LowQual")
 
-    # Index it
-    result = subprocess.run(
-        ["tabix", "-f", "-p", "vcf", compressed_vcf],
-        check=True,
-        capture_output=True,
-        text=True
-    )
-    if result.stderr:
-        print(f"tabix warning: {result.stderr}")
+                # Reset filters (empty = PASS)
+                record.filter.clear()
+                if remaining_filters:
+                    for f in remaining_filters:
+                        record.filter.add(f)
+                else:
+                    record.filter.add("PASS")
+                
+                vcf_out.write(record)
+    
+    # Index the VCF
+    pysam.tabix_index(output_file, preset="vcf", force=True)
+    
+    print(f"Updated VCF saved as {output_file}")
 
-    print(f"Compressed VCF saved as {compressed_vcf}")
 
 if __name__ == "__main__":
     main()
