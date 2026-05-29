@@ -197,11 +197,14 @@ workflow NANOPORE {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ch_min_vcf = channel.empty()
     if ( params.minor_variants ) {
+        ch_clairsto_model = Channel.value(params.clairsto_model)
+
         WF_NANOPORE_MINOR_VARIANTS(
             ch_bam,
             ch_reference,
             GET_REF_STATS.out.fai,
-            ch_vcf // major variants from the main pipeline required for deduplication of vcfs
+            ch_vcf, // major variants from the main pipeline required for deduplication of vcfs
+            ch_clairsto_model
         )
         ch_min_vcf = WF_NANOPORE_MINOR_VARIANTS.out.vcf
         ch_versions = ch_versions.mix(WF_NANOPORE_MINOR_VARIANTS.out.versions)

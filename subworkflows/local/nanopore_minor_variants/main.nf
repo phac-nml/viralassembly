@@ -22,6 +22,7 @@ workflow WF_NANOPORE_MINOR_VARIANTS {
     ch_reference    // channel: [ file(reference) ]
     ch_ref_fai      // channel: [ file(reference.fai) ]
     ch_con_vcf          // channel: [  val(meta), file(vcf) ]
+    ch_clairSTO_model // channel:  val(model_name)
 
     main:
 
@@ -34,7 +35,8 @@ workflow WF_NANOPORE_MINOR_VARIANTS {
     CLAIRSTO_VARIANTS(
         ch_bam,
         ch_reference,
-        ch_ref_fai
+        ch_ref_fai,
+        ch_clairSTO_model
     )
     ch_versions = ch_versions.mix(CLAIRSTO_VARIANTS.out.versions)
 
@@ -45,18 +47,21 @@ workflow WF_NANOPORE_MINOR_VARIANTS {
     CAT_VCF(
         CLAIRSTO_VARIANTS.out.vcf
     )
+    ch_versions = ch_versions.mix(CAT_VCF.out.versions)
 
     // Remove consensus variants for readability of minor vcf
     DEDUP_VCFS(
         CAT_VCF.out.vcf
             .join(ch_con_vcf, by: [0])
     )
+    ch_versions = ch_versions.mix(DEDUP_VCFS.out.versions)
 
     // Adjust filters and qual scores for viral minor variants
     FIX_VCF(
         DEDUP_VCFS.out.vcf
     )
     ch_complete_min_vcf = FIX_VCF.out.vcf
+    ch_versions = ch_versions.mix(FIX_VCF.out.versions)
 
     // Publish a joined VCF with passing minor and major variants
     CAT_PASS_VCF(

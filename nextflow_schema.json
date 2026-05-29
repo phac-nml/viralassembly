@@ -172,7 +172,7 @@
             "default": "",
             "fa_icon": "fas fa-tools",
             "properties": {
-                "clairS_model": {
+                "clairsto_model": {
                     "type": "string",
                     "default": "r1041_e82_400bps_sup_v420",
                     "description": "Model to use in ClairS-TO. See ClairS-TO docs for more info. Be as accurate as possible for best results!",

@@ -40,11 +40,12 @@ def fix_non_ascii(input_vcf: str) -> str:
     else:
         vcf_fix = input_vcf.replace(".vcf", "_clean.vcf")
     
-    # Handle zipped files:
+    # In case input is zipped
     zip = input_vcf.endswith('.gz')
     open_func = gzip.open if zip else open
     read_mode = 'rt' if zip else 'r'
 
+    # Clean any non-ASCII characters from vcf
     with open_func(input_vcf, read_mode, encoding='utf-8', errors='replace') as vcf_in, \
     open(vcf_fix, 'w', encoding='ascii', errors='replace') as vcf_out:
         for line in vcf_in:

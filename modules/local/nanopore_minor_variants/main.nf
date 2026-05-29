@@ -15,6 +15,7 @@ process CLAIRSTO_VARIANTS {
     tuple val(meta), path(bam), path(bai)
     path reference
     path fai
+    val model
 
     output:
     tuple val(meta),
@@ -42,7 +43,7 @@ process CLAIRSTO_VARIANTS {
         --tumor_bam_fn $bam \\
         --ref_fn $reference \\
         --threads ${task.cpus} \\
-        --platform ${params.clairS_model} \\
+        --platform "$model" \\
         --output_dir "${meta.id}-clairSTO-out" \\
         --chunk_size 1000 \\
         --threads 6 \\
@@ -84,6 +85,7 @@ process CAT_VCF {
 
     output:
     tuple val(meta), path("${meta.id}-cat.vcf.gz"), path("${meta.id}-cat.vcf.gz.tbi"), emit: vcf
+    path "versions.yml", emit: versions
 
     script:
     """
@@ -96,6 +98,12 @@ process CAT_VCF {
         -a -o ${meta.id}-cat.vcf.gz \\
         -O z \$real_snv \$real_indel
     tabix -p vcf ${meta.id}-cat.vcf.gz
+
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bcftools: \$(bcftools --version 2>&1 | head -n1 | sed 's/^.*bcftools //; s/ .*\$//')
+    END_VERSIONS
     """
 }
 
@@ -118,6 +126,7 @@ process DEDUP_VCFS {
     output:
     // dedup_vcfs/0000.vcf - records private to sample-cat.vcf.gz (unique to ClairS-TO)
     tuple val(meta), path("dedup_vcfs/0000.vcf"), emit: vcf
+    path "versions.yml", emit: versions
 
     script:
     """
@@ -128,6 +137,12 @@ process DEDUP_VCFS {
     dedup_vcfs.py \\
         --consensus-vcf \$real_pass \\
         --clairSTO-vcf \$real_cat
+
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bcftools: \$(bcftools --version 2>&1 | head -n1 | sed 's/^.*bcftools //; s/ .*\$//')
+    END_VERSIONS
     """
 }
 
@@ -147,6 +162,7 @@ process FIX_VCF {
 
     output:
     tuple val(meta), path("${meta.id}-minor.vcf.gz"),  emit: vcf
+    path "versions.yml", emit: versions
 
     script:
     """
@@ -154,6 +170,13 @@ process FIX_VCF {
         -i $dedup_vcf \\
         -o ${meta.id}-minor.vcf \\
         -q ${params.min_qual_clairS}
+
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        python: \$(python --version | sed 's/Python //')
+        pysam: \$(python -c "import pysam; print(pysam.__version__)")
+    END_VERSIONS
     """
 }
 
