@@ -20,9 +20,7 @@ process CLAIRSTO_VARIANTS {
     output:
     tuple val(meta),
         path("${meta.id}-clairSTO-out/snv.vcf.gz"),
-        path("${meta.id}-clairSTO-out/snv.vcf.gz.tbi"),
         path("${meta.id}-clairSTO-out/indel.vcf.gz"),
-        path("${meta.id}-clairSTO-out/indel.vcf.gz.tbi"),
         emit: vcf
     path "versions.yml", emit: versions
 
@@ -46,9 +44,8 @@ process CLAIRSTO_VARIANTS {
         --platform "$model" \\
         --output_dir "${meta.id}-clairSTO-out" \\
         --chunk_size 1000 \\
-        --threads 6 \\
         --include_all_ctgs \\
-        --disable_verdict \\
+        --disable_verdict
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
@@ -81,10 +78,10 @@ process CAT_VCF {
         'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(snv_vcf), path(snv_index), path(indel_vcf), path(indel_index)
+    tuple val(meta), path(snv_vcf), path(indel_vcf)
 
     output:
-    tuple val(meta), path("${meta.id}-cat.vcf.gz"), path("${meta.id}-cat.vcf.gz.tbi"), emit: vcf
+    tuple val(meta), path("${meta.id}-cat.vcf"), emit: vcf
     path "versions.yml", emit: versions
 
     script:
@@ -94,10 +91,8 @@ process CAT_VCF {
 
     # Need to use absolute paths in bcftools command because links were causing errors.
     bcftools concat \\
-        --output-type z \\
-        -a -o ${meta.id}-cat.vcf.gz \\
-        -O z \$real_snv \$real_indel
-    tabix -p vcf ${meta.id}-cat.vcf.gz
+        -a -o ${meta.id}-cat.vcf \\
+        \$real_snv \$real_indel
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
@@ -120,7 +115,8 @@ process DEDUP_VCFS {
 
     input:
     tuple val(meta),
-        path(cat_vcf), path(cat_index),
+        path(cat_vcf),
+        path(cat_tbi),
         path(pass_vcf)
 
     output:
@@ -181,7 +177,7 @@ process FIX_VCF {
 }
 
 // combine the major and minor snps/indels into a single VCF
-process CAT_PASS_VCF {
+process PASS_VCF {
     label 'process_single'
     label 'error_retry'
     tag "$meta.id"
@@ -192,25 +188,20 @@ process CAT_PASS_VCF {
         'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta),
-        path(min_vcf),
-        path(maj_vcf)
+    tuple val(meta), path(full_vcf)
 
     output:
-    tuple val(meta), path("${meta.id}-full.vcf.gz")
+    tuple val(meta), path("${meta.id}-full.vcf.gz"), emit: vcf
+    path "versions.yml", emit: versions
 
     script:
     """
-    real_min=\$(readlink -f $min_vcf)
-    real_maj=\$(readlink -f $maj_vcf)
+    bcftools view --output-type z -f PASS $full_vcf > ${meta.id}-full.vcf.gz
 
-    # Concatenate minor and major VCFs, then filter for PASS only (failing minor variants are printed for filter visibility)
-    bcftools concat \\
-        -a --output-type z \\
-        -O z \\
-        -o ${meta.id}-cat.vcf.gz \\
-        \$real_min \$real_maj
-
-    bcftools view --output-type z -f PASS ${meta.id}-cat.vcf.gz > ${meta.id}-full.vcf.gz
+    # Versions #
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        bcftools: \$(bcftools --version 2>&1 | head -n1 | sed 's/^.*bcftools //; s/ .*\$//')
+    END_VERSIONS
     """
 }

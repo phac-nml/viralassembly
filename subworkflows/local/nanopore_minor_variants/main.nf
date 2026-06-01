@@ -7,9 +7,11 @@
 */
 include { CLAIRSTO_VARIANTS            } from '../../../modules/local/nanopore_minor_variants/main'
 include { CAT_VCF                      } from '../../../modules/local/nanopore_minor_variants/main'
+include { CAT_VCF as CAT_FULL_VCF      } from '../../../modules/local/nanopore_minor_variants/main'
 include { DEDUP_VCFS                   } from '../../../modules/local/nanopore_minor_variants/main'
 include { FIX_VCF                      } from '../../../modules/local/nanopore_minor_variants/main'
-include { CAT_PASS_VCF                      } from '../../../modules/local/nanopore_minor_variants/main'
+include { PASS_VCF                     } from '../../../modules/local/nanopore_minor_variants/main'
+include { ZIP_AND_INDEX_VCF            } from '../../../modules/local/artic_subcommands/zip_and_index/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -49,10 +51,15 @@ workflow WF_NANOPORE_MINOR_VARIANTS {
     )
     ch_versions = ch_versions.mix(CAT_VCF.out.versions)
 
+    ZIP_AND_INDEX_VCF(
+        CAT_VCF.out.vcf
+    )
+    ch_versions = ch_versions.mix(ZIP_AND_INDEX_VCF.out.versions)
+
     // Remove consensus variants for readability of minor vcf
     DEDUP_VCFS(
-        CAT_VCF.out.vcf
-            .join(ch_con_vcf, by: [0])
+            ZIP_AND_INDEX_VCF.out.vcf
+                .join(ch_con_vcf, by: [0])
     )
     ch_versions = ch_versions.mix(DEDUP_VCFS.out.versions)
 
@@ -64,10 +71,15 @@ workflow WF_NANOPORE_MINOR_VARIANTS {
     ch_versions = ch_versions.mix(FIX_VCF.out.versions)
 
     // Publish a joined VCF with passing minor and major variants
-    CAT_PASS_VCF(
+    CAT_FULL_VCF(
         FIX_VCF.out.vcf
             .join(ch_con_vcf, by: [0])
     )
+
+    PASS_VCF(
+        CAT_FULL_VCF.out.vcf
+    )
+    ch_versions = ch_versions.mix(PASS_VCF.out.versions)
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     emit:
