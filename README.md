@@ -66,7 +66,7 @@ This pipeline utilizes the same steps as the artic fieldbioinformatics minion pi
 Basic command:
 
 ```bash
-nextflow run /PATH/TO/artic-generic-nf/main.nf \
+nextflow run phac-nml/viralassemblymain.nf \
     -profile <PROFILE(s)> \
     --fastq_pass </PATH/TO/fastq_pass> \
     --reference <REF.fa> \
@@ -96,7 +96,7 @@ See the [medaka section](./docs/usage.md#medaka) of the usage docs for more info
 Basic command:
 
 ```bash
-nextflow run /PATH/TO/artic-generic-nf/main.nf \
+nextflow run phac-nml/viralassemblymain.nf \
     -profile <PROFILE(s)> \
     --variant_caller 'medaka' \
     --fastq_pass </PATH/TO/fastq_pass> \
@@ -124,7 +124,7 @@ See the [nanopolish section](./docs/usage.md#nanopolish) of the usage docs for m
 Basic command:
 
 ```bash
-nextflow run /PATH/TO/artic-generic-nf/main.nf \
+nextflow run phac-nml/viralassemblymain.nf \
     -profile <PROFILE(s)> \
     --variant_caller 'nanopolish' \
     --fastq_pass </PATH/TO/fastq_pass> \

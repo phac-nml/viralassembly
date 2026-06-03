@@ -249,7 +249,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_100.neg_control_info == "NA"
             assert iridanext_metadata.reads_100.run_status == "PASS"
             assert iridanext_metadata.reads_100.run_summary == ""
-            assert iridanext_metadata.reads_100.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_100.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_100.pipeline_version == "1.2.0-dev"
 
             // Sample Name: reads_25
@@ -268,7 +268,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_25.neg_control_info == "NA"
             assert iridanext_metadata.reads_25.run_status == "PASS"
             assert iridanext_metadata.reads_25.run_summary == ""
-            assert iridanext_metadata.reads_25.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_25.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_25.pipeline_version == "1.2.0-dev"
 
             // Sample Name: negative-ctrl with irida_id negative_ctrl
@@ -288,7 +288,7 @@ nextflow_pipeline {
             assert iridanext_metadata.negative_ctrl.neg_control_info == "PASS"
             assert iridanext_metadata.negative_ctrl.run_status == "PASS"
             assert iridanext_metadata.negative_ctrl.run_summary == ""
-            assert iridanext_metadata.negative_ctrl.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.negative_ctrl.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.negative_ctrl.pipeline_version == "1.2.0-dev"
 
             // Sample Name: sample1 && sample2 as they are the same
@@ -307,7 +307,7 @@ nextflow_pipeline {
             assert iridanext_metadata.sample1.neg_control_info == "NA"
             assert iridanext_metadata.sample2.run_status == "PASS"
             assert iridanext_metadata.sample1.run_summary == ""
-            assert iridanext_metadata.sample2.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.sample2.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.sample1.pipeline_version == "1.2.0-dev"
 
             // Pipeline info and tracking
@@ -487,7 +487,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_100.neg_control_info == "NA"
             assert iridanext_metadata.reads_100.run_status == "PASS"
             assert iridanext_metadata.reads_100.run_summary == ""
-            assert iridanext_metadata.reads_100.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_100.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_100.pipeline_version == "1.2.0-dev"
 
             // Sample Name: reads_25
@@ -506,7 +506,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_25.neg_control_info == "NA"
             assert iridanext_metadata.reads_25.run_status == "PASS"
             assert iridanext_metadata.reads_25.run_summary == ""
-            assert iridanext_metadata.reads_25.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_25.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_25.pipeline_version == "1.2.0-dev"
 
             // Sample Name: negative-ctrl
@@ -525,7 +525,7 @@ nextflow_pipeline {
             assert iridanext_metadata.negative_ctrl.neg_control_info == "PASS"
             assert iridanext_metadata.negative_ctrl.run_status == "PASS"
             assert iridanext_metadata.negative_ctrl.run_summary == ""
-            assert iridanext_metadata.negative_ctrl.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.negative_ctrl.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.negative_ctrl.pipeline_version == "1.2.0-dev"
 
             // Sample Name: sample1 && sample2 as they are the same
@@ -544,7 +544,7 @@ nextflow_pipeline {
             assert iridanext_metadata.sample1.neg_control_info == "NA"
             assert iridanext_metadata.sample2.run_status == "PASS"
             assert iridanext_metadata.sample1.run_summary == ""
-            assert iridanext_metadata.sample2.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.sample2.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.sample1.pipeline_version == "1.2.0-dev"
 
             // Pipeline info and tracking
@@ -736,7 +736,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_100.neg_control_info == "NA"
             assert iridanext_metadata.reads_100.run_status == "PASS"
             assert iridanext_metadata.reads_100.run_summary == ""
-            assert iridanext_metadata.reads_100.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_100.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_100.pipeline_version == "1.2.0-dev"
 
             // Sample Name: reads_25
@@ -755,7 +755,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_25.neg_control_info == "NA"
             assert iridanext_metadata.reads_25.run_status == "PASS"
             assert iridanext_metadata.reads_25.run_summary == ""
-            assert iridanext_metadata.reads_25.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_25.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_25.pipeline_version == "1.2.0-dev"
 
             // Sample Name: negative-ctrl
@@ -774,7 +774,7 @@ nextflow_pipeline {
             assert iridanext_metadata.negative_ctrl.neg_control_info == "PASS"
             assert iridanext_metadata.negative_ctrl.run_status == "PASS"
             assert iridanext_metadata.negative_ctrl.run_summary == ""
-            assert iridanext_metadata.negative_ctrl.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.negative_ctrl.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.negative_ctrl.pipeline_version == "1.2.0-dev"
 
             // Sample Name: sample1 && sample2 as they are the same
@@ -793,7 +793,7 @@ nextflow_pipeline {
             assert iridanext_metadata.sample1.neg_control_info == "NA"
             assert iridanext_metadata.sample2.run_status == "PASS"
             assert iridanext_metadata.sample1.run_summary == ""
-            assert iridanext_metadata.sample2.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.sample2.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.sample1.pipeline_version == "1.2.0-dev"
 
             // Pipeline info and tracking

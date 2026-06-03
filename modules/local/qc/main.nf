@@ -1,6 +1,6 @@
 // QC Modules
 //  Using artic env for the moment as it has a bunch of tools and
-//  is used in earlier steps
+//  is used in earlier steps already
 process MAKE_SAMPLE_QC_CSV {
     label 'process_single'
     tag "$meta.id"
@@ -22,22 +22,14 @@ process MAKE_SAMPLE_QC_CSV {
 
     script:
     // Need to structure args based on what we have
-    def version = workflow.manifest.version
     def metadataArg = metadata ? "--metadata $metadata" : ""
     def seqArg = primer_bed ? "--seq_bed $primer_bed" : ""
     def pcrArg = pcr_primers ? "--pcr_bed $pcr_primers" : ""
-    def analysis = "nanopolish"
-    if ( params.variant_caller == 'medaka' ) {
-        analysis = "medaka"
-    } else if ( params.variant_caller == 'clair3' ) {
-        analysis = "clair3"
-    }
     """
     qc.py \\
-        --analysis $analysis \\
-        --consensus $consensus \\
         --bam $bam \\
         --vcf $vcf \\
+        --consensus $consensus \\
         --depth $depth_bed \\
         $metadataArg \\
         $seqArg \\
@@ -63,6 +55,7 @@ process MAKE_SAMPLE_QC_CSV {
     END_VERSIONS
     """
 }
+
 process FINAL_QC_CSV {
     label 'process_single'
 

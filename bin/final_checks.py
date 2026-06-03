@@ -6,14 +6,11 @@ from Bio import SeqIO
 from collections import defaultdict
 
 def init_parser() -> argparse.ArgumentParser:
-    """
-    Purpose
-    -------
-    Parse CL inputs to be used in script
+    """Parse CL inputs to be used in script
 
-    Returns
-    -------
-    argparse.ArgumentParser
+    Returns:
+    --------
+        argparse.ArgumentParser
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -75,27 +72,38 @@ def init_parser() -> argparse.ArgumentParser:
     )
     return parser
 
-def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
-    """
-    Purpose
-    -------
-    Check that input CSV contains the correct columns needed. Exits program if not
 
-    Parameters
-    ----------
-    df: pd.DataFrame
-        Pandas dataframe made from the input CSV file
+def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
+    """Check that input CSV contains the correct columns needed. Exits program if not
+
+    Params:
+    -------
+        df (DataFrame): Dataframe made from the input CSV file
+        needed_columns (list): List of columns to confirm exist
     """
     columns = list(df.columns)
     if any(x not in columns for x in needed_columns):
         missing_str = ', '.join([x for x in needed_columns if x not in columns])
         raise ValueError(f'Missing {missing_str} column(s) needed for validation')
 
+
 def assess_control(row: pd.Series, threshold: float) -> str:
-    """Assess control values to pass or fail them based on float threshold given"""
+    """Assess control values to pass or fail them based on float threshold given
+
+    Params:
+    -------
+        row (Series): Object containing all of the rows values
+        threshold (float): Contamination threshold to check against
+
+    Returns:
+    --------
+        str: 'PASS' or Warning for samples above contamination threshold
+
+    """
     if row['genome_completeness'] >= threshold:
         return f'Warning - Above {threshold}% genome completeness contamination threshold'
     return 'PASS'
+
 
 def main() -> None:
     '''Run the program'''
@@ -178,7 +186,7 @@ def main() -> None:
     df['run_status'] = run_control_status
     df['run_summary'] = run_control_info
     df = df.fillna(args.fill_str)
-    df['pipeline_name'] = 'artic-generic-nf'
+    df['pipeline_name'] = 'ViralAssembly'
     df['pipeline_version'] = args.version
     df.sort_values(by='sample', inplace=True)
     df.to_csv('overall.qc.csv', index=False)
