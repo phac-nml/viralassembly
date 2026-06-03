@@ -5,19 +5,49 @@
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
+                    "bcftools/filter": {
+                        "branch": "master",
+                        "git_sha": "682f789f93070bd047868300dd018faf3d434e7c",
+                        "installed_by": ["modules"]
+                    },
+                    "bcftools/norm": {
+                        "branch": "master",
+                        "git_sha": "682f789f93070bd047868300dd018faf3d434e7c",
+                        "installed_by": ["modules"]
+                    },
+                    "bcftools/sort": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "bedtools/maskfasta": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "bedtools/merge": {
+                        "branch": "master",
+                        "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
+                        "installed_by": ["modules"]
+                    },
+                    "bowtie2/align": {
+                        "branch": "master",
+                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "installed_by": ["modules"]
+                    },
+                    "bowtie2/build": {
+                        "branch": "master",
+                        "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d",
+                        "installed_by": ["modules"]
+                    },
                     "custom/dumpsoftwareversions": {
                         "branch": "master",
                         "git_sha": "bba7e362e4afead70653f84d8700588ea28d0f9e",
                         "installed_by": ["modules"]
                     },
-                    "nextclade/datasetget": {
+                    "fastp": {
                         "branch": "master",
-                        "git_sha": "682f789f93070bd047868300dd018faf3d434e7c",
-                        "installed_by": ["modules"]
-                    },
-                    "nextclade/run": {
-                        "branch": "master",
-                        "git_sha": "682f789f93070bd047868300dd018faf3d434e7c",
+                        "git_sha": "d082103d7976a2804f21225446cc110cbd822f4c",
                         "installed_by": ["modules"]
                     },
                     "pangolin/run": {
@@ -33,6 +63,16 @@
                     "samtools/flagstat": {
                         "branch": "master",
                         "git_sha": "f4596fe0bdc096cf53ec4497e83defdb3a94ff62",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/sort": {
+                        "branch": "master",
+                        "git_sha": "d5d785b3d8b422cda9c6d84a23f629a8e9ff8cd8",
+                        "installed_by": ["modules"]
+                    },
+                    "tabix/tabix": {
+                        "branch": "master",
+                        "git_sha": "524a7d5ef99a0cbfb4feec8bf7062eb6a531931a",
                         "installed_by": ["modules"]
                     }
                 }
