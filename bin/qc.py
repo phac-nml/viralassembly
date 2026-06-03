@@ -37,13 +37,6 @@ def init_parser() -> argparse.ArgumentParser:
         help='IRIDA ID to upload to'
     )
     parser.add_argument(
-        '-a',
-        '--analysis',
-        required=True,
-        type=str,
-        help='Analysis program used ["nanopolish", "medaka", "clair3"]'
-    )
-    parser.add_argument(
         '-c',
         '--consensus',
         required=True,

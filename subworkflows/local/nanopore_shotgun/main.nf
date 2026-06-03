@@ -11,7 +11,8 @@
 include { MINIMAP2_ALIGN            } from '../../../modules/local/minimap2/main'
 include { LONGSHOT                  } from '../../../modules/local/longshot/main'
 include { BCFTOOLS_NORM             } from '../../../modules/local/bcftools/norm/main'
-include { BCFTOOLS_CONSENSUS        } from '../../../modules/local/bcftools/consensus/main'
+include { BCFTOOLS_CONSENSUS_FINAL  } from '../../../modules/local/bcftools/consensus/main'
+include { ADJUST_FASTA_HEADER       } from '../../../modules/local/artic_subcommands/adjust_fasta_header/main'
 
 // Variant calling tools
 include { MEDAKA_CONSENSUS          } from '../../../modules/local/nanopore_shotgun/medaka/main'
@@ -49,7 +50,7 @@ workflow WF_NANOPORE_SHOTGUN {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     MINIMAP2_ALIGN(
         ch_fastqs,
-        ch_reference
+        ch_reference.collect{ _meta, ref -> ref }
     )
     ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
     ch_bam = MINIMAP2_ALIGN.out.bam
@@ -64,7 +65,7 @@ workflow WF_NANOPORE_SHOTGUN {
         ch_versions = ch_versions.mix(MEDAKA_CONSENSUS.out.versions)
         MEDAKA_VARIANT(
             MEDAKA_CONSENSUS.out.hdf,
-            ch_reference
+            ch_reference.collect{ _meta, ref -> ref }
         )
         ch_primary_vcf = MEDAKA_VARIANT.out.vcf
         ch_versions = ch_versions.mix(MEDAKA_VARIANT.out.versions)
@@ -74,7 +75,7 @@ workflow WF_NANOPORE_SHOTGUN {
                 .combine(ch_bam, by: [0]),
             ch_fast5s,
             ch_seqSum,
-            ch_reference,
+            ch_reference.collect{ _meta, ref -> ref },
             ch_refstats
         )
         ch_primary_vcf = NANOPOLISH_VARIANTS.out.vcf
@@ -82,7 +83,7 @@ workflow WF_NANOPORE_SHOTGUN {
     } else {
         CLAIR3_VARIANTS(
             ch_bam,
-            ch_reference,
+            ch_reference.collect{ _meta, ref -> ref },
             ch_ref_fai,
             ch_clair3_model
         )
@@ -104,7 +105,7 @@ workflow WF_NANOPORE_SHOTGUN {
         LONGSHOT(
             ZIP_AND_INDEX_VCF.out.vcf
                 .join(ch_bam, by: [0]),
-            ch_reference,
+            ch_reference.collect{ _meta, ref -> ref },
             ch_ref_fai
         )
         ch_intermediate_vcf = LONGSHOT.out.vcf
@@ -127,14 +128,14 @@ workflow WF_NANOPORE_SHOTGUN {
     //  But will look more into it
     CUSTOM_MAKE_DEPTH_MASK(
         ch_bam,
-        ch_reference
+        ch_reference.collect{ _meta, ref -> ref }
     )
     // ch_versions = ch_versions.mix(CUSTOM_MAKE_DEPTH_MASK.out.versions)
 
     ARTIC_MASK(
         CUSTOM_MAKE_DEPTH_MASK.out.coverage_mask
             .join(CUSTOM_VCF_FILTER.out.fail_vcf, by: [0]),
-        ch_reference
+        ch_reference.collect{ _meta, ref -> ref }
     )
     ch_versions = ch_versions.mix(ARTIC_MASK.out.versions)
 
@@ -145,12 +146,24 @@ workflow WF_NANOPORE_SHOTGUN {
     )
     ch_versions = ch_versions.mix(BCFTOOLS_NORM.out.versions)
 
-    BCFTOOLS_CONSENSUS(
+    BCFTOOLS_CONSENSUS_FINAL(
         ARTIC_MASK.out.preconsensus
             .join(CUSTOM_MAKE_DEPTH_MASK.out.coverage_mask, by: [0])
             .join(BCFTOOLS_NORM.out.vcf, by: [0])
     )
-    ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS.out.versions)
+    ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_FINAL.out.versions)
+
+    //
+    // MODULE: Adjust final consensus sequence headers to make downstream processes easier
+    //
+    ADJUST_FASTA_HEADER(
+        BCFTOOLS_CONSENSUS_FINAL.out.consensus,
+        ch_reference,
+        '.consensus',
+        ''
+    )
+    ch_consensus = ADJUST_FASTA_HEADER.out.consensus
+    ch_versions = ch_versions.mix(ADJUST_FASTA_HEADER.out.versions)
 
     // Remove tabix index from vcf as it is not needed and won't match the normal artic steps as output
     CUSTOM_VCF_FILTER.out.pass_vcf
@@ -159,8 +172,8 @@ workflow WF_NANOPORE_SHOTGUN {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     emit:
-    consensus = BCFTOOLS_CONSENSUS.out.consensus
-    bam = ch_bam
-    vcf = ch_pass_vcf
-    versions = ch_versions
+    consensus   = ch_consensus  // channel: [ val(meta), file(consensus) ]
+    bam         = ch_bam        // channel: [ val(meta), file(bam), file(bai) ]
+    vcf         = ch_pass_vcf   // channel: [ val(meta), file(vcf) ]
+    versions    = ch_versions   // channel: [ path(versions.yml) ]
 }

@@ -30,7 +30,7 @@ params.nextclade_dataset_tag   = params.nextclade_dataset_tag ?:
 */
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_viralassembly_pipeline'
 include { FORMAT_INPUT            } from './subworkflows/local/format_input'
-include { NANOPORE                } from './workflows/nanopore.nf'
+include { VIRALASSEMBLY           } from './workflows/viralassembly.nf'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_viralassembly_pipeline'
 
 /*
@@ -42,7 +42,7 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_vira
 //
 // WORKFLOW: Run main analysis pipeline after formatting inputs
 //
-workflow VIRALASSEMBLY {
+workflow PHACNML_VIRALASSEMBLY {
 
     main:
     // Format the input to match based on the type of input - folder, file, or samplesheet
@@ -51,7 +51,7 @@ workflow VIRALASSEMBLY {
     //
     // WORKFLOW: Run pipeline
     //
-    NANOPORE (
+    VIRALASSEMBLY (
         FORMAT_INPUT.out.pass,
         FORMAT_INPUT.out.empty
     )
@@ -75,13 +75,14 @@ workflow {
         params.validate_params,
         params.monochrome_logs,
         args,
-        params.outdir
+        params.outdir,
+        params.reference
     )
 
     //
     // WORKFLOW: Run main workflow
     //
-    VIRALASSEMBLY()
+    PHACNML_VIRALASSEMBLY()
 
     //
     // Final pipeline completion

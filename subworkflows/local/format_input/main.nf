@@ -20,10 +20,10 @@ workflow FORMAT_INPUT {
     //
     // Fastq pass directory input
     //
-    if ( params.fastq_pass ) {
-        // Create fastqs channel based on if barcode dirs or .fastq files found in input
+    if ( params.fastq_pass && params.platform == 'nanopore' ) {
+        // Create fastqs channel based on if barcode dirs or .fastq/.fq files found in input
         nanoporeBarcodeDirs = file("${params.fastq_pass}/barcode*", type: 'dir', maxdepth: 1 )
-        nanoporeFastqs = file("${params.fastq_pass}/*.fastq*", type: 'file', maxdepth: 1)
+        nanoporeFastqs = file("${params.fastq_pass}/*.{fastq, fq}*", type: 'file', maxdepth: 1)
         // Barcode DIRs
         if ( nanoporeBarcodeDirs ) {
             channel.fromPath( nanoporeBarcodeDirs )
@@ -44,6 +44,21 @@ workflow FORMAT_INPUT {
         // Failing to detect
         } else {
             log.error("Couldn't detect any barcode directories or fastq files in --fastq_pass ${params.fastq_pass}")
+            System.exit(1)
+        }
+    } else if ( params.fastq_pass && params.platform == 'illumina' ) {
+        // Create fastqs channel based on if .fastq/.fq files found in input
+        illuminaFastqs = file("${params.fastq_pass}/*.{fastq, fq}*", type: 'file', maxdepth: 1)
+        if (illuminaFastqs){
+            channel.fromFilePairs("${params.fastq_pass}/*_{R1,R2}*.{fastq, fq}*", size: 2)
+                .map{ id, fastqs -> [ [id: id], fastqs ] }
+                .branch{ _meta, fastqs ->
+                    pass: fastqs[0].countFastq() >= 1 && fastqs[1].countFastq() >= 1
+                    empty: fastqs[0].countFastq() == 0 && fastqs[1].countFastq() == 0
+                }.set{ ch_fastqs }
+        // Failing to detect
+        } else {
+            log.error("Couldn't detect any fastq files in --fastq_pass ${params.fastq_pass}")
             System.exit(1)
         }
     }

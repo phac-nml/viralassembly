@@ -60,7 +60,7 @@ workflow WF_SNPEFF_ANNOTATE {
         .set { ch_ann_vcf }
 
     emit:
-    vcf = ch_ann_vcf
-    csv = SNPEFF_ANNOTATE.out.csv
-    versions = ch_versions
+    vcf         = ch_ann_vcf                // channel: [ val(meta), file(vcf) ]
+    csv         = SNPEFF_ANNOTATE.out.csv   // channel: [ val(meta), file(csv) ]
+    versions    = ch_versions               // channel: [ path(versions.yml) ]
 }

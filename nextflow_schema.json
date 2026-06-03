@@ -41,7 +41,7 @@
                     "type": "string",
                     "description": "Virus name that sets virus specific processes and nextclade runs",
                     "$comment": "Currently, this virus name option is set to run nextclade with the predefined dataset according to the named virus.\n Additionally, it currently runs the COVID virus specific subworkflow. Future use will possibly include more predefined options.",
-                    "pattern": "(?i)^(covid|rsv_a|rsv_b|mpox|ebola|sudan|measles|dengue|yfv|hmpv|vzv|rubella|mumps|wnv)$"
+                    "pattern": "(?i)^(covid|rsv_a|rsv_b|mpox|ebola|bdbv|sudan|measles|dengue|yfv|hmpv|vzv|rubella|mumps|wnv)$"
                 }
             },
             "required": ["outdir"]
@@ -68,9 +68,25 @@
                     "pattern": "^\\S+\\.fn?a(sta)?$",
                     "description": "Path to reference genome fasta file",
                     "fa_icon": "fas fa-font"
+                },
+                "platform": {
+                    "type": "string",
+                    "description": "Sequencing platform used. Options are: 'illumina' or 'nanopore'",
+                    "enum": ["illumina", "nanopore"],
+                    "fa_icon": "fas fa-vector-square"
                 }
             },
-            "required": ["variant_caller", "reference"]
+            "required": ["reference", "platform"],
+            "if": {
+                "properties": {
+                    "platform": {
+                        "const": "nanopore"
+                    }
+                }
+            },
+            "then": {
+                "required": ["variant_caller"]
+            }
         },
         "amplicon_settings": {
             "title": "Amplicon Settings",
@@ -208,6 +224,58 @@
                     "mimetype": "text/plain",
                     "fa_icon": "fas fa-file-alt",
                     "description": "Path to sequencing_summary file REQUIRED for nanopolish"
+                }
+            }
+        },
+        "freebayes_options": {
+            "title": "Freebayes Options",
+            "type": "object",
+            "description": "Options relating to illumina variant calling with Freebayes",
+            "default": "",
+            "properties": {
+                "min_ambiguity_threshold": {
+                    "type": "number",
+                    "description": "Minimum threshold to call a position as an IUPAC",
+                    "default": 0.3,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "max_ambiguity_threshold": {
+                    "type": "number",
+                    "description": "Maximum threshold to call a position as an IUPAC",
+                    "default": 0.75,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-plus-square"
+                },
+                "min_indel_threshold": {
+                    "type": "number",
+                    "description": "Minimum thresholds to keep an indel",
+                    "default": 0.6,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "min_alt_fraction_freebayes": {
+                    "type": "number",
+                    "description": "Require at least this fraction of observations supporting an alt allele to evaluate position",
+                    "default": 0.05,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "min_variant_qual_freebayes": {
+                    "type": "integer",
+                    "description": "Minimum freebayes quality (probability) to filter variants",
+                    "default": 20,
+                    "minimum": 0,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "use_ivar": {
+                    "type": "boolean",
+                    "description": "Use iVar as a variant caller instead of Freebayes for Illumina data. Default: False",
+                    "default": false
                 }
             }
         },
@@ -469,6 +537,9 @@
         },
         {
             "$ref": "#/$defs/nanopolish_settings"
+        },
+        {
+            "$ref": "#/$defs/freebayes_options"
         },
         {
             "$ref": "#/$defs/read_filtering_options"

@@ -1,4 +1,4 @@
-process NEXTCLADE_DATASETGET {
+process NEXTCLADE_SORT {
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
@@ -7,11 +7,10 @@ process NEXTCLADE_DATASETGET {
         'community.wave.seqera.io/library/nextclade:3.11.0--155203da8341cfe6' }"
 
     input:
-    val dataset
-    val tag
+    tuple val(meta), path(fasta)
 
     output:
-    path "$prefix"     , emit: dataset
+    tuple val(meta), path(fasta), stdout, emit: dataset_name
     path "versions.yml", emit: versions
 
     when:
@@ -19,16 +18,11 @@ process NEXTCLADE_DATASETGET {
 
     script:
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${dataset}"
-    def version = tag ? "--tag ${tag}" : ''
     """
     nextclade \\
-        dataset \\
-        get \\
-        $args \\
-        --name $dataset \\
-        $version \\
-        --output-dir $prefix
+        sort \\
+        -r - \\
+        $fasta | awk 'NR==2 {print \$4}'
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -37,21 +31,11 @@ process NEXTCLADE_DATASETGET {
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${dataset}"
     """
-    mkdir -p ${prefix}
-    touch ${prefix}/CHANGELOG.md
-    touch ${prefix}/README.md
-    touch ${prefix}/genome_annotation.gff3
-    touch ${prefix}/pathogen.json
-    touch ${prefix}/reference.fasta
-    touch ${prefix}/sequences.fasta
-    touch ${prefix}/tree.json
-
+    echo "No Dataset"
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         nextclade: \$(echo \$(nextclade --version 2>&1) | sed 's/^.*nextclade //; s/ .*\$//')
     END_VERSIONS
     """
-
 }

@@ -26,15 +26,8 @@ process MAKE_SAMPLE_QC_CSV {
     def metadataArg = metadata ? "--metadata $metadata" : ""
     def seqArg = primer_bed ? "--seq_bed $primer_bed" : ""
     def pcrArg = pcr_primers ? "--pcr_bed $pcr_primers" : ""
-    def analysis = "nanopolish"
-    if ( params.variant_caller == 'medaka' ) {
-        analysis = "medaka"
-    } else if ( params.variant_caller == 'clair3' ) {
-        analysis = "clair3"
-    }
     """
     qc.py \\
-        --analysis $analysis \\
         --consensus $consensus \\
         --bam $bam \\
         --vcf $vcf \\

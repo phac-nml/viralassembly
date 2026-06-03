@@ -8,8 +8,7 @@ process NEXTCLADE_RUN {
         'biocontainers/nextclade:3.9.1--h9ee0642_0' }"
 
     input:
-    tuple val(meta), path(fasta)
-    path dataset
+    tuple val(meta), path(fasta), path(dataset)
 
     output:
     tuple val(meta), path("${prefix}.csv")           , optional:true, emit: csv

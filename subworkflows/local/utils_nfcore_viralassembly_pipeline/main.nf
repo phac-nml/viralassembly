@@ -20,6 +20,7 @@ workflow PIPELINE_INITIALISATION {
     monochrome_logs   // boolean: Do not use coloured log outputs
     nextflow_cli_args // array: List of positional nextflow CLI args
     outdir            // string: The output directory where the results will be saved
+    reference         // path: The reference FASTA file
 
     main:
 
@@ -69,6 +70,17 @@ workflow PIPELINE_INITIALISATION {
         (params.nextclade_dataset_dir && params.nextclade_dataset_name))) {
             log.error("Please pass only one of the following to run nextclade: `--nextclade_dataset_name', '--nextclade_dataset_dir', or '--virus_name'")
             System.exit(1)
+    }
+
+    // Nextclade input when virus is segmented
+    def segmented = new File(reference)
+        .readLines()
+        .findAll { it.startsWith('>') }
+        .size() > 1
+
+    if ( segmented && (params.nextclade_dataset_dir || params.nextclade_dataset_name)) {
+        log.error("The reference FASTA used is a segmented virus. Please remove the 'nextclade_dataset_dir' or 'nextclade_dataset_name' argument as the pipeline will assign the appropriate nextclade dataset to each segment.")
+        System.exit(1)
     }
 
     //
