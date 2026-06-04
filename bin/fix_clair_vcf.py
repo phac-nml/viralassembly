@@ -31,7 +31,7 @@ def parse_arguments():
 
 def fix_non_ascii(input_vcf: str) -> str:
     """
-    Reads in vcf and replaces non-ASCII with equivalent
+    Reads in vcf and replaces non-ASCII with ?
     Returns path to a temp clean vcf file
     """
     # Temp vcf
@@ -49,9 +49,8 @@ def fix_non_ascii(input_vcf: str) -> str:
     with open_func(input_vcf, read_mode, encoding='utf-8', errors='replace') as vcf_in, \
     open(vcf_fix, 'w', encoding='ascii', errors='replace') as vcf_out:
         for line in vcf_in:
-            cleaned = line.encode('ascii', 'replace').decode('ascii')
-            vcf_out.write(cleaned)
-    
+            vcf_out.write(line)
+
     return vcf_fix
 
 def main() -> None:
@@ -82,7 +81,7 @@ def main() -> None:
                 record.qual = float(gq_value)
 
                 # Remove irrelevant filters
-                irrelevant_filters.add("LowQual")  # Add LowQual because we are using our own threshold to reset after removing irrelevant filters
+                irrelevant_filters.add("LowQual")  # Add LowQual here because it gets added for any filter pass, add back based on our qual threshold later
                 current_filters = set(record.filter)
                 remaining_filters = current_filters - irrelevant_filters
 
