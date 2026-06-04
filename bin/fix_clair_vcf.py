@@ -95,7 +95,7 @@ def main() -> None:
                         record.filter.add(f)
                 else:
                     record.filter.add("PASS")
-                
+
                 vcf_out.write(record)
 
     # Index the VCF
