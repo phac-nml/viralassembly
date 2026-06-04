@@ -38,7 +38,7 @@ def split_mnv_to_snvs(record: pysam.VariantRecord) -> list:
     # check for multiallelic sites (using normalized vcf should prevent this!)
     if len(record.alts) > 1:
         print(f"Skipping multiallelic variant at {record.chrom}:{record.pos}. Run BCFtools norm to decompose these!")
-        return [record]  
+        return [record]
 
     # Redundant check for indels
     if len(ref) != len(alt):

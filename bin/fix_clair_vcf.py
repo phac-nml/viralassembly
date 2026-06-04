@@ -39,7 +39,7 @@ def fix_non_ascii(input_vcf: str) -> str:
         vcf_fix = input_vcf.replace(".vcf.gz", "_clean.vcf")
     else:
         vcf_fix = input_vcf.replace(".vcf", "_clean.vcf")
-    
+
     # In case input is zipped
     zip = input_vcf.endswith('.gz')
     open_func = gzip.open if zip else open
@@ -73,7 +73,6 @@ def main() -> None:
         output_file = args.output if args.output.endswith('.gz') else f"{args.output}.gz"
         with pysam.VariantFile(output_file, 'wz', header=new_header) as vcf_out:
             for record in vcf_in:
-                
                 # Grab Qscore from info field
                 gq_value = record.samples[0].get("GQ", 0)
 
@@ -98,12 +97,11 @@ def main() -> None:
                     record.filter.add("PASS")
                 
                 vcf_out.write(record)
-    
+
     # Index the VCF
     pysam.tabix_index(output_file, preset="vcf", force=True)
-    
-    print(f"Updated VCF saved as {output_file}")
 
+    print(f"Updated VCF saved as {output_file}")
 
 if __name__ == "__main__":
     main()
