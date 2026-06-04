@@ -209,7 +209,7 @@ def main():
     parser.add_argument('--medaka', action='store_true')
     parser.add_argument('--clair3', action='store_true')
     parser.add_argument('--no-frameshifts', action='store_true')
-    parser.add_argument("--min-depth", type=int, default=10)
+    parser.add_argument("--min-depth", type=int, default=20)
     parser.add_argument('--min-qual-c3', type=int, default=7)
     parser.add_argument('--min-frameshift-qual', type=int, default=15)
     parser.add_argument('--min-allele-freq', type=float, default=0.60)
