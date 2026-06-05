@@ -1,6 +1,6 @@
-name: artic
+name: bcftools
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::artic=1.7.4
+  - bioconda::bcftools=1.19

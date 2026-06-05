@@ -6,8 +6,8 @@ process CAT_VCF {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
-        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/bcftools:1.19--h8b25389_0' :
+        'biocontainers/bcftools:1.19--h8b25389_0' }"
 
     input:
     tuple val(meta), path(snv_vcf), path(indel_vcf)
