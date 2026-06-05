@@ -61,6 +61,7 @@ def process_vcf(consensus_vcf: str, clairSTO_vcf: str) -> None:
     Deduplicates VCFs using bcftools isec
     """
 
+    # Start by preprocessing consensus vcf
     base_name = os.path.basename(consensus_vcf)
     if base_name.endswith('.vcf.gz'):
         base_name = base_name[:-7]
@@ -68,12 +69,16 @@ def process_vcf(consensus_vcf: str, clairSTO_vcf: str) -> None:
         base_name = base_name[:-4]
 
     # Intermediate files
+    norm_vcf = f"{base_name}.norm.vcf"
     split_vcf = f"{base_name}.split.vcf"
     compressed_vcf = f"{base_name}.split.vcf.gz"
     sorted_vcf = f"{base_name}.sorted.vcf.gz"
 
-    # Split MNVs into SNVs in the consensus vcf
-    with pysam.VariantFile(consensus_vcf, 'r') as vcf_reader, pysam.VariantFile(split_vcf, 'w', header=vcf_reader.header) as vcf_writer:
+    # First split any multiallelic sites:
+    subprocess.run(["bcftools", "norm", '-m', '-any', consensus_vcf, "--output-type", "z", "-o", norm_vcf], check=True)
+
+    # Split MNVs into SNVs
+    with pysam.VariantFile(norm_vcf, 'r') as vcf_reader, pysam.VariantFile(split_vcf, 'w', header=vcf_reader.header) as vcf_writer:
         for record in vcf_reader:
             # find and split MNVs but make sure they aren't indels or multiallelic, print everything else as is
             if len(record.alts) == 1 and len(record.ref) == len(record.alts[0]) and len(record.ref) > 1:

@@ -70,6 +70,9 @@ def main() -> None:
             if filter_id in new_header.filters:
                 new_header.filters.remove_header(filter_id)
 
+        # Now add LowQual here because it gets assigned for any filter failed, we will add back based on the qual threshold
+        irrelevant_filters.add("LowQual")
+
         output_file = args.output if args.output.endswith('.gz') else f"{args.output}.gz"
         with pysam.VariantFile(output_file, 'wz', header=new_header) as vcf_out:
             for record in vcf_in:
@@ -80,7 +83,6 @@ def main() -> None:
                 record.qual = float(gq_value)
 
                 # Remove irrelevant filters
-                irrelevant_filters.add("LowQual")  # Add LowQual here because it gets added for any filter pass, add back based on our qual threshold later
                 current_filters = set(record.filter)
                 remaining_filters = current_filters - irrelevant_filters
 
