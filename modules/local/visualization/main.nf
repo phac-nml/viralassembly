@@ -250,6 +250,7 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
 
     script:
     def amp_arg = merged_amplicon_depth_csv ? "run_amplicons = TRUE" : "run_amplicons = FALSE"
+    def min_af_arg = "min_allele_freq = ${params.min_allele_freq}"
     """
     # Setup sample files to be found by RMD
     mkdir -p all_variation_positions
@@ -263,7 +264,7 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
     Rscript \\
         -e "library(rmarkdown)" \\
         -e "library(flexdashboard)" \\
-        -e "rmarkdown::render('$rmd_base_template', params=list($amp_arg))"
+        -e "rmarkdown::render('$rmd_base_template', params=list($amp_arg, $min_af_arg))"
     """
 
     stub:

@@ -11,7 +11,7 @@ process MAKE_SAMPLE_QC_CSV {
         'biocontainers/artic:1.8.5--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(consensus), path(bam), path(bai), path(depth_bed), path(vcf)
+    tuple val(meta), path(consensus), path(bam), path(bai), path(depth_bed), path(vcf), path(min_vcf)
     path primer_bed
     path metadata
     path pcr_primers
@@ -25,6 +25,7 @@ process MAKE_SAMPLE_QC_CSV {
     def metadataArg = metadata ? "--metadata $metadata" : ""
     def seqArg = primer_bed ? "--seq_bed $primer_bed" : ""
     def pcrArg = pcr_primers ? "--pcr_bed $pcr_primers" : ""
+    def minVcfArg = min_vcf ? "--min_vcf $min_vcf" : ""
     """
     qc.py \\
         --bam $bam \\
@@ -34,6 +35,7 @@ process MAKE_SAMPLE_QC_CSV {
         $metadataArg \\
         $seqArg \\
         $pcrArg \\
+        $minVcfArg \\
         --sample $meta.id \\
         --irida_id $meta.irida_id
 

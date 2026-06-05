@@ -104,7 +104,7 @@ if (file.exists(var_f)) {
     layout(
       xaxis = list (title = "Position", tickformat = ".0f"),
       yaxis = list (title = "Percent Non Reference Base", tickformat = '2.%'),
-      shapes = hline(75)
+      shapes = list(hline(min_allele_freq * 100))
     )
 p
 ```

@@ -63,6 +63,12 @@ def init_parser() -> argparse.ArgumentParser:
         help='Positional depth bed file from samtools depth'
     )
     parser.add_argument(
+        '--min_vcf',
+        required=False,
+        type=str,
+        help='Input sample minor vcf file'
+    )
+    parser.add_argument(
         '-m',
         '--metadata',
         required=False,
@@ -409,6 +415,36 @@ def grade_qc(completeness: float, mean_dep: float, median_dep: float, frameshift
         return ';'.join(qc_status)
     return 'PASS'
 
+def count_minor_variants(vcf_file: str, chrom: str) -> Tuple[int, int]:
+    """Small function to count passing SNPs and indels in the minor VCF file.
+
+    Params:
+    -------
+      vcf_file (str): Path to the minor VCF file.
+      chrom (str): Chromosome to filter variants.
+
+    Returns:
+    --------
+      Tuple[int, int]: Number of passing SNPs and indels.
+    """
+    snps = 0
+    indels = 0
+
+    with open(vcf_file, 'rb') as handle:
+        reader = vcf.Reader(handle)
+        for record in reader:
+            if record.CHROM != chrom:
+                continue
+            if record.FILTER and "PASS" not in record.FILTER:
+                continue
+            ref_len = len(record.REF)
+            alt_len = len(record.ALT[0])
+            if ref_len == 1 and alt_len == 1:
+                snps += 1
+            elif ref_len != alt_len:
+                indels += 1
+
+    return snps, indels
 
 def main() -> None:
     """Main entry to the program"""
@@ -445,15 +481,20 @@ def main() -> None:
             if args.pcr_bed:
                 pcr_primer_overlap = check_primers(args.pcr_bed, variant_positions, chrom)
 
+            # Minor variants (if provided)
+            if args.min_vcf:
+                minor_snps, minor_indels = count_minor_variants(args.min_vcf, chrom)
+
             # Grade qc
             mean_depth = depth_dict[chrom].get('mean', 0)
             median_depth = depth_dict[chrom].get('median', 0)
             qc_status = grade_qc(completeness, mean_depth, median_depth, frameshift_variants)
 
             # Final Output
-            final_out.append({
+            sample_data = {
                 'sample': args.sample,
                 'reference': chrom,
+                'qc_pass': qc_status,
                 'num_aligned_reads': total_reads,
                 'num_segment_reads': num_reads,
                 'num_consensus_n': count_n,
@@ -470,9 +511,16 @@ def main() -> None:
                 'possible_frameshift_variants': frameshift_variants,
                 'sequencing_primer_variants': seq_primer_overlap,
                 'diagnostic_primer_variants': pcr_primer_overlap,
-                'qc_pass': qc_status,
                 'irida_id': args.irida_id
-            })
+            }
+
+            # Conditionally add the minor variant data
+            if args.min_vcf:
+                sample_data['minor_snps'] = minor_snps
+                sample_data['minor_indels'] = minor_indels
+
+            final_out.append(sample_data)
+
 
     # Create and output final CSV
     df = pd.DataFrame.from_dict(final_out)

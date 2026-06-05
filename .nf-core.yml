@@ -3,6 +3,8 @@ repository_type: pipeline
 nf_core_version: 3.2.1
 
 lint:
+  template_strings:
+    - test_data/nanopore/bams/sample1.sorted.bam
   files_exist:
     - .github/ISSUE_TEMPLATE/config.yml
     - .github/ISSUE_TEMPLATE/bug_report.yml

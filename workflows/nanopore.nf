@@ -27,10 +27,15 @@ include { SAMTOOLS_DEPTH            } from '../modules/local/samtools/depth/main
 include { MAKE_SAMPLE_QC_CSV        } from '../modules/local/qc/main'
 include { FINAL_QC_CSV              } from '../modules/local/qc/main'
 
+// SnpEff related
+include { SNPEFF_DATABASE   } from '../modules/local/snpeff/database/main'
+
 // Subworkflows
 include { WF_NANOPORE_AMPLICON      } from '../subworkflows/local/nanopore_amplicon'
 include { WF_NANOPORE_SHOTGUN       } from '../subworkflows/local/nanopore_shotgun'
+include { WF_NANOPORE_MINOR_VARIANTS       } from '../subworkflows/local/nanopore_minor_variants'
 include { WF_SNPEFF_ANNOTATE        } from '../subworkflows/local/snpeff_annotate'
+include { WF_SNPEFF_ANNOTATE as   WF_SNPEFF_ANNOTATE_MIN    } from '../subworkflows/local/snpeff_annotate'
 include { WF_NEXTCLADE              } from '../subworkflows/local/nextclade'
 include { WF_VIRUS_COVID            } from '../subworkflows/local/virus_specific/covid'
 include { WF_CREATE_MULTIQC_REPORTS } from '../subworkflows/local/create_multiqc_reports'
@@ -188,17 +193,83 @@ workflow NANOPORE {
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    //  Call Minor variants (i.e. AF below consensus level), optional
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    ch_min_vcf = channel.empty()
+    if ( params.minor_variants ) {
+        ch_clairsto_model = Channel.value(params.clairsto_model)
+
+        WF_NANOPORE_MINOR_VARIANTS(
+            ch_bam,
+            ch_reference,
+            GET_REF_STATS.out.fai,
+            ch_vcf, // major variants from the main pipeline required for deduplication of vcfs
+            ch_clairsto_model
+        )
+        ch_min_vcf = WF_NANOPORE_MINOR_VARIANTS.out.vcf
+        ch_versions = ch_versions.mix(WF_NANOPORE_MINOR_VARIANTS.out.versions)
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // SnpEff annotation
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
     ch_snpeff_csv = channel.empty()
+    ch_snpeff_db = channel.empty()
+    ch_snpeff_config = channel.empty()
+    // Use gff if provided:
+    ch_gff = params.gff ? file(params.gff, type: 'file', checkIfExists: true) : []
+
     if (! params.skip_snpeff) {
+
+        // Store original VCF as fallback if SnpEff fails
+        // Pipeline robust for typical snpeff issues but annotation files can be problematic
+        ch_vcf_original = ch_vcf
+
+        // Get reference id
+        ch_reference.splitFasta( record: [ id: true ] )
+            .map{ record -> record.id.toString() }
+            .collect() // To collect segmented and turn to a value channel
+            .set{ ch_ref_ids }
+
+        SNPEFF_DATABASE(
+            ch_ref_ids,
+            ch_reference,
+            ch_gff
+        )
+        ch_versions = ch_versions.mix(SNPEFF_DATABASE.out.versions)
+        ch_snpeff_db = SNPEFF_DATABASE.out.db
+        ch_snpeff_config = SNPEFF_DATABASE.out.config
+
         WF_SNPEFF_ANNOTATE(
             ch_vcf,
-            ch_reference
+            ch_snpeff_db,
+            ch_snpeff_config,
+            "Major"
         )
+        // If SnpEff failed the original vcf will be used in reports, otherwise reports never run if SnpEff fails
         ch_vcf = WF_SNPEFF_ANNOTATE.out.vcf
+            .mix(ch_vcf_original)
+            .groupTuple()
+            .map { meta, vcfs -> [meta, vcfs.find { it.name.endsWith('.ann.vcf.gz') } ?: vcfs[0]] }
         ch_snpeff_csv = WF_SNPEFF_ANNOTATE.out.csv
         ch_versions = ch_versions.mix(WF_SNPEFF_ANNOTATE.out.versions)
+
+        if ( params.minor_variants ) {
+            // Store original VCF as fallback if SnpEff fails, which is common
+            ch_minvcf_original = ch_min_vcf
+            WF_SNPEFF_ANNOTATE_MIN(
+                ch_min_vcf,
+                ch_snpeff_db,
+                ch_snpeff_config,
+                "Minor"
+            )
+            ch_min_vcf = WF_SNPEFF_ANNOTATE_MIN.out.vcf
+                .mix(ch_minvcf_original)
+                .groupTuple()
+                .map { meta, vcfs -> [meta, vcfs.find { it.name.endsWith('.ann.vcf.gz') } ?: vcfs[0]] }
+            ch_min_snpeff_csv = WF_SNPEFF_ANNOTATE_MIN.out.csv
+        }
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
@@ -249,11 +320,16 @@ workflow NANOPORE {
         )
         ch_versions = ch_versions.mix(SAMTOOLS_DEPTH.out.versions)
 
+        // Pass minor vcf to qc or create dummy channel if not running minor_variants
+        ch_min_vcf_for_qc = params.minor_variants ? ch_min_vcf
+            : ch_consensus.map { meta, consensus -> [meta, []] }
+
         MAKE_SAMPLE_QC_CSV(
             ch_consensus
                 .join(ch_bam, by: [0])
                 .join(SAMTOOLS_DEPTH.out.bed, by: [0])
-                .join(ch_vcf, by: [0]),
+                .join(ch_vcf, by: [0])
+                .join(ch_min_vcf_for_qc, by: [0]),
             ch_primer_bed,
             ch_metadata,
             ch_pcr_primer_bed
