@@ -114,6 +114,16 @@ custom_data:
       possible_frameshift_variants:
         title: "Possible Frameshift Variants"
         description: "Variants detected by SnpEFF as containing a frameshift or if SnpEFF was not run, indels that fail a divisible by 3 check"
+      minor_snps:
+        title: "# Minor SNPs"
+        description: "Number of Minor SNPs (i.e. below consensus threshold) passing filters in the sample"
+        min: 0
+        scale: "PuBu"
+      minor_indels:
+        title: "# Minor Indels"
+        description: "Number of Minor Indels (i.e. below consensus threshold) passing filters in the sample"
+        min: 0
+        scale: "PuBu"
         # Note that the order here must be kept or the no_data will be yellow
         cond_formatting_rules:
           pass: [{ "s_eq": "none" }]

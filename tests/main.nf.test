@@ -125,12 +125,12 @@ nextflow_pipeline {
             assert path("$launchDir/results/overall.qc.csv").exists()
             // Using columns up to snp count
             lines = path("$launchDir/results/overall.qc.csv").text
-            assert lines.contains("sample,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,")
-            assert lines.contains("reads_100,66,29903,0.0,2.3,2,0,0,")
-            assert lines.contains("reads_25,0,29903,0.0,0.0,0,0,0,")
-            assert lines.contains("negative-ctrl,0,29903,0.0,0.0,0,0,0,")
-            assert lines.contains("sample1,7598,1154,0.9614,264.27,217,54,49,")
-            assert lines.contains("sample2,7598,1154,0.9614,264.27,217,54,49,")
+            assert lines.contains("sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,")
+            assert lines.contains("reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.3,2,0,0,")
+            assert lines.contains("reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,")
+            assert lines.contains("negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,")
+            assert lines.contains("sample1,PASS,7598,1154,0.9614,264.27,217,54,49,")
+            assert lines.contains("sample2,PASS,7598,1154,0.9614,264.27,217,54,49,")
 
             // Intermediate generated reference files
             assert path("$launchDir/results/reference/MN908947.3.reference.fasta.fai").exists()
@@ -351,12 +351,12 @@ nextflow_pipeline {
             assert path("$launchDir/results/overall.qc.csv").exists()
             // Using columns up to snp count
             lines = path("$launchDir/results/overall.qc.csv").text
-            assert lines.contains("sample,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,")
-            assert lines.contains("reads_100,66,29903,0.0,2.22,2,0,0,")
-            assert lines.contains("reads_25,0,29903,0.0,0.0,0,0,0,")
-            assert lines.contains("negative-ctrl,0,29903,0.0,0.0,0,0,0,")
-            assert lines.contains("sample1,7594,2698,0.9097,254.11,210,55,50,")
-            assert lines.contains("sample2,7594,2698,0.9097,254.11,210,55,50,")
+            assert lines.contains("sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,")
+            assert lines.contains("reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.22,2,0,0,")
+            assert lines.contains("reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,")
+            assert lines.contains("negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,")
+            assert lines.contains("sample1,PASS,7594,2698,0.9097,254.11,210,55,50,")
+            assert lines.contains("sample2,PASS,7594,2698,0.9097,254.11,210,55,50,")
 
             // Intermediate generated reference files
             assert path("$launchDir/results/reference/MN908947.3.reference.fasta.fai").exists()
@@ -589,12 +589,12 @@ nextflow_pipeline {
             assert path("$launchDir/results/overall.qc.csv").exists()
             // Using columns up to snp count
             lines = path("$launchDir/results/overall.qc.csv").text
-            assert lines.contains("sample,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,")
-            assert lines.contains("reads_100,66,29903,0.0,2.22,2,0,0,")
-            assert lines.contains("reads_25,0,29903,0.0,0.0,0,0,0,")
-            assert lines.contains("negative-ctrl,0,29903,0.0,0.0,0,0,0,")
-            assert lines.contains("sample1,7594,2697,0.9098,254.11,210,55,50,")
-            assert lines.contains("sample2,7594,2697,0.9098,254.11,210,55,50,")
+            assert lines.contains("sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,")
+            assert lines.contains("reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.22,2,0,0,")
+            assert lines.contains("reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,")
+            assert lines.contains("negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,")
+            assert lines.contains("sample1,PASS,7594,2697,0.9098,254.11,210,55,50,")
+            assert lines.contains("sample2,PASS,7594,2697,0.9098,254.11,210,55,50,")
 
             // Intermediate generated reference files
             assert path("$launchDir/results/reference/MN908947.3.reference.fasta.fai").exists()
@@ -883,13 +883,13 @@ nextflow_pipeline {
             assert path("$launchDir/results/overall.qc.csv").exists()
             // Using columns up to snp count
             lines = path("$launchDir/results/overall.qc.csv").text
-            assert lines.contains("sample,reference,num_aligned_reads,num_segment_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,")
-            assert lines.contains("ERR14941536,NC_014395.1,6103,621,7,0.9959,154.49,118.0,61,61,")
-            assert lines.contains("ERR14941536,NC_014396.1,6103,2143,43,0.9889,249.24,216.0,142,142,")
-            assert lines.contains("ERR14941536,NC_014397.1,6103,3339,0,1.0,213.45,102.0,227,227,")
-            assert lines.contains("25_reads,NC_014395.1,0,0,1690,0.0,0.0,0.0,0,0,")
-            assert lines.contains("25_reads,NC_014396.1,0,0,3885,0.0,0.0,0.0,0,0,")
-            assert lines.contains("25_reads,NC_014397.1,0,0,6404,0.0,0.0,0.0,0,0,")
+            assert lines.contains("sample,reference,qc_pass,num_aligned_reads,num_segment_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,")
+            assert lines.contains("ERR14941536,NC_014395.1,PASS,6103,621,7,0.9959,154.49,118.0,61,61,")
+            assert lines.contains("ERR14941536,NC_014396.1,PASS,6103,2143,43,0.9889,249.24,216.0,142,142,")
+            assert lines.contains("ERR14941536,NC_014397.1,PASS,6103,3339,0,1.0,213.45,102.0,227,227,")
+            assert lines.contains("25_reads,NC_014395.1,TOO FEW SIZE SELECTED READS,0,0,1690,0.0,0.0,0.0,0,0,")
+            assert lines.contains("25_reads,NC_014396.1,TOO FEW SIZE SELECTED READS,0,0,3885,0.0,0.0,0.0,0,0,")
+            assert lines.contains("25_reads,NC_014397.1,TOO FEW SIZE SELECTED READS,0,0,6404,0.0,0.0,0.0,0,0,")
         }
     }
 }

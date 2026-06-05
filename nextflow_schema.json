@@ -165,6 +165,49 @@
                 }
             }
         },
+        "clairS-TO_settings": {
+            "title": "ClairS-TO Settings",
+            "type": "object",
+            "description": "Settings pertaining to the ClairS-TO minor variant calling workflow.",
+            "default": "",
+            "fa_icon": "fas fa-tools",
+            "properties": {
+                "clairsto_model": {
+                    "type": "string",
+                    "default": "r1041_e82_400bps_sup_v420",
+                    "description": "Model to use in ClairS-TO. See ClairS-TO docs for more info. Be as accurate as possible for best results!",
+                    "enum": [
+                        "r1041_e82_400bps_sup_v420",
+                        "r1041_e82_400bps_sup_v410",
+                        "r1041_e82_400bps_hac_v410",
+                        "r1041_e82_400bps_sup_g615",
+                        "r1041_e82_400bps_hac_g657",
+                        "ilmn",
+                        "hifi_revio"
+                    ]
+                },
+                "min_snv_af_clairS": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "Minimum clairS-TO allele frequency to PASS minor single nucleotide variants"
+                },
+                "min_indel_af_clairS": {
+                    "type": "number",
+                    "default": 0.15,
+                    "description": "Minimum clairS-TO allele frequency to PASS minor insertions and deletions"
+                },
+                "min_cov_clairS": {
+                    "type": "integer",
+                    "default": 20,
+                    "description": "Minimum clairS-TO coverage to PASS minor variants"
+                },
+                "min_qual_clairS": {
+                    "type": "integer",
+                    "default": 5,
+                    "description": "Minimum clairS-TO quality to PASS minor variants"
+                }
+            }
+        },
         "medaka_settings": {
             "title": "Medaka Settings (If using over clair3)",
             "type": "object",
@@ -256,6 +299,10 @@
                     "default": 20,
                     "minimum": 0,
                     "description": "Minimum depth to call a position. Positions lower are masked with an N"
+                },
+                "minor_variants": {
+                    "type": "boolean",
+                    "description": "Enable minor variant calling with ClairS-TO"
                 },
                 "no_frameshift": {
                     "type": "boolean",
@@ -463,6 +510,9 @@
         },
         {
             "$ref": "#/$defs/clair3_settings"
+        },
+        {
+            "$ref": "#/$defs/clairS-TO_settings"
         },
         {
             "$ref": "#/$defs/medaka_settings"
