@@ -150,7 +150,7 @@
                 },
                 "min_qual_clair3": {
                     "type": "integer",
-                    "default": 8,
+                    "default": 7,
                     "description": "Minimum clair3 variant quality to PASS variant to final consensus"
                 },
                 "min_frameshift_qual": {
@@ -160,8 +160,13 @@
                 },
                 "min_allele_freq": {
                     "type": "number",
-                    "default": 0.65,
+                    "default": 0.6,
                     "description": "Minimum clair3 allele frequency to PASS variant to final consensus"
+                },
+                "min_mask_freq": {
+                    "type": "number",
+                    "default": 0.25,
+                    "description": "Minimum clair3 allele frequency to mask a variant with an N in the final consensus"
                 }
             }
         },
@@ -275,8 +280,8 @@
                 },
                 "max_length": {
                     "type": "integer",
-                    "default": 4000,
-                    "minimum": 100,
+                    "default": 8000,
+                    "minimum": 50,
                     "description": "Maximum read length to keep"
                 }
             }
@@ -289,7 +294,7 @@
             "properties": {
                 "normalise": {
                     "type": "integer",
-                    "default": 1000,
+                    "default": 2000,
                     "minimum": 0,
                     "description": "Normalize coverage for each amplicon to this threshold",
                     "fa_icon": "fas fa-balance-scale"

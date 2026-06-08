@@ -31,7 +31,7 @@ process CLAIR3_VARIANTS {
         --haploid_precise \\
         --enable_long_indel \\
         --include_all_ctgs \\
-        --chunk_size=10000 \\
+        --chunk_size=5000 \\
         --no_phasing_for_fa
 
     gunzip ${meta.id}-out/merge_output.vcf.gz

@@ -65,7 +65,7 @@ process BEDTOOLS_COVERAGE_AMPLICON_BED {
     bedtools coverage \\
         -a $amplicon_bed \\
         -b $bam \\
-        -F 0.85 \\
+        -F 0.90 \\
         >> ${meta.id}.amplicon_coverage.bed
 
     # Versions #

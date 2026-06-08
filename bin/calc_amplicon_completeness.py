@@ -50,14 +50,15 @@ def main() -> None:
 
     # Read in the amplicon bed file
     #  It shouldn't change format as it comes from the primers_to_amplicons script
-    with open(args.amplicon_bed, 'r') as handle:
+    with open(args.amplicon_bed) as handle:
         reader = csv.reader(handle, delimiter='\t')
         out = {}
         for row in reader:
             # Remember that by primer conventions start is 0-based and stop is 1-based
+            #  So works in python indexes with no changes needed
             start, stop, name = int(row[1]), int(row[2]), str(row[3])
             amp_length = len(range(start, stop))
-            n_count = consensus.seq[start:stop-1].count('N') # -1 to stop to get to 0-based for correct position
+            n_count = consensus.seq[start:stop].count('N')
 
             # Calc
             if amp_length == 0:
@@ -68,8 +69,8 @@ def main() -> None:
 
     # Output
     with open(f'{str(args.sample)}_amplicon_completeness.csv', 'w') as f:
-        header = 'sample,{0}'.format(','.join(out.keys()))
-        line = '{0},{1}'.format(str(args.sample),",".join(out.values()))
+        header = f'sample,{",".join(out.keys())}'
+        line = f'{str(args.sample)},{",".join(out.values())}'
         f.write(header)
         f.write('\n')
         f.write(line)

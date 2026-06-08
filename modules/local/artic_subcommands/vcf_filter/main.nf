@@ -26,6 +26,7 @@ process CUSTOM_VCF_FILTER {
         argsList.add("--min-qual-c3 ${params.min_qual_clair3}")
         argsList.add("--min-frameshift-qual ${params.min_frameshift_qual}")
         argsList.add("--min-allele-freq ${params.min_allele_freq}")
+        argsList.add("--min-mask-freq ${params.min_mask_freq}")
     }
     def argsConfig = argsList.join(" ")
     """

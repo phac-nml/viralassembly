@@ -108,6 +108,10 @@ nextflow_pipeline {
                 max_length      = 1600
                 min_qual_clair3 = 10
                 min_depth       = 15
+                // Previous param defaults
+                min_allele_freq = 0.65
+                min_mask_freq   = 0
+                normalise       = 1000
             }
         }
         then {
@@ -245,7 +249,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_100.neg_control_info == "NA"
             assert iridanext_metadata.reads_100.run_status == "PASS"
             assert iridanext_metadata.reads_100.run_summary == ""
-            assert iridanext_metadata.reads_100.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_100.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_100.pipeline_version == "1.2.0-dev"
 
             // Sample Name: reads_25
@@ -264,7 +268,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_25.neg_control_info == "NA"
             assert iridanext_metadata.reads_25.run_status == "PASS"
             assert iridanext_metadata.reads_25.run_summary == ""
-            assert iridanext_metadata.reads_25.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_25.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_25.pipeline_version == "1.2.0-dev"
 
             // Sample Name: negative-ctrl with irida_id negative_ctrl
@@ -284,7 +288,7 @@ nextflow_pipeline {
             assert iridanext_metadata.negative_ctrl.neg_control_info == "PASS"
             assert iridanext_metadata.negative_ctrl.run_status == "PASS"
             assert iridanext_metadata.negative_ctrl.run_summary == ""
-            assert iridanext_metadata.negative_ctrl.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.negative_ctrl.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.negative_ctrl.pipeline_version == "1.2.0-dev"
 
             // Sample Name: sample1 && sample2 as they are the same
@@ -303,7 +307,7 @@ nextflow_pipeline {
             assert iridanext_metadata.sample1.neg_control_info == "NA"
             assert iridanext_metadata.sample2.run_status == "PASS"
             assert iridanext_metadata.sample1.run_summary == ""
-            assert iridanext_metadata.sample2.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.sample2.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.sample1.pipeline_version == "1.2.0-dev"
 
             // Pipeline info and tracking
@@ -355,8 +359,8 @@ nextflow_pipeline {
             assert lines.contains("reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.22,2,0,0,")
             assert lines.contains("reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,")
             assert lines.contains("negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,")
-            assert lines.contains("sample1,PASS,7594,2698,0.9097,254.11,210,55,50,")
-            assert lines.contains("sample2,PASS,7594,2698,0.9097,254.11,210,55,50,")
+            assert lines.contains("sample1,PASS,7594,2698,0.9097,254.11,210,56,50,")
+            assert lines.contains("sample2,PASS,7594,2698,0.9097,254.11,210,56,50,")
 
             // Intermediate generated reference files
             assert path("$launchDir/results/reference/MN908947.3.reference.fasta.fai").exists()
@@ -423,20 +427,20 @@ nextflow_pipeline {
             // SnpEff outputs
             assert path("$launchDir/results/snpeff/sample1.ann.vcf").exists()
             lines = path("$launchDir/results/snpeff/sample1.ann.vcf").readLines()
-            assert lines.size() == 84
+            assert lines.size() == 85
 
             assert path("$launchDir/results/snpeff/sample2.ann.vcf").exists()
             lines = path("$launchDir/results/snpeff/sample2.ann.vcf").readLines()
-            assert lines.size() == 84
+            assert lines.size() == 85
 
             assert path("$launchDir/results/snpeff/reads_100.ann.vcf").exists()
             lines = path("$launchDir/results/snpeff/reads_100.ann.vcf").readLines()
             assert lines.size() == 19
 
-            // TSV of the VCF for reporting - Not annotated as no SnpEff
+            // TSV of the VCF for reporting
             assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()
             lines = path("$launchDir/results/vcf/sample1.vcf.tsv").readLines()
-            assert lines.size() == 56
+            assert lines.size() == 57
             assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
             // Check for some specific protein mutations
             assert lines.any { it.contains("orf1ab p.T4992I") }
@@ -483,7 +487,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_100.neg_control_info == "NA"
             assert iridanext_metadata.reads_100.run_status == "PASS"
             assert iridanext_metadata.reads_100.run_summary == ""
-            assert iridanext_metadata.reads_100.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_100.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_100.pipeline_version == "1.2.0-dev"
 
             // Sample Name: reads_25
@@ -502,7 +506,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_25.neg_control_info == "NA"
             assert iridanext_metadata.reads_25.run_status == "PASS"
             assert iridanext_metadata.reads_25.run_summary == ""
-            assert iridanext_metadata.reads_25.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_25.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_25.pipeline_version == "1.2.0-dev"
 
             // Sample Name: negative-ctrl
@@ -521,7 +525,7 @@ nextflow_pipeline {
             assert iridanext_metadata.negative_ctrl.neg_control_info == "PASS"
             assert iridanext_metadata.negative_ctrl.run_status == "PASS"
             assert iridanext_metadata.negative_ctrl.run_summary == ""
-            assert iridanext_metadata.negative_ctrl.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.negative_ctrl.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.negative_ctrl.pipeline_version == "1.2.0-dev"
 
             // Sample Name: sample1 && sample2 as they are the same
@@ -530,17 +534,17 @@ nextflow_pipeline {
             assert iridanext_metadata.sample1.genome_completeness == "0.9097"
             assert iridanext_metadata.sample2.mean_sequencing_depth == "254.11"
             assert iridanext_metadata.sample1.median_sequencing_depth == "210"
-            assert iridanext_metadata.sample2.total_variants == "55"
+            assert iridanext_metadata.sample2.total_variants == "56"
             assert iridanext_metadata.sample1.num_snps == "50"
-            assert iridanext_metadata.sample2.num_deletions == "30"
-            assert iridanext_metadata.sample1.num_deletion_sites == "5"
+            assert iridanext_metadata.sample2.num_deletions == "39"
+            assert iridanext_metadata.sample1.num_deletion_sites == "6"
             assert iridanext_metadata.sample2.num_insertions == "0"
             assert iridanext_metadata.sample1.num_insertion_sites == "0"
             assert iridanext_metadata.sample2.qc_pass == "PASS"
             assert iridanext_metadata.sample1.neg_control_info == "NA"
             assert iridanext_metadata.sample2.run_status == "PASS"
             assert iridanext_metadata.sample1.run_summary == ""
-            assert iridanext_metadata.sample2.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.sample2.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.sample1.pipeline_version == "1.2.0-dev"
 
             // Pipeline info and tracking
@@ -553,6 +557,7 @@ nextflow_pipeline {
     test("Nanopore Amplicon Workflow No Pool Split with MultiQC") {
         tag "success"
         tag "amplicon"
+        tag "here"
 
         when {
             params {
@@ -593,8 +598,8 @@ nextflow_pipeline {
             assert lines.contains("reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.22,2,0,0,")
             assert lines.contains("reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,")
             assert lines.contains("negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,")
-            assert lines.contains("sample1,PASS,7594,2697,0.9098,254.11,210,55,50,")
-            assert lines.contains("sample2,PASS,7594,2697,0.9098,254.11,210,55,50,")
+            assert lines.contains("sample1,PASS,7594,2697,0.9098,254.11,210,56,50,")
+            assert lines.contains("sample2,PASS,7594,2697,0.9098,254.11,210,56,50,")
 
             // Intermediate generated reference files
             assert path("$launchDir/results/reference/MN908947.3.reference.fasta.fai").exists()
@@ -657,11 +662,11 @@ nextflow_pipeline {
             // SnpEff outputs
             assert path("$launchDir/results/snpeff/sample1.ann.vcf").exists()
             lines = path("$launchDir/results/snpeff/sample1.ann.vcf").readLines()
-            assert lines.size() == 79
+            assert lines.size() == 80
 
             assert path("$launchDir/results/snpeff/sample2.ann.vcf").exists()
             lines = path("$launchDir/results/snpeff/sample2.ann.vcf").readLines()
-            assert lines.size() == 79
+            assert lines.size() == 80
 
             assert path("$launchDir/results/snpeff/reads_100.ann.vcf").exists()
             lines = path("$launchDir/results/snpeff/reads_100.ann.vcf").readLines()
@@ -684,7 +689,7 @@ nextflow_pipeline {
             // TSV of the VCF for reporting
             assert path("$launchDir/results/vcf/sample1.vcf.tsv").exists()
             lines = path("$launchDir/results/vcf/sample1.vcf.tsv").readLines()
-            assert lines.size() == 56
+            assert lines.size() == 57
             assert lines.contains("Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual")
             // Check for some specific protein mutations
             assert lines.any { it.contains("orf1ab p.T4992I") }
@@ -731,7 +736,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_100.neg_control_info == "NA"
             assert iridanext_metadata.reads_100.run_status == "PASS"
             assert iridanext_metadata.reads_100.run_summary == ""
-            assert iridanext_metadata.reads_100.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_100.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_100.pipeline_version == "1.2.0-dev"
 
             // Sample Name: reads_25
@@ -750,7 +755,7 @@ nextflow_pipeline {
             assert iridanext_metadata.reads_25.neg_control_info == "NA"
             assert iridanext_metadata.reads_25.run_status == "PASS"
             assert iridanext_metadata.reads_25.run_summary == ""
-            assert iridanext_metadata.reads_25.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.reads_25.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.reads_25.pipeline_version == "1.2.0-dev"
 
             // Sample Name: negative-ctrl
@@ -769,7 +774,7 @@ nextflow_pipeline {
             assert iridanext_metadata.negative_ctrl.neg_control_info == "PASS"
             assert iridanext_metadata.negative_ctrl.run_status == "PASS"
             assert iridanext_metadata.negative_ctrl.run_summary == ""
-            assert iridanext_metadata.negative_ctrl.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.negative_ctrl.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.negative_ctrl.pipeline_version == "1.2.0-dev"
 
             // Sample Name: sample1 && sample2 as they are the same
@@ -778,17 +783,17 @@ nextflow_pipeline {
             assert iridanext_metadata.sample1.genome_completeness == "0.9098"
             assert iridanext_metadata.sample2.mean_sequencing_depth == "254.11"
             assert iridanext_metadata.sample1.median_sequencing_depth == "210"
-            assert iridanext_metadata.sample2.total_variants == "55"
+            assert iridanext_metadata.sample2.total_variants == "56"
             assert iridanext_metadata.sample1.num_snps == "50"
-            assert iridanext_metadata.sample2.num_deletions == "30"
-            assert iridanext_metadata.sample1.num_deletion_sites == "5"
+            assert iridanext_metadata.sample2.num_deletions == "39"
+            assert iridanext_metadata.sample1.num_deletion_sites == "6"
             assert iridanext_metadata.sample2.num_insertions == "0"
             assert iridanext_metadata.sample1.num_insertion_sites == "0"
             assert iridanext_metadata.sample2.qc_pass == "PASS"
             assert iridanext_metadata.sample1.neg_control_info == "NA"
             assert iridanext_metadata.sample2.run_status == "PASS"
             assert iridanext_metadata.sample1.run_summary == ""
-            assert iridanext_metadata.sample2.pipeline_name == "artic-generic-nf"
+            assert iridanext_metadata.sample2.pipeline_name == "ViralAssembly"
             assert iridanext_metadata.sample1.pipeline_version == "1.2.0-dev"
 
             // Pipeline info and tracking

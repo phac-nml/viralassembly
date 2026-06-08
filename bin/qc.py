@@ -11,15 +11,13 @@ from Bio import SeqIO, SeqRecord
 from collections import defaultdict
 from typing import Tuple, Optional
 
-def init_parser() -> argparse.ArgumentParser:
-    """
-    Purpose
-    -------
-    Parse CL inputs to be used in script
 
-    Returns
-    -------
-    argparse.ArgumentParser
+def init_parser() -> argparse.ArgumentParser:
+    """Parse CL inputs to be used in script
+
+    Returns:
+    --------
+        argparse.ArgumentParser
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -34,35 +32,14 @@ def init_parser() -> argparse.ArgumentParser:
         '--irida_id',
         required=True,
         type=str,
-        help='IRIDA ID to upload to'
-    )
-    parser.add_argument(
-        '-a',
-        '--analysis',
-        required=True,
-        type=str,
-        help='Analysis program used ["nanopolish", "medaka", "clair3"]'
-    )
-    parser.add_argument(
-        '-c',
-        '--consensus',
-        required=True,
-        type=str,
-        help='Input sample consensus sequence file'
+        help='IRIDA ID to upload metadata to'
     )
     parser.add_argument(
         '-b',
         '--bam',
         required=True,
         type=str,
-        help='Input sample bam file'
-    )
-    parser.add_argument(
-        '-d',
-        '--depth',
-        required=True,
-        type=str,
-        help='Input sample depth bed file'
+        help='Bam file used to call variants from'
     )
     parser.add_argument(
         '-v',
@@ -70,6 +47,20 @@ def init_parser() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help='Input sample passing vcf file'
+    )
+    parser.add_argument(
+        '-c',
+        '--consensus',
+        required=True,
+        type=str,
+        help='Final sample consensus sequence file'
+    )
+    parser.add_argument(
+        '-d',
+        '--depth',
+        required=True,
+        type=str,
+        help='Positional depth bed file from samtools depth'
     )
     parser.add_argument(
         '--min_vcf',
@@ -98,62 +89,53 @@ def init_parser() -> argparse.ArgumentParser:
     )
     return parser
 
-def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
-    """
-    Purpose
-    -------
-    Check that input CSV contains the correct columns needed. Exits program if not
 
-    Parameters
-    ----------
-    df: pd.DataFrame
-        Pandas dataframe made from the input CSV file
+def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
+    """Check that input CSV contains the correct columns needed. Exits program if not
+
+    Params:
+    -------
+        df (DataFrame): Dataframe made from the input CSV file
+        needed_columns (list): List of columns to confirm exist
     """
     columns = list(df.columns)
     if any(x not in columns for x in needed_columns):
         missing_str = ', '.join([x for x in needed_columns if x not in columns])
         raise ValueError(f'Missing {missing_str} column(s) needed for validation'.format())
 
+
 def get_read_count(bam: str, chrom: Optional[str] = None) -> int:
-    '''
-    Purpose
-    -------
-    Get the number of aligned reads from given bamfile using samtools and subprocess
+    """Get the number of aligned reads from given bamfile and optionally the given chrom using samtools view and subprocess
 
-    Parameters
-    ----------
-    bam: str
-        Path to the primertrimmed bam file
-    chrom: None | str
-        Name of the segment/chromosome to get the stats for
-
-    Returns
+    Params:
     -------
-    Integer number of aligned reads
-    '''
+        bam (str): Path to the bam file used to call variants
+        chrom (None | str): Optional name of the segment/chromosome to get the stats for
+
+    Returns:
+    --------
+        integer: Number of aligned reads
+    """
     cmd = ['samtools', 'view', '-c', '-F0x900', bam]
     if chrom:
         cmd.append(chrom)
     read_count = subprocess.run(cmd, capture_output=True, check=True, text=True).stdout.strip('\n')
     return int(read_count)
 
+
 def parse_depth_bed(bed: str) -> defaultdict:
-    '''
-    Purpose
-    -------
-    Calculate the mean and median sequencing depth for each chrom from samtools depth bed file
+    """Calculate the mean and median sequencing depth for each chrom from samtools depth bed file
 
-    Parameters
-    ----------
-    bed: str
-        Path to the input depth bed file from samtools depth
-
-    Returns
+    Params:
     -------
-    depth_stats dict containing chrom as keys with median and mode underlying
-    '''
+        bed (str): Path to the input depth bed file from samtools depth
+
+    Returns:
+    --------
+        defaultdict: Containing chrom as keys with median and mode underlying
+    """
     depth = defaultdict(list)
-    with open(bed, 'r') as handle:
+    with open(bed) as handle:
         reader = csv.DictReader(handle, delimiter='\t')
         for d in reader:
             depth[d['chrom']].append(int(d['depth']))
@@ -172,56 +154,61 @@ def parse_depth_bed(bed: str) -> defaultdict:
         depth_stats[chrom]['median'] = median_dep
     return depth_stats
 
+
 def parse_consensus(fasta: SeqRecord) -> Tuple[int, float]:
-    '''
-    Purpose
-    -------
-    Parse consensus file to get the genome completeness and N count
+    """Parse consensus file to get the genome completeness and N count
 
-    Parameters:
-    -----------
-    fasta: SeqRecord
-        Bio SeqRecord of input consensus sequence
-
-    Returns
+    Params:
     -------
-    Integer number of Ns
-    Float genome completeness calculated from the number of Ns
-    '''
+        fasta (SeqRecord): Single consensus sequence input
+
+    Returns:
+    --------
+        integer: Number of Ns
+        float: Genome completeness calculated from the number of Ns and the genome length
+    """
     n_pos =  [i for i, base in enumerate(fasta.seq.lower()) if base == 'n']
     count_n = len(n_pos)
     completeness = 1 - (count_n / len(fasta.seq))
     completeness = round(completeness, 4)
     return count_n, completeness
 
+
 def _create_variantpos_dict(var: str, var_range: range) -> dict:
-    '''Create dict with keys "variant" and "range"'''
+    """Create variant position dict for tracking variants
+
+    Params:
+    -------
+        var (str): Variant
+        var_range (range): Genomic range the variant spans
+
+    Returns:
+    --------
+        dict: with keys "variant" and "range"
+    """
     return {
         'variant': var,
         'range': var_range
     }
 
-def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, str, dict]:
-    '''
-    Purpose
-    -------
-    Parse input VCF file to find variants and their locations
 
-    Parameters
-    ----------
-    vcf_file: str
-        Path to input gzipped vcf file from args
-    chrom: str
-        Name of chrom to select variants from
+def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
+    """Parse input VCF file to find variants and their locations
 
-    Returns
+    Params:
     -------
-    String of parsed variants to report
-    List of variant-range dicts
-    String of any potential frameshift variants (%3==0 check and snpeff ann check)
-    Dict of different variant counts
-        {'total_variants': int, 'num_snps': int, 'num_deletions': int, 'num_deletion_sites': int, 'num_insertions': int, 'num_insertion_sites': int}
-    '''
+        vcf_file (str): Path to input gzipped vcf file
+        chrom (str): Name of chrom to select variants from
+
+    Returns:
+    --------
+        tuple: Elements parsed from the vcf file for tracking
+            str: All parsed variants to report formatted as 'RefPosAlt'
+            list: Containing variant-range dicts
+            str: Potential frameshift variants (%3==0 check and snpeff ann check)
+            dict: Tracking the different variant counts
+                {'total_variants': int, 'num_snps': int, 'num_deletions': int, 'num_deletion_sites': int, 'num_insertions': int, 'num_insertion_sites': int}
+    """
     # Base outputs
     variants = []
     variant_positions = []
@@ -246,7 +233,7 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, str, dict]:
             if str(record.ALT[0]).upper() == 'N':
                 continue
             # Other odd issue, skip positions where alt is None
-            if record.ALT[0] == None:
+            if record.ALT[0] is None:
                 continue
             # Multiple alleles not supported warning
             if len(record.ALT) > 1:
@@ -322,36 +309,32 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, str, dict]:
         return ';'.join(variants),  variant_positions, frameshift_variants, var_count_dict
     return 'none', variant_positions, frameshift_variants, var_count_dict
 
-def range_overlap(r1: range, r2: range) -> bool:
-    '''Return True if range2 overlaps range1'''
+
+def range_contains(r1: range, r2: range) -> bool:
+    """Returns True if range1 fully contains range2"""
     x1, x2 = r1.start, r1.stop
     y1, y2 = r2.start, r2.stop
     return x1 <= y2 and y1 <= x2
 
+
 def check_primers(bed: str, variant_locations: list, chrom: str) -> str:
-    '''
-    Purpose
-    -------
-    Parse input bed file for any variant regions that overlap
+    """Parse input bed file for any variant regions that overlap
 
-    Parameters
-    ----------
-    bed: str
-        Path to bed file
-    variant_locations: list[dict]
-        List of variantpos dictionaries with variant and range keys
-    chrom: str
-        Name of the segment the variants are from
-
-    Returns
+    Params:
     -------
-    String of primer mutations found or string "none" if there are none
-    '''
+        bed (str): Path to primer bed file
+        variant_locations (list[dict]): Variant position dictionaries with variant and range keys
+        chrom (str): Name of the segment the variants are from
+
+    Returns:
+    --------
+        str: Primer mutations found or string "none" if there were none
+    """
     if not variant_locations:
         return 'none'
 
     primer_mutations = []
-    with open(bed, 'r') as handle:
+    with open(bed) as handle:
         reader = csv.reader(handle, delimiter='\t')
         for row in reader:
             # Bed file needs at least 4 rows (chrom, start, stop, name)
@@ -368,30 +351,26 @@ def check_primers(bed: str, variant_locations: list, chrom: str) -> str:
 
             # Check if the location range overlaps with any variant ranges
             for var_dict in variant_locations:
-                if range_overlap(location, var_dict['range']):
+                if range_contains(location, var_dict['range']):
                     primer_mutations.append(f'{var_dict["variant"]}-{name}')
 
     if not primer_mutations:
         return 'none'
     return ';'.join(primer_mutations)
 
+
 def parse_metadata(metadata: str, sample: str) -> pd.DataFrame:
-    '''
-    Purpose
-    -------
-    Parse metadata file for given sample
+    """Parse metadata file for given sample
 
-    Parameters
-    ----------
-    metadata: str
-        Path to metadata file
-    sample: str
-        Sample name to look for
-
-    Returns
+    Params:
     -------
-    DataFrame containing the found sample
-    '''
+        metadata (str): Path to metadata file
+        sample  (str): Sample name to look for
+
+    Returns:
+    --------
+        DataFrame: Containing columns from the wanted sample
+    """
     df = pd.read_csv(metadata, sep='\t')
     validate_df_columns(df, ['sample'])
     df = df.loc[df['sample'] == sample]
@@ -403,27 +382,21 @@ def parse_metadata(metadata: str, sample: str) -> pd.DataFrame:
         # Can return an empty df
         return df
 
+
 def grade_qc(completeness: float, mean_dep: float, median_dep: float, frameshift_vars: str) -> str:
-    '''
-    Purpose
-    -------
-    Determine if the sample passes internal QC metrics
+    """Determine if the sample passes internal QC metrics and assign a PASS or why it failed
 
-    Parameters
-    ----------
-    completeness: float
-        Genome completeness
-    mean_dep: float
-        Mean sequencing depth
-    median_dep: float
-        Median sequencing depth
-    frameshift_vars: str
-        String of any potential frameshift variants or "none" if there weren't any
-
-    Returns
+    Params:
     -------
-    String QC status
-    '''
+    completeness (float): Final genome completeness
+    mean_dep (float): Mean sequencing depth
+    median_dep (float): Median sequencing depth
+    frameshift_vars (str): Any potential frameshift variants or "none" if there weren't any
+
+    Returns:
+    --------
+        str: Final QC status
+    """
     qc_status = []
     # Completeness
     if completeness < 0.9:
@@ -443,22 +416,16 @@ def grade_qc(completeness: float, mean_dep: float, median_dep: float, frameshift
     return 'PASS'
 
 def count_minor_variants(vcf_file: str, chrom: str) -> Tuple[int, int]:
-    """
-    Purpose
-    -------
-    Small function to count passing SNPs and indels in the minor VCF file.
+    """Small function to count passing SNPs and indels in the minor VCF file.
 
-    Parameters
-    ----------
-    vcf_file: str
-        Path to the minor VCF file.
-    chrom: str
-        Chromosome to filter variants.
-
-    Returns
+    Params:
     -------
-    Tuple[int, int]
-        Number of passing SNPs and indels.
+      vcf_file (str): Path to the minor VCF file.
+      chrom (str): Chromosome to filter variants.
+
+    Returns:
+    --------
+      Tuple[int, int]: Number of passing SNPs and indels.
     """
     snps = 0
     indels = 0
@@ -480,7 +447,7 @@ def count_minor_variants(vcf_file: str, chrom: str) -> Tuple[int, int]:
     return snps, indels
 
 def main() -> None:
-    '''Run the program'''
+    """Main entry to the program"""
     # Init Parser and set arguments
     parser = init_parser()
     args = parser.parse_args()
@@ -494,7 +461,7 @@ def main() -> None:
     final_out = []
     with open(args.consensus) as handle:
         for record in SeqIO.parse(handle, "fasta"):
-            # The chrom/segment is always after the sample name based on how the pipeline is setup
+            # The chrom/segment is always after the sample name based on how the pipeline is setup to rename consensus seqs
             chrom = record.description.split(' ')[1]
 
             # Reads
