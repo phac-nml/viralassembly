@@ -30,7 +30,8 @@ include { CREATE_TILING_BED         } from '../../../modules/local/custom/utils.
 include { MINIMAP2_ALIGN            } from '../../../modules/local/minimap2/main'
 include { LONGSHOT                  } from '../../../modules/local/longshot/main'
 include { BCFTOOLS_NORM             } from '../../../modules/local/bcftools/norm/main'
-include { BCFTOOLS_CONSENSUS        } from '../../../modules/local/bcftools/consensus/main'
+include { BCFTOOLS_CONSENSUS as BCFTOOLS_CONSENSUS_FINAL  } from '../../../modules/local/bcftools/consensus/main'
+include { ADJUST_FASTA_HEADER       } from '../../../modules/local/artic_subcommands/adjust_fasta_header/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,7 +65,7 @@ workflow WF_NANOPORE_AMPLICON {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     MINIMAP2_ALIGN(
         ch_fastqs,
-        ch_reference
+        ch_reference.collect{ _meta, ref -> ref }
     )
     ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
 
@@ -113,7 +114,7 @@ workflow WF_NANOPORE_AMPLICON {
             ch_versions = ch_versions.mix(MEDAKA_CONSENSUS.out.versions)
             MEDAKA_VARIANT(
                 MEDAKA_CONSENSUS.out.hdf,
-                ch_reference
+                ch_reference.collect{ _meta, ref -> ref }
             )
             ch_tmp_vcfs = MEDAKA_VARIANT.out.vcf
             ch_versions = ch_versions.mix(MEDAKA_VARIANT.out.versions)
@@ -127,7 +128,7 @@ workflow WF_NANOPORE_AMPLICON {
                     .combine(ch_trimmed_bams_w_pool, by: [0]),
                 ch_fast5s,
                 ch_seqSum,
-                ch_reference,
+                ch_reference.collect{ _meta, ref -> ref },
                 ch_refstats
             )
             ch_tmp_vcfs = NANOPOLISH_VARIANTS.out.vcf
@@ -162,7 +163,7 @@ workflow WF_NANOPORE_AMPLICON {
         // Run clair3
         CLAIR3_VARIANTS(
             ch_trimmed_bams_w_pool,
-            ch_reference,
+            ch_reference.collect{ _meta, ref -> ref },
             ch_ref_fai,
             ch_clair3_model,
             params.clair3_no_pool_split
@@ -197,7 +198,7 @@ workflow WF_NANOPORE_AMPLICON {
         LONGSHOT(
             ZIP_AND_INDEX_VCF.out.vcf
                 .join(ch_primertrimmed_bams, by: [0]),
-            ch_reference,
+            ch_reference.collect{ _meta, ref -> ref },
             ch_ref_fai
         )
         ch_merged_vcf = LONGSHOT.out.vcf
@@ -214,7 +215,7 @@ workflow WF_NANOPORE_AMPLICON {
 
     ARTIC_MAKE_DEPTH_MASK(
         ch_primertrimmed_bams,
-        ch_reference
+        ch_reference.collect{ _meta, ref -> ref }
     )
     ch_versions = ch_versions.mix(ARTIC_MAKE_DEPTH_MASK.out.versions)
 
@@ -224,7 +225,7 @@ workflow WF_NANOPORE_AMPLICON {
     ARTIC_MASK(
         ARTIC_MAKE_DEPTH_MASK.out.coverage_mask
             .join(CUSTOM_VCF_FILTER.out.fail_vcf, by: [0]),
-        ch_reference
+        ch_reference.collect{ _meta, ref -> ref }
     )
     ch_versions = ch_versions.mix(ARTIC_MASK.out.versions)
 
@@ -235,12 +236,27 @@ workflow WF_NANOPORE_AMPLICON {
     )
     ch_versions = ch_versions.mix(BCFTOOLS_NORM.out.versions)
 
-    BCFTOOLS_CONSENSUS(
+    BCFTOOLS_CONSENSUS_FINAL(
         ARTIC_MASK.out.preconsensus
             .join(ARTIC_MAKE_DEPTH_MASK.out.coverage_mask, by: [0])
             .join(BCFTOOLS_NORM.out.vcf, by: [0])
+            .map { meta, fasta, mask, vcf, tbi ->
+                [ meta, vcf, tbi, fasta, mask ]
+            }
     )
-    ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS.out.versions)
+    ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_FINAL.out.versions)
+
+    //
+    // MODULE: Adjust final consensus sequence headers to contain sample id and reference info
+    //
+    ADJUST_FASTA_HEADER(
+        BCFTOOLS_CONSENSUS_FINAL.out.fasta,
+        ch_reference,
+        '.consensus',
+        ''
+    )
+    ch_consensus = ADJUST_FASTA_HEADER.out.consensus
+    ch_versions = ch_versions.mix(ADJUST_FASTA_HEADER.out.versions)
 
     // Remove tabix index from vcf as it is not needed and won't match the normal artic steps as output
     CUSTOM_VCF_FILTER.out.pass_vcf
@@ -250,8 +266,8 @@ workflow WF_NANOPORE_AMPLICON {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     emit:
-    consensus = BCFTOOLS_CONSENSUS.out.consensus
-    bam = ch_primertrimmed_bams
-    vcf = ch_pass_vcf
-    versions = ch_versions
+    consensus   = ch_consensus          // channel: [ val(meta), file(consensus) ]
+    bam         = ch_primertrimmed_bams // channel: [ val(meta), file(bam), file(bai) ]
+    vcf         = ch_pass_vcf           // channel: [ val(meta), file(vcf) ]
+    versions    = ch_versions           // channel: [ path(versions.yml) ]
 }

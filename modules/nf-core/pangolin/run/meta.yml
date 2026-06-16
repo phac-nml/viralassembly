@@ -22,15 +22,14 @@ input:
         type: file
         description: |
           The genome assembly to be evaluated
-        ontologies: []
-  - db:
-      type: directory
-      description: |
-        Directory containing the Pangolin database
+  - - db:
+        type: directory
+        description: |
+          Directory containing the Pangolin database
 
 output:
-  report:
-    - - meta:
+  - report:
+      - meta:
           type: map
           description: |
             Groovy Map containing sample information
@@ -38,15 +37,11 @@ output:
           type: file
           description: Pangolin lineage report
           pattern: "*.{csv}"
-          ontologies:
-            - edam: http://edamontology.org/format_3752 # CSV
-  versions:
-    - versions.yml:
-        type: file
-        description: File containing software versions
-        pattern: "versions.yml"
-        ontologies:
-          - edam: http://edamontology.org/format_3750 # YAML
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions
+          pattern: "versions.yml"
 authors:
   - "@kevinmenden"
   - "@drpatelh"
