@@ -32,6 +32,7 @@ Outputs
 import argparse
 import pysam
 import csv
+import re
 from typing import Optional, Tuple
 
 # Set for iupac assignment
@@ -52,6 +53,21 @@ iupac_map = {
     frozenset(['C', 'G', 'T']): 'B',
     frozenset(['A', 'C', 'G', 'T']): 'N'
 }
+
+
+def expand_cigar(cigar: str) -> str:
+    """Expand CIGAR string
+
+    Params
+    ------
+        cigar (str): Variant CIGAR string
+
+    Returns
+    -------
+        string: expanded CIGAR string
+    """
+    parts = re.findall(r'(\d+)([MXID])', cigar)
+    return ''.join(int(n) * op for n, op in parts)
 
 
 def calculate_vafs(record: pysam.VariantRecord) -> list:
@@ -147,17 +163,23 @@ def handle_sub(vcf_header: pysam.VariantHeader, record: pysam.VariantRecord) -> 
     for i in range(0, sub_length):
         base_frequency.append({ "A": 0.0, "C": 0.0, "G": 0.0, "T": 0.0})
 
-    for alt, vaf in zip(record.alts, vafs):
-        if len(alt) != sub_length:
+    for i, (alt, vaf) in enumerate(zip(record.alts, vafs)):
+        expanded_cigar = expand_cigar(record.info['CIGAR'][i])
+        alt_pos = 0
+        for base, cigar in zip(alt, expanded_cigar):
+            if cigar == 'I':
                 continue
-        for i, base in enumerate(alt):
-            base_frequency[i][base] += vaf
+            elif cigar == 'D':
+                alt_pos += 1
+                continue
+            base_frequency[alt_pos][base] += vaf
+            alt_pos += 1
 
     # Construct output records
     for i in range(0, sub_length):
         # Choose base with highest frequency, skipping the reference
         #  That way we can identify mixed sites where the reference is the most represented base
-        #  and are above our minimum frequency
+        #  and that are above our minimum frequency
         max_b = base_max(base_frequency[i], record.ref[i])
         if max_b is None:
             continue
