@@ -86,7 +86,8 @@ workflow {
         params.validate_params,
         params.monochrome_logs,
         args,
-        params.outdir
+        params.outdir,
+        params.reference
     )
 
     //
