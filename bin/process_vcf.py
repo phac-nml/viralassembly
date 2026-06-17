@@ -33,7 +33,7 @@ import argparse
 import pysam
 import csv
 import re
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Generator
 
 # Set for iupac assignment
 iupac_map = {
@@ -55,19 +55,30 @@ iupac_map = {
 }
 
 
-def expand_cigar(cigar: str) -> str:
-    """Expand CIGAR string
+def yield_alt_base(cigar: str, alt: str) -> Generator:
+    """Expand CIGAR string and alt to yield alt the alt base for each reference position (handling indels)
 
     Params
     ------
         cigar (str): Variant CIGAR string
+        alt (str): Alt allele string
 
     Returns
     -------
-        string: expanded CIGAR string
+        Generator: alt base for each ref position
     """
     parts = re.findall(r'(\d+)([MXID])', cigar)
-    return ''.join(int(n) * op for n, op in parts)
+    expanded_cigar = ''.join(int(n) * op for n, op in parts)
+
+    alt_pos = 0
+    for cigar_str in expanded_cigar:
+        if cigar_str == 'I':
+            alt_pos += 1
+        elif cigar_str == 'D':
+            yield '-'
+        else:
+            yield alt[alt_pos]
+            alt_pos += 1
 
 
 def calculate_vafs(record: pysam.VariantRecord) -> list:
@@ -163,17 +174,11 @@ def handle_sub(vcf_header: pysam.VariantHeader, record: pysam.VariantRecord) -> 
     for i in range(0, sub_length):
         base_frequency.append({ "A": 0.0, "C": 0.0, "G": 0.0, "T": 0.0})
 
-    for i, (alt, vaf) in enumerate(zip(record.alts, vafs)):
-        expanded_cigar = expand_cigar(record.info['CIGAR'][i])
-        alt_pos = 0
-        for base, cigar in zip(alt, expanded_cigar):
-            if cigar == 'I':
+    for alt, vaf, cigar in zip(record.alts, vafs, record.info['CIGAR']):
+        for i, base in enumerate(yield_alt_base(cigar, alt)):
+            if base == '-':
                 continue
-            elif cigar == 'D':
-                alt_pos += 1
-                continue
-            base_frequency[alt_pos][base] += vaf
-            alt_pos += 1
+            base_frequency[i][base] += vaf
 
     # Construct output records
     for i in range(0, sub_length):
@@ -324,7 +329,6 @@ def main() -> None:
 
     # Setup list of dicts for later TSV creation and reporting
     tsv_data_list = []
-
 
     # Parsing VCF records to assign final consensus variants and filter out poor variant calls for the filtered VCF
     for base_record in vcf:
