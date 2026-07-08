@@ -1,0 +1,3 @@
+sample, fastq_1, fastq_2
+reads_25, https://github.com/phac-nml/viralassembly/raw/refs/heads/dev/test_data/nanopore_segmented/fastqs/25_reads.fastq.gz,
+ERR14941536, https://github.com/phac-nml/viralassembly/raw/refs/heads/dev/test_data/nanopore_segmented/fastqs/ERR14941536.fastq.gz,

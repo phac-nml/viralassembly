@@ -1,6 +1,6 @@
 process BCFTOOLS_CONSENSUS {
     tag "${meta.id}"
-    label 'process_medium'
+    label 'process_single'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
@@ -13,7 +13,7 @@ process BCFTOOLS_CONSENSUS {
     tuple val(meta), path(vcf), path(tbi), path(fasta), path(mask)
 
     output:
-    tuple val(meta), path('*.fasta'), emit: fasta
+    tuple val(meta), path('*.fa'), emit: fasta
     path "versions.yml", emit: versions
 
     when:
@@ -21,7 +21,7 @@ process BCFTOOLS_CONSENSUS {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ? "${meta.id}-${task.ext.prefix}": "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}"
     def masking = mask ? "-m ${mask}" : ""
     """
     cat ${fasta} \\
@@ -30,10 +30,10 @@ process BCFTOOLS_CONSENSUS {
             ${vcf} \\
             ${args} \\
             ${masking} \\
-            > ${prefix}.fasta
+            > ${prefix}.fa
 
     # Apply samplename as header but keep existing info #
-    sed -i "s/>/>$meta.id /" ${prefix}.fasta
+    sed -i "s/>/>$meta.id /" ${prefix}.fa
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
@@ -45,7 +45,7 @@ process BCFTOOLS_CONSENSUS {
     stub:
     def prefix = task.ext.prefix ? "${meta.id}-${task.ext.prefix}": "${meta.id}"
     """
-    touch ${prefix}.fasta
+    touch ${prefix}.fa
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml

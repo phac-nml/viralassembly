@@ -18,7 +18,11 @@ process ADJUST_FASTA_HEADER {
 
     script:
     """
-    sed "1 s/.*/>${meta.id}${additional_header_str} ${meta2.id}/" $consensus > ${meta.id}${additional_extension_str}.fasta
+    if [ \$(grep -c '^>' ${reference}) -gt 1 ]; then
+        cp ${consensus} ${meta.id}${additional_extension_str}.fasta
+    else
+        sed "1 s/.*/>${meta.id}${additional_header_str} ${meta2.id}/" $consensus > ${meta.id}${additional_extension_str}.fasta
+    fi
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml

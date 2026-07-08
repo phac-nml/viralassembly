@@ -11,6 +11,7 @@ process SNPEFF_DATABASE {
     val ref_ids
     path reference
     path gff
+    val segments
 
     output:
     tuple val(genome), path("snpeff_db"), emit: db
@@ -27,10 +28,10 @@ process SNPEFF_DATABASE {
     }
 
     // Some setup based on segmented virus compared to non
-    def segmented = ref_ids.size() > 1 ? true : false
+    def segmented = segments ? true : false
     def str_ref_ids = ref_ids.join(' ')
     genome = str_ref_ids
-    if (segmented) {
+    if (segmented == true) {
         genome = reference.name.split((/\./))[0]
     }
 

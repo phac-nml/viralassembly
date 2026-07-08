@@ -73,16 +73,8 @@ workflow VIRALASSEMBLY {
 
     // Function: Get FASTA header and use that as ref_id
     def fastaHeaderId = { Path fasta ->
-        def header = fasta.withReader { r ->
-            String line
-            while ((line = r.readLine()) != null) {
-                line = line.trim()
-                if (line) return line
-            }
-            return null
-        }
-        assert header?.startsWith('>') : "Reference FASTA (${fasta}) must start with a header line"
-        return header.substring(1).tokenize()[0]
+            .findAll { it.startsWith('>') }
+            .collect { it.substring(1).tokenize()[0] }
     }
 
     // Create reference channel
@@ -91,7 +83,7 @@ workflow VIRALASSEMBLY {
             .map { ref ->
                 segmented
                     ? tuple([ id: ref.baseName ], ref)
-                    : tuple([ id: fastaHeaderId(ref) ], ref)
+                    : tuple([ id: fastaHeaderId(ref)[0] ], ref)
             }
         : []
 
@@ -200,16 +192,19 @@ workflow VIRALASSEMBLY {
         // Pipeline robust for typical snpeff issues but annotation files can be problematic
         ch_vcf_original = ch_vcf
 
-        // Get reference id
-        ch_reference.splitFasta( record: [ id: true ] )
-            .map{ record -> record.id.toString() }
+        // Get reference ids
+        ch_reference
+            .collect{ _meta, ref -> ref }
+            .map{ ref -> fastaHeaderId(ref) }
+            .flatten()
             .collect() // To collect segmented and turn to a value channel
             .set{ ch_ref_ids }
 
         SNPEFF_DATABASE(
             ch_ref_ids,
             ch_reference.collect{ _meta, ref -> ref },
-            ch_gff
+            ch_gff,
+            segmented
         )
         ch_versions = ch_versions.mix(SNPEFF_DATABASE.out.versions)
         ch_snpeff_db = SNPEFF_DATABASE.out.db

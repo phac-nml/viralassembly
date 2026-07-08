@@ -11,7 +11,7 @@
 include { MINIMAP2_ALIGN            } from '../../../modules/local/minimap2/main'
 include { LONGSHOT                  } from '../../../modules/local/longshot/main'
 include { BCFTOOLS_NORM             } from '../../../modules/local/bcftools/norm/main'
-include { BCFTOOLS_CONSENSUS as BCFTOOLS_CONSENSUS_FINAL  } from '../../../modules/local/bcftools/consensus/main'
+include { BCFTOOLS_CONSENSUS as BCFTOOLS_CONSENSUS_NANOPORE  } from '../../../modules/local/bcftools/consensus/main'
 include { ADJUST_FASTA_HEADER       } from '../../../modules/local/artic_subcommands/adjust_fasta_header/main'
 
 // Variant calling tools
@@ -146,7 +146,7 @@ workflow WF_NANOPORE_SHOTGUN {
     )
     ch_versions = ch_versions.mix(BCFTOOLS_NORM.out.versions)
 
-    BCFTOOLS_CONSENSUS_FINAL(
+    BCFTOOLS_CONSENSUS_NANOPORE(
         ARTIC_MASK.out.preconsensus
             .join(CUSTOM_MAKE_DEPTH_MASK.out.coverage_mask, by: [0])
             .join(BCFTOOLS_NORM.out.vcf, by: [0])
@@ -154,13 +154,13 @@ workflow WF_NANOPORE_SHOTGUN {
                 [ meta, vcf, tbi, fasta, mask ]
             }
     )
-    ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_FINAL.out.versions)
+    ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_NANOPORE.out.versions)
 
     //
     // MODULE: Adjust final consensus sequence headers to contain sample id and reference info
     //
     ADJUST_FASTA_HEADER(
-        BCFTOOLS_CONSENSUS_FINAL.out.fasta,
+        BCFTOOLS_CONSENSUS_NANOPORE.out.fasta,
         ch_reference,
         '.consensus',
         ''

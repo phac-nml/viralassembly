@@ -32,10 +32,9 @@ include { BEDTOOLS_MASKFASTA            } from '../../../modules/nf-core/bedtool
 include { FREEBAYES                     } from '../../../modules/local/freebayes/main'
 include { PROCESS_VCF                   } from '../../../modules/local/process_vcf/main'
 include { CUSTOM_MAKE_DEPTH_MASK        } from '../../../modules/local/artic_subcommands/make_depth_mask/main'
-include { BCFTOOLS_CONSENSUS as BCFTOOLS_CONSENSUS_AMBIGUOUS  } from '../../../modules/local/bcftools/consensus/main'
 
 // Output Final Consensus and Adjust Sequence Header
-include { BCFTOOLS_CONSENSUS as BCFTOOLS_CONSENSUS_FINAL      } from '../../../modules/local/bcftools/consensus/main'
+include { BCFTOOLS_CONSENSUS as BCFTOOLS_CONSENSUS_ILLUMINA      } from '../../../modules/local/bcftools/consensus/main'
 include { ADJUST_FASTA_HEADER           } from '../../../modules/local/artic_subcommands/adjust_fasta_header/main'
 
 /*
@@ -199,16 +198,16 @@ workflow WF_ILLUMINA_CONSENSUS {
             .map { meta, fasta, vcf, tbi ->
                 [ meta, vcf, tbi, fasta, [] ]
             }
-        BCFTOOLS_CONSENSUS_FINAL(
+        BCFTOOLS_CONSENSUS_ILLUMINA(
             ch_bcfcons_in
         )
-        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_FINAL.out.versions)
+        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_ILLUMINA.out.versions)
 
         //
         // MODULE: Adjust final consensus sequence headers to make downstream processes easier
         //
         ADJUST_FASTA_HEADER(
-            BCFTOOLS_CONSENSUS_FINAL.out.fasta,
+            BCFTOOLS_CONSENSUS_ILLUMINA.out.fasta,
             ch_reference,
             '.consensus',
             ''
@@ -224,6 +223,7 @@ workflow WF_ILLUMINA_CONSENSUS {
             ch_reference.collect{ _meta, ref -> ref }
         )
         ch_versions = ch_versions.mix(FREEBAYES.out.versions)
+
         //
         // MODULE: Process freebayes variant calls with custom python script and bcftools norm
         //
@@ -233,6 +233,7 @@ workflow WF_ILLUMINA_CONSENSUS {
         )
         ch_versions = ch_versions.mix(PROCESS_VCF.out.versions)
         ch_vcf = PROCESS_VCF.out.consensus_vcf.map { meta, vcf, _tbi -> tuple(meta, vcf) }
+
         //
         // MODULE: Make a depth mask based on the minimum depth required to call a position
         //
@@ -241,35 +242,25 @@ workflow WF_ILLUMINA_CONSENSUS {
             ch_reference.collect{ _meta, ref -> ref }
         )
         ch_versions = ch_versions.mix(CUSTOM_MAKE_DEPTH_MASK.out.versions)
-        //
-        // MODULE: Create intermediate fasta file with IUPACs for ambiguous positions from freebayes
-        //
-        BCFTOOLS_CONSENSUS_AMBIGUOUS(
-            PROCESS_VCF.out.ambiguous_vcf
-                .combine(ch_reference)
-                .map { meta, vcf, tbi, _meta_ref, ref ->
-                    tuple(meta, vcf, tbi, ref, [])
-                }
-        )
 
         //
         // MODULE: Create final consensus sequence with all variants
         //
-        BCFTOOLS_CONSENSUS_FINAL(
-            BCFTOOLS_CONSENSUS_AMBIGUOUS.out.fasta
+        BCFTOOLS_CONSENSUS_ILLUMINA(
+            PROCESS_VCF.out.consensus_vcf
                 .join(CUSTOM_MAKE_DEPTH_MASK.out.coverage_mask, by: [0])
-                .join(PROCESS_VCF.out.consensus_vcf, by: [0])
-                .map { meta, fasta, mask, vcf, tbi ->
+                .combine( ch_reference.collect{ _meta, ref -> ref } )
+                .map { meta, vcf, tbi, mask, fasta ->
                     [ meta, vcf, tbi, fasta, mask ]
                 }
         )
-        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_FINAL.out.versions)
+        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_ILLUMINA.out.versions)
 
         //
         // MODULE: Adjust final consensus sequence headers to contain sample id and reference info
         //
         ADJUST_FASTA_HEADER(
-            BCFTOOLS_CONSENSUS_FINAL.out.fasta,
+            BCFTOOLS_CONSENSUS_ILLUMINA.out.fasta,
             ch_reference,
             '.consensus',
             ''
