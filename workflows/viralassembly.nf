@@ -73,6 +73,7 @@ workflow VIRALASSEMBLY {
 
     // Function: Get FASTA header and use that as ref_id
     def fastaHeaderId = { Path fasta ->
+        fasta.readLines()
             .findAll { it.startsWith('>') }
             .collect { it.substring(1).tokenize()[0] }
     }
