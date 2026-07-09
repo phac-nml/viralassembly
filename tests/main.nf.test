@@ -99,6 +99,7 @@ nextflow_pipeline {
     test("Nanopore WGS Workflow with SnpEff") {
         tag "success"
         tag "wgs"
+        tag "nanopore"
 
         when {
             params {
@@ -236,6 +237,7 @@ nextflow_pipeline {
         tag "success"
         tag "amplicon"
         tag "here"
+        tag "nanopore"
 
         when {
             params {
@@ -381,6 +383,7 @@ nextflow_pipeline {
         tag "success"
         tag "wgs"
         tag "segmented"
+        tag "nanopore"
 
         when {
             params {
@@ -517,6 +520,7 @@ nextflow_pipeline {
     test("Illumina WGS Workflow with SnpEff") {
         tag "success"
         tag "wgs"
+        tag "illumina"
 
         when {
             params {
@@ -641,6 +645,7 @@ nextflow_pipeline {
         tag "success"
         tag "amplicon"
         tag "here"
+        tag "illumina"
 
         when {
             params {
