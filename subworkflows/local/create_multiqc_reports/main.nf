@@ -66,7 +66,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
 
     // Amplicon analysis
     ch_amplicon_completeness = channel.empty()
-    if ( ! params.reference ) {
+    if ( params.primer_bed ) {
         // Coverage
         BEDTOOLS_COVERAGE_AMPLICON_BED(
             ch_bam,

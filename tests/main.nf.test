@@ -11,7 +11,7 @@ nextflow_pipeline {
         when {
             params {
                 outdir      = "results"
-                reference   = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
+                reference   = "${projectDir}/test_data/MN908947.3.reference.fasta"
                 platform    = "nanopore"
             }
         }
@@ -32,7 +32,7 @@ nextflow_pipeline {
         when {
             params {
                 outdir      = "results"
-                reference   = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
+                reference   = "${projectDir}/test_data/MN908947.3.reference.fasta"
                 input       = "${projectDir}/test_data/nanopore/input.csv"
                 fastq_pass  = "${projectDir}/test_data/nanopore/fastq_pass"
                 platform    = "nanopore"
@@ -75,7 +75,7 @@ nextflow_pipeline {
             params {
                 outdir       = "results"
                 fastq_pass   = "${projectDir}/test_data/nanopore/fastq_pass"
-                reference    = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
+                reference    = "${projectDir}/test_data/MN908947.3.reference.fasta"
                 clair3_model = "this_is_not_a_model"
                 platform     = "nanopore"
             }
@@ -91,7 +91,7 @@ nextflow_pipeline {
 
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-                                        Passing Tests
+                                Passing Nanopore Tests
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
@@ -104,7 +104,7 @@ nextflow_pipeline {
             params {
                 outdir          = "results"
                 input           = "${projectDir}/test_data/nanopore/input.csv"
-                reference       = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
+                reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
                 clair3_model    = "r1041_e82_400bps_sup_v420"
                 platform        = "nanopore"
                 nextclade_dataset_name = "nextstrain/sars-cov-2/wuhan-hu-1/orfs"
@@ -242,10 +242,10 @@ nextflow_pipeline {
                 outdir          = "results"
                 input           = "${projectDir}/test_data/nanopore/input.csv"
                 clair3_model    = "r1041_e82_400bps_sup_v420"
-                reference       = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
-                primer_bed      = "${projectDir}/test_data/nanopore/primer.bed"
+                reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
+                primer_bed      = "${projectDir}/test_data/primer.bed"
                 metadata        = "${projectDir}/test_data/nanopore/metadata.tsv"
-                gff             = "${projectDir}/test_data/nanopore/MN908947.3.gff3"
+                gff             = "${projectDir}/test_data/MN908947.3.gff3"
                 multiqc_report  = true
                 platform        = "nanopore"
                 virus_name      = "covid"
@@ -377,129 +377,6 @@ nextflow_pipeline {
     }
 
     //--- Test 7 ----------------------------------------------------------------------------
-    test("Nanopore Amplicon Workflow No Pool Split with MultiQC") {
-        tag "success"
-        tag "amplicon"
-        tag "here"
-
-        when {
-            params {
-                outdir          = "results"
-                input           = "${projectDir}/test_data/nanopore/input.csv"
-                clair3_model    = "r1041_e82_400bps_sup_v420"
-                reference       = "${projectDir}/test_data/nanopore/MN908947.3.reference.fasta"
-                primer_bed      = "${projectDir}/test_data/nanopore/primer.bed"
-                metadata        = "${projectDir}/test_data/nanopore/metadata.tsv"
-                gff             = "${projectDir}/test_data/nanopore/MN908947.3.gff3"
-                platform        = "nanopore"
-                clair3_no_pool_split = true
-                multiqc_report  = true
-                virus_name = "covid"
-                // To keep consistent results from downsampled input
-                min_length      = 600
-                max_length      = 1600
-                min_qual_clair3 = 10
-                min_depth       = 15
-                normalise       = 0
-            }
-        }
-        then {
-            // Status
-            assert workflow.success
-            assert workflow.trace.failed().size() == 0
-
-            // Expected outputs
-            def results = "$launchDir/results"
-            [
-                // Summary Reports
-                "",
-                "overall.qc.csv",
-                "Overall-Run-MultiQC.report.html",
-                "sample_mqc/sample1.report.html",
-                "sample_mqc/sample2.report.html",
-                "iridanext.output.json",
-
-                // Reference files
-                "reference/MN908947.3.reference.fasta.fai",
-                "reference/genome.bed",
-                "reference/refstats.txt",
-
-                // Amplicon
-                "bed/tiling_region.bed",
-                "bed/amplicon.bed",
-
-                // Consensus
-                "consensus/sample1.consensus.fasta",
-                "consensus/sample2.consensus.fasta",
-                "consensus/reads_100.consensus.fasta",
-
-                // Variants
-                "variation_csvs/sample1_variation.csv",
-                "snpeff/sample1.csv",
-                "vcf/sample1.vcf.tsv",
-
-                // Nextclade
-                "nextclade/nextstrain/sars-cov-2/wuhan-hu-1/orfs/reference.fasta",
-                "nextclade/sample1.csv",
-                "nextclade/reads_100.csv",
-
-                // Pipeline Info
-                "pipeline_info",
-                "pipeline_info/software_versions.yml"
-            ].each {
-                assert path("$results/$it").exists()
-            }
-
-            // Final QC File
-            // Using columns up to snp count
-            def qc = path("$launchDir/results/overall.qc.csv")
-            [
-                "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
-                "reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.22,2,0,0,",
-                "reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
-                "negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,",
-                "sample1,PASS,7594,2697,0.9098,254.11,210,56,50,",
-                "sample2,PASS,7594,2697,0.9098,254.11,210,56,50,"
-            ].each {
-                assert qc.text.contains(it)
-            }
-
-            // Intermediate generated bed files
-            assert path("$launchDir/results/bed/amplicon.bed").readLines().size() == 29
-            assert path("$launchDir/results/bed/amplicon.bed").text.contains("MN908947.3\t54\t1183\tnCoV-2019_1\t1")
-
-            // Tiling bed only in the no split pool one
-            assert path("$launchDir/results/bed/tiling_region.bed").readLines().size() == 1
-            assert path("$launchDir/results/bed/tiling_region.bed").text.contains("MN908947.3\t54\t29768")
-
-            // Sample Outputs
-            //  Fasta files
-            assert path("$launchDir/results/consensus/reads_100.consensus.fasta").md5 == "4493f765193dec5917ba9fa18da5e909"
-            assert path("$launchDir/results/consensus/sample1.consensus.fasta").md5 == "d41eec4ddd284911999dc61c13c15453"
-            assert path("$launchDir/results/consensus/sample2.consensus.fasta").md5 == "b0357754cbb862748f58bf03bf7bd2b4"
-
-            // Nextclade outputs
-            assert path("$launchDir/results/nextclade/nextstrain/sars-cov-2/wuhan-hu-1/orfs/reference.fasta").md5 == "c7ce05f28e4ec0322c96f24e064ef55c"
-            assert path("$launchDir/results/nextclade/sample1.csv").md5 == "66a4537bd4f1d826e4e8e15ec5b2537c"
-            assert path("$launchDir/results/nextclade/reads_100.csv").md5 == "9acc20bcf6ce68da206799368d5efb66"
-
-            // IRIDA Next output
-            def iridanext_metadata = path("$launchDir/results/iridanext.output.json").json.metadata.samples
-
-            // Number of Consensus Ns and Genome Completeness
-            assert iridanext_metadata.reads_100.num_consensus_n == "29903"
-            assert iridanext_metadata.reads_100.genome_completeness == "0.0"
-            assert iridanext_metadata.reads_100.pipeline_version == "2.0.0"
-            assert iridanext_metadata.reads_25.num_consensus_n == "29903"
-            assert iridanext_metadata.reads_25.genome_completeness == "0.0"
-            assert iridanext_metadata.reads_25.pipeline_name == "ViralAssembly"
-            assert iridanext_metadata.sample2.num_consensus_n == "2697"
-            assert iridanext_metadata.sample1.genome_completeness == "0.9098"
-
-        }
-    }
-
-    //--- Test 8 ----------------------------------------------------------------------------
     test("Nanopore WGS Segmented Workflow with SnpEff") {
         tag "success"
         tag "wgs"
@@ -630,4 +507,268 @@ nextflow_pipeline {
 
         }
     }
+
+    /*
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+                                Passing Illumina Tests
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    */
+
+    //--- Test 8 ----------------------------------------------------------------------------
+    test("Illumina WGS Workflow with SnpEff") {
+        tag "success"
+        tag "wgs"
+
+        when {
+            params {
+                outdir          = "results"
+                input           = "${projectDir}/test_data/illumina/illumina_wgs.csv"
+                reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
+                platform        = "illumina"
+                nextclade_dataset_name = "nextstrain/sars-cov-2/wuhan-hu-1/orfs"
+                nextclade_dataset_tag = "2026-01-06--14-59-32Z"
+            }
+        }
+        then {
+            // Status
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+
+            // Expected outputs
+            def results = "$launchDir/results"
+            [
+                // Summary Reports
+                "",
+                "overall.qc.csv",
+                "reportDashboard.html",
+                "iridanext.output.json",
+
+                // Reference files
+                "reference/MN908947.3.reference.fasta.fai",
+                "reference/genome.bed",
+
+                // Consensus
+                "consensus/sample1.consensus.fasta",
+                "consensus/reads_25.consensus.fasta",
+
+                // Variants
+                "variation_csvs/sample1_variation.csv",
+                "snpeff/sample1.csv",
+                "vcf/sample1.vcf.tsv",
+
+                // Nextclade
+                "nextclade/nextstrain/sars-cov-2/wuhan-hu-1/orfs/reference.fasta",
+                "nextclade/sample1.csv",
+                "nextclade/reads_25.csv",
+
+                // Pipeline Info
+                "pipeline_info",
+                "pipeline_info/software_versions.yml"
+            ].each {
+                assert path("$results/$it").exists()
+            }
+
+            // Final QC file
+            def qc = path("$results/overall.qc.csv")
+            [
+                "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
+                "reads_25,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,46,29903,0.0,0.11,0,0,0,",
+                "sample1,PARTIAL_GENOME,66454,14124,0.5277,180.33,24,2,2,"
+            ].each {
+                assert qc.text.contains(it)
+            }
+
+            // Intermediate generated reference files
+            assert path("$launchDir/results/reference/MN908947.3.reference.fasta.fai").text.contains(
+                "MN908947.3\t29903\t12\t60\t61"
+            )
+            assert path("$launchDir/results/reference/genome.bed").text.contains(
+                "MN908947.3\t0\t29903"
+            )
+
+            // Consensus outputs
+            assert path("$launchDir/results/consensus/reads_25.consensus.fasta").md5 == "00e6cf74dea37a96d9bba96dcd740e7b"
+            assert path("$launchDir/results/consensus/sample1.consensus.fasta").md5 == "ba7a336533aba510ecd66c64df3d08d4"
+            ["reads_25", "sample1"].each { sample ->
+                def consensus = path("$results/consensus/${sample}.consensus.fasta")
+                assert consensus.readLines().first() == ">$sample MN908947.3"
+            }
+
+            // Variation output
+            def variation = path("$results/variation_csvs/sample1_variation.csv")
+            [
+                "position,chrom,A,C,T,G,del,ins,total_reads,percentage_nonref,ref_base,variant_type,distribution",
+                "14408,MN908947.3,0,0,68,0,0,0,68,100.0,C,T SNP,NA"
+            ].each {
+                assert variation.text.contains(it)
+            }
+
+            // TSV of the VCF for reporting
+            def vcfTsv = path("$results/vcf/sample1.vcf.tsv")
+            [
+                "Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual",
+                "MN908947.3\t14408\torf1ab p.P4715L\tmissense_variant\tC\tT\t2775.19",
+                "MN908947.3\t25563\tORF3a p.Q57H\tmissense_variant\tG\tT\t35276.8"
+            ].each {
+                assert vcfTsv.text.contains(it)
+            }
+
+            // Nextclade outputs
+            assert path("$results/nextclade/sample1.csv").readLines().size() == 2
+            assert path("$results/nextclade/reads_25.csv").readLines().size() == 2
+
+            // IRIDA Next output
+            def irida = path("$results/iridanext.output.json").json
+            assert irida.files.global*.path.contains("reportDashboard.html")
+            assert irida.files.global*.path.contains("pipeline_info/software_versions.yml")
+            ["reads_25", "sample1"].each { sample ->
+                assert iridanext.files.samples[sample].any { it.path == "consensus/${sample}.consensus.fasta" }
+                assert iridanext.files.samples[sample].any { it.path == "vcf/processed_vcf/${sample}.consensus.norm.vcf.gz" }
+            }
+
+            // IRIDA metadata
+            assert irida.metadata.samples.reads_25.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
+            assert irida.metadata.samples.sample1.qc_pass == "PARTIAL_GENOME"
+            assert irida.metadata.samples.sample1.genome_completeness == "0.5277"
+            assert irida.metadata.samples.sample1.num_snps == "49"
+            assert irida.metadata.samples.reads_25.total_variants == "0"
+            assert irida.metadata.samples.sample1.pipeline_name == "ViralAssembly"
+            assert irida.metadata.samples.reads_25.pipeline_version == "2.0.0"
+        }
+    }
+
+    //--- Test 9 ----------------------------------------------------------------------------
+    test("Illumina Amplicon Workflow with iVar and MultiQC") {
+        tag "success"
+        tag "amplicon"
+        tag "here"
+
+        when {
+            params {
+                outdir          = "results"
+                input           = "${projectDir}/test_data/illumina/illumina_amplicon.csv"
+                reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
+                primer_bed      = "${projectDir}/test_data/primer.bed"
+                gff             = "${projectDir}/test_data/MN908947.3.gff3"
+                multiqc_report  = true
+                platform        = "illumina"
+                virus_name      = "covid"
+                use_ivar        = true
+            }
+        }
+        then {
+            // Status
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+
+            // Expected outputs
+            def results = "$launchDir/results"
+            [
+                // Summary Reports
+                "",
+                "overall.qc.csv",
+                "Overall-Run-MultiQC.report.html",
+                "sample_mqc/sample1.report.html",
+                "iridanext.output.json",
+
+                // Reference files
+                "reference/MN908947.3.reference.fasta.fai",
+                "reference/genome.bed",
+                "reference/refstats.txt",
+
+                // Amplicon
+                "bed/amplicon.bed",
+
+                // Consensus
+                "consensus/sample1.consensus.fasta",
+                "consensus/reads_25.consensus.fasta",
+
+                // Variants
+                "variation_csvs/sample1_variation.csv",
+                "snpeff/sample1.csv",
+                "vcf/sample1.vcf.tsv",
+
+                // Pipeline Info
+                "pipeline_info",
+                "pipeline_info/software_versions.yml"
+            ].each {
+                assert path("$results/$it").exists()
+            }
+
+            // Final QC File
+            def qc = path("$launchDir/results/overall.qc.csv")
+            [
+                "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
+                "reads_25,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,48,29903,0.0,0.19,0,0,0,",
+                "sample1,PASS,86288,2330,0.922,350.31,325,120,118,",
+            ].each {
+                assert qc.text.contains(it)
+            }
+
+            // Intermediate generated reference files
+            assert path("$launchDir/results/reference/MN908947.3.reference.fasta.fai").text.contains("MN908947.3\t29903\t12\t60\t61")
+            assert path("$launchDir/results/reference/genome.bed").text.contains("MN908947.3\t0\t29903")
+            assert path("$launchDir/results/reference/refstats.txt").text.contains("MN908947.3:1-29904")
+
+            // Intermediate generated bed file
+            assert path("$launchDir/results/bed/amplicon.bed").readLines().size() == 29
+
+            // Consensus outputs
+            assert path("$launchDir/results/consensus/reads_25.consensus.fasta").md5 == "00e6cf74dea37a96d9bba96dcd740e7b"
+            assert path("$launchDir/results/consensus/sample1.consensus.fasta").md5 == "4dfc0bcbf2850ba9ab72118f7f94c5d4"
+            ["reads_25", "sample1"].each { sample ->
+                def consensus = path("$results/consensus/${sample}.consensus.fasta")
+                assert consensus.readLines().first() == ">$sample MN908947.3"
+            }
+
+            // Variation output
+            def varSample1 = path("$launchDir/results/variation_csvs/sample1_variation.csv")
+            [
+                "position,chrom,A,C,T,G,del,ins,total_reads,percentage_nonref,ref_base,variant_type,distribution",
+                "4184,MN908947.3,75,0,0,0,0,0,75,100.0,G,A SNP,NA",
+                "11620,MN908947.3,0,0,37,0,0,0,37,100.0,C,T SNP,NA",
+                "22629,MN908947.3,0,75,0,0,0,0,75,100.0,A,C SNP,NA",
+                "28883,MN908947.3,0,36,0,0,0,0,36,100.0,G,C SNP,NA"
+            ].each {
+                assert varSample2.text.contains(it)
+            }
+
+            // SnpEff outputs
+            assert path("$launchDir/results/snpeff/sample1.ann.vcf").readLines().size() == 146
+            assert path("$launchDir/results/snpeff/reads_25.ann.vcf").readLines().size() == 21
+
+            // TSV of the VCF for reporting
+            def vcfSample1 = path("$launchDir/results/vcf/sample1.vcf.tsv")
+            [
+                "Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual",
+                "MN908947.3\t3037\torf1ab p.F924F\tsynonymous_variant\tC\tT\tNone"
+                "orf1ab p.R3394R",
+                "S p.D1184E",
+                "N p.R203K",
+                "MN908947.3"
+            ].each {
+                assert vcfSample1.text.contains(it)
+            }
+
+            // IRIDA Next output
+            def iridanext = path("$launchDir/results/iridanext.output.json").json
+            assert iridanext.files.global.any { it.path == "Overall-Run-MultiQC.report.html" }
+            assert iridanext.files.global.any { it.path == "pipeline_info/software_versions.yml" }
+            ["reads_25", "sample1"].each { sample ->
+                assert iridanext.files.samples[sample].any { it.path == "consensus/${sample}.consensus.fasta" }
+                assert iridanext.files.samples[sample].any { it.path == "vcf/ivar_filtered/${sample}.filtered.vcf.gz" }
+            }
+
+            // IRIDA metadata
+            assert iridanext.files.samples.sample1.any { it.path == "sample_mqc/sample1.report.html" }
+            assert iridanext.metadata.samples.sample1.qc_pass == "PASS"
+            assert iridanext.metadata.samples.reads_25.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
+            assert iridanext.metadata.samples.sample1.num_snps == "118"
+            assert iridanext.metadata.samples.reads_25.num_consensus_n == "29903"
+            assert iridanext.metadata.samples.sample1.pipeline_name == "ViralAssembly"
+            assert iridanext.metadata.samples.reads_25.pipeline_version == "2.0.0"
+
+        }
+    }
+
 }

@@ -83,8 +83,8 @@ workflow VIRALASSEMBLY {
         ? channel.value( file(params.reference, type: 'file', checkIfExists: true) )
             .map { ref ->
                 segmented
-                    ? tuple([ id: ref.baseName ], ref)
-                    : tuple([ id: fastaHeaderId(ref)[0] ], ref)
+                    ? tuple([ id: ref.baseName, irida_id: ref.baseName ], ref)
+                    : tuple([ id: fastaHeaderId(ref)[0], irida_id: fastaHeaderId(ref)[0] ], ref)
             }
         : []
 
@@ -152,7 +152,7 @@ workflow VIRALASSEMBLY {
         ch_bam = WF_ILLUMINA_CONSENSUS.out.bam
         ch_vcf = WF_ILLUMINA_CONSENSUS.out.vcf
         ch_filtered_fastqs_empty = WF_ILLUMINA_CONSENSUS.out.empty_filtered_fastqs
-        ch_reads_stats = Channel.empty()
+        ch_reads_stats = ch_consensus.map { meta, _fasta -> tuple(meta, []) }
         ch_versions = ch_versions.mix(WF_ILLUMINA_CONSENSUS.out.versions)
 
     } else {
