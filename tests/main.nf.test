@@ -504,7 +504,6 @@ nextflow_pipeline {
             assert iridanext.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.reads_25.genome_completeness == "0.0"
             assert iridanext.metadata.samples.reads_25.pipeline_name == "ViralAssembly"
-
         }
     }
 
@@ -767,7 +766,6 @@ nextflow_pipeline {
             assert iridanext.metadata.samples.reads_25.num_consensus_n == "29903"
             assert iridanext.metadata.samples.sample1.pipeline_name == "ViralAssembly"
             assert iridanext.metadata.samples.reads_25.pipeline_version == "2.0.0"
-
         }
     }
 
