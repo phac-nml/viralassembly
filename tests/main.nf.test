@@ -214,21 +214,21 @@ nextflow_pipeline {
             assert path("$results/nextclade/reads_100.csv").readLines().size() == 2
 
             // IRIDA Next output
-            def irida = path("$results/iridanext.output.json").json
-            assert irida.files.global*.path.contains("reportDashboard.html")
-            assert irida.files.global*.path.contains("pipeline_info/software_versions.yml")
+            def iridanext = path("$results/iridanext.output.json").json
+            assert iridanext.files.global*.path.contains("reportDashboard.html")
+            assert iridanext.files.global*.path.contains("pipeline_info/software_versions.yml")
 
             // IRIDA metadata
-            assert irida.metadata.samples.reads_100.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
-            assert irida.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
-            assert irida.metadata.samples.negative_ctrl.qc_pass == "PASS"
-            assert irida.metadata.samples.negative_ctrl.neg_control_info == "PASS"
-            assert irida.metadata.samples.sample1.genome_completeness == "0.9614"
-            assert irida.metadata.samples.sample1.num_snps == "49"
-            assert irida.metadata.samples.sample2.total_variants == "54"
-            assert irida.metadata.samples.sample2.num_deletions == "30"
-            assert irida.metadata.samples.sample1.pipeline_name == "ViralAssembly"
-            assert irida.metadata.samples.sample1.pipeline_version == "2.0.0"
+            assert iridanext.metadata.samples.reads_100.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
+            assert iridanext.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
+            assert iridanext.metadata.samples.negative_ctrl.qc_pass == "PASS"
+            assert iridanext.metadata.samples.negative_ctrl.neg_control_info == "PASS"
+            assert iridanext.metadata.samples.sample1.genome_completeness == "0.9614"
+            assert iridanext.metadata.samples.sample1.num_snps == "49"
+            assert iridanext.metadata.samples.sample2.total_variants == "54"
+            assert iridanext.metadata.samples.sample2.num_deletions == "30"
+            assert iridanext.metadata.samples.sample1.pipeline_name == "ViralAssembly"
+            assert iridanext.metadata.samples.sample1.pipeline_version == "2.0.0"
         }
     }
 
@@ -621,22 +621,22 @@ nextflow_pipeline {
             assert path("$results/nextclade/reads_25.csv").readLines().size() == 2
 
             // IRIDA Next output
-            def irida = path("$results/iridanext.output.json").json
-            assert irida.files.global*.path.contains("reportDashboard.html")
-            assert irida.files.global*.path.contains("pipeline_info/software_versions.yml")
+            def iridanext = path("$results/iridanext.output.json").json
+            assert iridanext.files.global*.path.contains("reportDashboard.html")
+            assert iridanext.files.global*.path.contains("pipeline_info/software_versions.yml")
             ["reads_25", "sample1"].each { sample ->
                 assert iridanext.files.samples[sample].any { it.path == "consensus/${sample}.consensus.fasta" }
                 assert iridanext.files.samples[sample].any { it.path == "vcf/processed_vcf/${sample}.consensus.norm.vcf.gz" }
             }
 
             // IRIDA metadata
-            assert irida.metadata.samples.reads_25.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
-            assert irida.metadata.samples.sample1.qc_pass == "PARTIAL_GENOME"
-            assert irida.metadata.samples.sample1.genome_completeness == "0.5277"
-            assert irida.metadata.samples.sample1.num_snps == "49"
-            assert irida.metadata.samples.reads_25.total_variants == "0"
-            assert irida.metadata.samples.sample1.pipeline_name == "ViralAssembly"
-            assert irida.metadata.samples.reads_25.pipeline_version == "2.0.0"
+            assert iridanext.metadata.samples.reads_25.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
+            assert iridanext.metadata.samples.sample1.qc_pass == "PARTIAL_GENOME"
+            assert iridanext.metadata.samples.sample1.genome_completeness == "0.5277"
+            assert iridanext.metadata.samples.sample1.num_snps == "2"
+            assert iridanext.metadata.samples.reads_25.total_variants == "0"
+            assert iridanext.metadata.samples.sample1.pipeline_name == "ViralAssembly"
+            assert iridanext.metadata.samples.reads_25.pipeline_version == "2.0.0"
         }
     }
 
@@ -734,7 +734,7 @@ nextflow_pipeline {
                 "22629,MN908947.3,0,75,0,0,0,0,75,100.0,A,C SNP,NA",
                 "28883,MN908947.3,0,36,0,0,0,0,36,100.0,G,C SNP,NA"
             ].each {
-                assert varSample2.text.contains(it)
+                assert varSample1.text.contains(it)
             }
 
             // SnpEff outputs

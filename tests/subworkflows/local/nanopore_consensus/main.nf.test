@@ -6,12 +6,13 @@ nextflow_workflow {
 
     test("Nanopore consensus subworkflow with no split pool test") {
         tag "no_split_pool"
+        tag "subworkflow"
         tag "amplicon"
         tag "success"
 
         when {
             params {
-                outdir                  = "results/nanopore_consensus/"
+                outdir                  = "results"
                 clair3_model            = "r1041_e82_400bps_sup_v420"
                 platform                = "nanopore"
                 clair3_no_pool_split    = true
@@ -21,15 +22,15 @@ nextflow_workflow {
                 min_qual_clair3         = 10
                 min_depth               = 15
                 normalise               = 0
-                primer_bed              = "${projectDir}/test_data/nanopore/primer.bed"
+                primer_bed              = "${projectDir}/test_data/primer.bed"
             }
             workflow {
                 """
-                input[0] = Channel.of([ [id: 'sample1'], file("${projectDir}/test_data/nanopore/fastqs/barcode01.fastq.gz") ])
-                input[1] = Channel.of([ [id: 'MN908947.3'], file("${projectDir}/test_data/nanopore/MN908947.3.reference.fasta") ])
+                input[0] = Channel.of([ [id: 'sample2'], file("${projectDir}/test_data/nanopore/fastqs/sample2.fastq.gz") ])
+                input[1] = Channel.of([ [id: 'MN908947.3'], file("${projectDir}/test_data/MN908947.3.reference.fasta") ])
                 input[2] = Channel.of([ file("${projectDir}/test_data/nanopore/MN908947.3.reference.fasta.fai") ])
                 input[3] = Channel.of([ file("${projectDir}/test_data/nanopore/refstats.txt") ])
-                input[4] = Channel.of([ file("${projectDir}/test_data/nanopore/primer.bed") ])
+                input[4] = Channel.of([ file("${projectDir}/test_data/primer.bed") ])
                 input[5] = Channel.of([ file("${projectDir}/test_data/nanopore/amplicon.bed") ])
                 """
             }
@@ -39,11 +40,10 @@ nextflow_workflow {
             assert workflow.success
 
             // Tiling bed only in the no split pool one
+            assert path("$launchDir/results/bed/tiling_region.bed").exists()
             assert path("$launchDir/results/bed/tiling_region.bed").readLines().size() == 1
             assert path("$launchDir/results/bed/tiling_region.bed").text.contains("MN908947.3\t54\t29768")
             //  Consensus Fasta files
-            assert path("$launchDir/results/consensus/reads_100.consensus.fasta").md5 == "4493f765193dec5917ba9fa18da5e909"
-            assert path("$launchDir/results/consensus/sample1.consensus.fasta").md5 == "d41eec4ddd284911999dc61c13c15453"
             assert path("$launchDir/results/consensus/sample2.consensus.fasta").md5 == "b0357754cbb862748f58bf03bf7bd2b4"
         }
     }
