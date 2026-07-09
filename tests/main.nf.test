@@ -699,7 +699,7 @@ nextflow_pipeline {
             [
                 "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
                 "reads_25,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,48,29903,0.0,0.19,0,0,0,",
-                "sample1,PASS,86288,2330,0.922,350.31,325,120,118,",
+                "sample1,PASS,86288,2330,0.922,350.31,325,120,118,"
             ].each {
                 assert qc.text.contains(it)
             }
@@ -740,7 +740,7 @@ nextflow_pipeline {
             def vcfSample1 = path("$launchDir/results/vcf/sample1.vcf.tsv")
             [
                 "Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual",
-                "MN908947.3\t3037\torf1ab p.F924F\tsynonymous_variant\tC\tT\tNone"
+                "MN908947.3\t3037\torf1ab p.F924F\tsynonymous_variant\tC\tT\tNone",
                 "orf1ab p.R3394R",
                 "S p.D1184E",
                 "N p.R203K",
