@@ -365,7 +365,7 @@ nextflow_pipeline {
             assert iridanext.files.global.any { it.path == "pipeline_info/software_versions.yml" }
             ["reads_100", "sample1", "sample2"].each { sample ->
                 assert iridanext.files.samples[sample].any { it.path == "consensus/${sample}.consensus.fasta" }
-                assert iridanext.files.samples[sample].any { it.path == "vcf/${sample}.pass.vcf.gz" }
+                assert iridanext.files.samples[sample].any { it.path == "vcf/${sample}.consensus.norm.vcf.gz" }
             }
             assert iridanext.files.samples.sample1.any { it.path == "sample_mqc/sample1.report.html" }
             assert iridanext.files.samples.sample2.any { it.path == "sample_mqc/sample2.report.html" }
