@@ -37,6 +37,7 @@ process ARTIC_ALIGN_TRIM {
         --report ${meta.id}.alignreport-${mode}.csv \\
         --amp-depth-report ${meta.id}.amplicon_depths.tsv \\
         --primer-match-threshold 15 \\
+        --no-read-groups \\
         $primer_bed \\
         < $bam \\
     | samtools sort -T ${meta.id} - -o $outName
