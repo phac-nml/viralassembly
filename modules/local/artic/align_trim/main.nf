@@ -30,6 +30,10 @@ process ARTIC_ALIGN_TRIM {
     } else {
         argsList.add("--no-trim-primers")
     }
+    // No read groups if Illumina
+    if (params.platform == "illumina") {
+        argsList.add("--no-read-groups")
+    }
     def argsConfig = argsList.join(" ")
     """
     align_trim \\
@@ -37,7 +41,6 @@ process ARTIC_ALIGN_TRIM {
         --report ${meta.id}.alignreport-${mode}.csv \\
         --amp-depth-report ${meta.id}.amplicon_depths.tsv \\
         --primer-match-threshold 15 \\
-        --no-read-groups \\
         $primer_bed \\
         < $bam \\
     | samtools sort -T ${meta.id} - -o $outName
