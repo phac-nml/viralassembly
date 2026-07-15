@@ -33,9 +33,8 @@ include { FREEBAYES                     } from '../../../modules/local/freebayes
 include { PROCESS_VCF                   } from '../../../modules/local/process_vcf/main'
 include { CUSTOM_MAKE_DEPTH_MASK        } from '../../../modules/local/artic_subcommands/make_depth_mask/main'
 
-// Output Final Consensus and Adjust Sequence Header
-include { BCFTOOLS_CONSENSUS as BCFTOOLS_CONSENSUS_ILLUMINA      } from '../../../modules/local/bcftools/consensus/main'
-include { ADJUST_FASTA_HEADER           } from '../../../modules/local/artic_subcommands/adjust_fasta_header/main'
+// Output Final Consensus
+include { BCFTOOLS_CONSENSUS            } from '../../../modules/local/bcftools/consensus/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -109,7 +108,8 @@ workflow WF_ILLUMINA_CONSENSUS {
         ARTIC_ALIGN_TRIM(
             ch_bam_bai,
             ch_primer_bed,
-            'primers'
+            'primers',
+            params.platform
         )
         ch_bam_bai = ARTIC_ALIGN_TRIM.out.bam
         ch_versions = ch_versions.mix(ARTIC_ALIGN_TRIM.out.versions)
@@ -198,22 +198,11 @@ workflow WF_ILLUMINA_CONSENSUS {
             .map { meta, fasta, vcf, tbi ->
                 [ meta, vcf, tbi, fasta, [] ]
             }
-        BCFTOOLS_CONSENSUS_ILLUMINA(
+        BCFTOOLS_CONSENSUS(
             ch_bcfcons_in
         )
-        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_ILLUMINA.out.versions)
-
-        //
-        // MODULE: Adjust final consensus sequence headers to make downstream processes easier
-        //
-        ADJUST_FASTA_HEADER(
-            BCFTOOLS_CONSENSUS_ILLUMINA.out.fasta,
-            ch_reference,
-            '.consensus',
-            ''
-        )
-        ch_consensus = ADJUST_FASTA_HEADER.out.consensus
-        ch_versions = ch_versions.mix(ADJUST_FASTA_HEADER.out.versions)
+        ch_consensus = BCFTOOLS_CONSENSUS.out.consensus
+        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS.out.versions)
     } else {
         //
         // MODULE: Run Freebayes to call variants
@@ -246,7 +235,7 @@ workflow WF_ILLUMINA_CONSENSUS {
         //
         // MODULE: Create final consensus sequence with all variants
         //
-        BCFTOOLS_CONSENSUS_ILLUMINA(
+        BCFTOOLS_CONSENSUS(
             PROCESS_VCF.out.consensus_vcf
                 .join(CUSTOM_MAKE_DEPTH_MASK.out.coverage_mask, by: [0])
                 .combine( ch_reference.collect{ _meta, ref -> ref } )
@@ -254,19 +243,8 @@ workflow WF_ILLUMINA_CONSENSUS {
                     [ meta, vcf, tbi, fasta, mask ]
                 }
         )
-        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_ILLUMINA.out.versions)
-
-        //
-        // MODULE: Adjust final consensus sequence headers to contain sample id and reference info
-        //
-        ADJUST_FASTA_HEADER(
-            BCFTOOLS_CONSENSUS_ILLUMINA.out.fasta,
-            ch_reference,
-            '.consensus',
-            ''
-        )
-        ch_consensus = ADJUST_FASTA_HEADER.out.consensus
-        ch_versions = ch_versions.mix(ADJUST_FASTA_HEADER.out.versions)
+        ch_consensus = BCFTOOLS_CONSENSUS.out.consensus
+        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS.out.versions)
     }
 
     emit:

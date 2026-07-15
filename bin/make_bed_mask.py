@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
-# Copied from nf-core/viralrecon and adjusted
+# Copied from nf-core/viralrecon
 # https://github.com/nf-core/viralrecon/blob/master/bin/make_bed_mask.py
 
 import argparse
 import gzip
 import re
 import sys
-
 
 
 def parse_args(args=None):

@@ -16,13 +16,13 @@ nextflow_workflow {
                 clair3_model            = "r1041_e82_400bps_sup_v420"
                 platform                = "nanopore"
                 clair3_no_pool_split    = true
+                primer_bed              = "${projectDir}/test_data/primer.bed"
                 // To keep consistent results from downsampled input
                 min_length              = 600
                 max_length              = 1600
                 min_qual_clair3         = 10
                 min_depth               = 15
                 normalise               = 0
-                primer_bed              = "${projectDir}/test_data/primer.bed"
             }
             workflow {
                 """

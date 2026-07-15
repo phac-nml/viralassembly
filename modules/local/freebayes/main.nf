@@ -22,7 +22,7 @@ process FREEBAYES {
         -b $bam \\
         -f $fasta \\
         ${args} \\
-        -F ${params.min_alt_fraction_freebayes} \\
+        -F ${params.min_alt_threshold_illumina} \\
         --min-coverage ${params.min_depth} \\
         | sed s/QR,Number=1,Type=Integer/QR,Number=1,Type=Float/ > ${meta.id}.vcf
 

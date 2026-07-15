@@ -11,7 +11,7 @@ process SNPEFF_DATABASE {
     val ref_ids
     path reference
     path gff
-    val segments
+    val segmented
 
     output:
     tuple val(genome), path("snpeff_db"), emit: db
@@ -28,11 +28,11 @@ process SNPEFF_DATABASE {
     }
 
     // Some setup based on segmented virus compared to non
-    def segmented = segments ? true : false
     def str_ref_ids = ref_ids.join(' ')
-    genome = str_ref_ids
     if (segmented == true) {
         genome = reference.name.split((/\./))[0]
+    } else {
+        genome = str_ref_ids
     }
 
     // Build with gff if that param is given
@@ -74,7 +74,7 @@ process SNPEFF_DATABASE {
     } else {
         """
         # Check if we can find the reference name in the database but only on non-segmented ones
-        if \$(snpEff databases | grep -q "$genome" ) && [ "$segmented" = "false" ]; then
+        if \$(snpEff databases | grep -q "$genome" ) && [ "${segmented}" = false ]; then
             echo "Found $genome in snpEff database"
             snpEff \\
                 -Xmx${avail_mem}M \\

@@ -2,6 +2,10 @@
 
 # Copied from nf-core/viralrecon and adjusted
 # https://github.com/nf-core/viralrecon/blob/master/bin/ivar_varaints_to_vcf.py
+# Asjustments:
+# - Support for empty iVar TSV files by writing a header-only VCF
+# - Added zero values for SNP, INS, DEL reporting for empty inputs
+# - MultiQC summary output is seperated from VCF Generation
 
 import os
 import sys

@@ -13,7 +13,7 @@ process BCFTOOLS_CONSENSUS {
     tuple val(meta), path(vcf), path(tbi), path(fasta), path(mask)
 
     output:
-    tuple val(meta), path('*.fa'), emit: fasta
+    tuple val(meta), path('*.fasta'), emit: consensus
     path "versions.yml", emit: versions
 
     when:
@@ -30,10 +30,10 @@ process BCFTOOLS_CONSENSUS {
             ${vcf} \\
             ${args} \\
             ${masking} \\
-            > ${prefix}.fa
+            > ${prefix}.fasta
 
     # Apply samplename as header but keep existing info #
-    sed -i "s/>/>$meta.id /" ${prefix}.fa
+    sed -i "s/>/>$meta.id /" ${prefix}.fasta
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
@@ -43,9 +43,9 @@ process BCFTOOLS_CONSENSUS {
     """
 
     stub:
-    def prefix = task.ext.prefix ? "${meta.id}-${task.ext.prefix}": "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.fa
+    touch ${prefix}.fasta
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml

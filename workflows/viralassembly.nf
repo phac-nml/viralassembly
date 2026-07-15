@@ -163,7 +163,8 @@ workflow VIRALASSEMBLY {
     //  Call Minor variants (i.e. AF below consensus level), optional
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ch_min_vcf = channel.empty()
-    if ( params.minor_variants ) {
+    // Only Nanopore for now
+    if ( params.minor_variants && params.platform == 'nanopore') {
         ch_clairsto_model = Channel.value(params.clairsto_model)
 
         WF_NANOPORE_MINOR_VARIANTS(

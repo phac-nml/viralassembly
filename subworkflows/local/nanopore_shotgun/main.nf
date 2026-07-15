@@ -11,8 +11,7 @@
 include { MINIMAP2_ALIGN            } from '../../../modules/local/minimap2/main'
 include { LONGSHOT                  } from '../../../modules/local/longshot/main'
 include { BCFTOOLS_NORM             } from '../../../modules/local/bcftools/norm/main'
-include { BCFTOOLS_CONSENSUS as BCFTOOLS_CONSENSUS_NANOPORE  } from '../../../modules/local/bcftools/consensus/main'
-include { ADJUST_FASTA_HEADER       } from '../../../modules/local/artic_subcommands/adjust_fasta_header/main'
+include { BCFTOOLS_CONSENSUS as BCFTOOLS_CONSENSUS  } from '../../../modules/local/bcftools/consensus/main'
 
 // Variant calling tools
 include { MEDAKA_CONSENSUS          } from '../../../modules/local/nanopore_shotgun/medaka/main'
@@ -146,7 +145,10 @@ workflow WF_NANOPORE_SHOTGUN {
     )
     ch_versions = ch_versions.mix(BCFTOOLS_NORM.out.versions)
 
-    BCFTOOLS_CONSENSUS_NANOPORE(
+    //
+    // MODULE: Create final consensus sequence with all variants
+    //
+    BCFTOOLS_CONSENSUS(
         ARTIC_MASK.out.preconsensus
             .join(CUSTOM_MAKE_DEPTH_MASK.out.coverage_mask, by: [0])
             .join(BCFTOOLS_NORM.out.vcf, by: [0])
@@ -154,19 +156,8 @@ workflow WF_NANOPORE_SHOTGUN {
                 [ meta, vcf, tbi, fasta, mask ]
             }
     )
-    ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS_NANOPORE.out.versions)
-
-    //
-    // MODULE: Adjust final consensus sequence headers to contain sample id and reference info
-    //
-    ADJUST_FASTA_HEADER(
-        BCFTOOLS_CONSENSUS_NANOPORE.out.fasta,
-        ch_reference,
-        '.consensus',
-        ''
-    )
-    ch_consensus = ADJUST_FASTA_HEADER.out.consensus
-    ch_versions = ch_versions.mix(ADJUST_FASTA_HEADER.out.versions)
+    ch_consensus = BCFTOOLS_CONSENSUS.out.consensus
+    ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS.out.versions)
 
     // Remove tabix index from vcf as it is not needed and won't match the normal artic steps as output
     CUSTOM_VCF_FILTER.out.pass_vcf
