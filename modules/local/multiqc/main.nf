@@ -7,8 +7,8 @@ process MULTIQC_SAMPLE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/multiqc:1.20--pyhdfd78af_2' :
-        'biocontainers/multiqc:1.20--pyhdfd78af_2' }"
+        'https://depot.galaxyproject.org/singularity/multiqc:1.26--pyhdfd78af_0' :
+        'biocontainers/multiqc:1.26--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(sample_csv), path(variation_csv), path(consensus_variant_tsv), path(qualimap_bamqc_data), path(nanostat_txt), path(amp_depth_tsv)

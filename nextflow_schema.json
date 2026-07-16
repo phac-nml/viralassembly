@@ -68,9 +68,25 @@
                     "pattern": "^\\S+\\.fn?a(sta)?$",
                     "description": "Path to reference genome fasta file",
                     "fa_icon": "fas fa-font"
+                },
+                "platform": {
+                    "type": "string",
+                    "description": "Sequencing platform used. Options are: 'illumina' or 'nanopore'",
+                    "enum": ["illumina", "nanopore"],
+                    "fa_icon": "fas fa-vector-square"
                 }
             },
-            "required": ["variant_caller", "reference"]
+            "required": ["reference", "platform"],
+            "if": {
+                "properties": {
+                    "platform": {
+                        "const": "nanopore"
+                    }
+                }
+            },
+            "then": {
+                "required": ["variant_caller"]
+            }
         },
         "amplicon_settings": {
             "title": "Amplicon Settings",
@@ -259,6 +275,58 @@
                 }
             }
         },
+        "freebayes_options": {
+            "title": "Freebayes Options",
+            "type": "object",
+            "description": "Options relating to illumina variant calling with Freebayes",
+            "default": "",
+            "properties": {
+                "min_ambiguity_threshold": {
+                    "type": "number",
+                    "description": "Minimum threshold to call a position as an IUPAC else reference allele is used",
+                    "default": 0.25,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "max_ambiguity_threshold": {
+                    "type": "number",
+                    "description": "Maximum threshold to call a position as an IUPAC otherwise the majority allele is used",
+                    "default": 0.75,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-plus-square"
+                },
+                "min_indel_threshold": {
+                    "type": "number",
+                    "description": "Minimum thresholds to keep an indel",
+                    "default": 0.6,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "min_alt_threshold_illumina": {
+                    "type": "number",
+                    "description": "Require at least this fraction of observations supporting an alt allele to evaluate position",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "min_variant_qual_freebayes": {
+                    "type": "integer",
+                    "description": "Minimum freebayes quality (probability) to filter variants",
+                    "default": 20,
+                    "minimum": 0,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "use_ivar": {
+                    "type": "boolean",
+                    "description": "Use iVar as a variant caller instead of Freebayes for Illumina data. Default: False",
+                    "default": false
+                }
+            }
+        },
         "read_filtering_options": {
             "title": "Read Filtering Options",
             "type": "object",
@@ -283,6 +351,15 @@
                     "default": 8000,
                     "minimum": 50,
                     "description": "Maximum read length to keep"
+                },
+                "fastp_adapter": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?$",
+                    "description": "Path to FASTA file containing adapter sequences",
+                    "fa_icon": "fas fa-font"
                 }
             }
         },
@@ -524,6 +601,9 @@
         },
         {
             "$ref": "#/$defs/nanopolish_settings"
+        },
+        {
+            "$ref": "#/$defs/freebayes_options"
         },
         {
             "$ref": "#/$defs/read_filtering_options"

@@ -1,4 +1,4 @@
-# Rift Valley Fever Segmented Test Dataset
+# Rift Valley Fever Segmented Nanopore Test Dataset
 
 Reads from: https://trace.ncbi.nlm.nih.gov/Traces/?view=run_browser&acc=ERR14941536&display=metadata
 

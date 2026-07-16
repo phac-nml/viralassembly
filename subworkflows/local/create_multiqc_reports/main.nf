@@ -55,7 +55,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     // Sample variant analysis
     CREATE_READ_VARIATION_CSV(
         ch_bam,
-        ch_reference
+        ch_reference.collect{ _meta, ref -> ref }
     )
     ch_versions = ch_versions.mix(CREATE_READ_VARIATION_CSV.out.versions)
 
@@ -66,7 +66,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
 
     // Amplicon analysis
     ch_amplicon_completeness = channel.empty()
-    if ( ! params.reference ) {
+    if ( params.primer_bed ) {
         // Coverage
         BEDTOOLS_COVERAGE_AMPLICON_BED(
             ch_bam,
@@ -100,7 +100,7 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     // Stats from tools
     BCFTOOLS_STATS(
         ch_vcf,
-        ch_reference
+        ch_reference.collect{ _meta, ref -> ref }
     )
     ch_versions = ch_versions.mix(BCFTOOLS_STATS.out.versions)
 

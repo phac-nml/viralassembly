@@ -1,4 +1,5 @@
 process NEXTCLADE_DATASETGET {
+    tag "$dataset"
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"

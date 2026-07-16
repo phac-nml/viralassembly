@@ -54,10 +54,11 @@ process CUSTOM_MAKE_DEPTH_MASK {
 
     input:
     tuple val(meta), path(bam), path(bai)
-    path(reference)
+    path reference
 
     output:
     tuple val(meta), path("${meta.id}.coverage_mask.txt"), emit: coverage_mask
+    path "versions.yml", emit: versions
 
     script:
     """

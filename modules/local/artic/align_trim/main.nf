@@ -11,6 +11,7 @@ process ARTIC_ALIGN_TRIM {
     tuple val(meta), path(bam), path(bai)
     path primer_bed
     val mode
+    val platform
 
     output:
     tuple val(meta), path("${meta.id}.*trimmed.rg.sorted.bam"), path("${meta.id}.*trimmed.rg.sorted.bam.bai"), emit: bam
@@ -29,6 +30,10 @@ process ARTIC_ALIGN_TRIM {
         outName = "${meta.id}.primertrimmed.rg.sorted.bam"
     } else {
         argsList.add("--no-trim-primers")
+    }
+    // No read groups if Illumina
+    if ( platform == "illumina" ) {
+        argsList.add("--no-read-groups")
     }
     def argsConfig = argsList.join(" ")
     """
