@@ -89,13 +89,36 @@ nextflow_pipeline {
         }
     }
 
+    //--- Test 5 ----------------------------------------------------------------------------
+    test("Segmented Virus with Multiple Nextclade Inputs") {
+        tag "fail"
+
+        when {
+            params {
+                outdir       = "results"
+                input        = "${projectDir}/test_data/illumina_segmented/illumina_segmented.csv"
+                reference    = "${projectDir}/test_data/rvfv.reference.fasta"
+                platform     = "illumina"
+                nextclade_dataset_name = "nextstrain/sars-cov-2/wuhan-hu-1/orfs"
+                nextclade_dataset_tag = "2026-01-06--14-59-32Z"
+            }
+        }
+        then {
+            // Status
+            assert workflow.failed
+
+            // Message
+            assert workflow.stdout.any { it.contains("The reference FASTA used is a segmented virus") }
+        }
+    }
+
     /*
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                                 Passing Nanopore Tests
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
-    //--- Test 5 ----------------------------------------------------------------------------
+    //--- Test 6 ----------------------------------------------------------------------------
     test("Nanopore WGS Workflow with SnpEff") {
         tag "success"
         tag "wgs"
@@ -232,7 +255,7 @@ nextflow_pipeline {
         }
     }
 
-    //--- Test 6 ----------------------------------------------------------------------------
+    //--- Test 7 ----------------------------------------------------------------------------
     test("Nanopore Amplicon Workflow with MultiQC") {
         tag "success"
         tag "amplicon"
@@ -378,7 +401,7 @@ nextflow_pipeline {
         }
     }
 
-    //--- Test 7 ----------------------------------------------------------------------------
+    //--- Test 8 ----------------------------------------------------------------------------
     test("Nanopore WGS Segmented Workflow with SnpEff") {
         tag "success"
         tag "wgs"
@@ -504,7 +527,7 @@ nextflow_pipeline {
     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     */
 
-    //--- Test 8 ----------------------------------------------------------------------------
+    //--- Test 9 ----------------------------------------------------------------------------
     test("Illumina WGS Workflow with SnpEff") {
         tag "success"
         tag "wgs"
@@ -516,8 +539,6 @@ nextflow_pipeline {
                 input           = "${projectDir}/test_data/illumina/illumina_wgs.csv"
                 reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
                 platform        = "illumina"
-                nextclade_dataset_name = "nextstrain/sars-cov-2/wuhan-hu-1/orfs"
-                nextclade_dataset_tag = "2026-01-06--14-59-32Z"
             }
         }
         then {
@@ -628,7 +649,7 @@ nextflow_pipeline {
         }
     }
 
-    //--- Test 9 ----------------------------------------------------------------------------
+    //--- Test 10 ----------------------------------------------------------------------------
     test("Illumina Amplicon Workflow with iVar and MultiQC") {
         tag "success"
         tag "amplicon"

@@ -7,7 +7,7 @@ process COLLATE_CSVS {
         : 'biocontainers/coreutils:8.31--h14c3975_0' }"
 
     input:
-    tuple val(meta), path(csvs, stageAs: 'segement_*.csv')
+    tuple val(meta), path(csvs, stageAs: 'segment_*.csv')
 
     output:
     tuple val(meta), path("${meta.file_name}.csv"), emit: final_csv

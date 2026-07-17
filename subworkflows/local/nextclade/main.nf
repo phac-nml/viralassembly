@@ -19,17 +19,13 @@ include { COLLATE_CSVS          } from '../../../modules/local/custom/collate_cs
 workflow WF_NEXTCLADE {
     take:
     ch_consensus  // channel: [ val(meta), file(consensus) ]
+    segmented     // boolean: Boolean whether virus is segmented or not
 
     main:
     // Version tracking
     ch_versions = channel.empty()
 
     // Split multi-FASTA (segmented viruses)
-    def segmented = new File(params.reference)
-        .readLines()
-        .findAll { it.startsWith('>') }
-        .size() > 1
-
     ch_consensus = ch_consensus.flatMap { meta, fasta ->
         if ( segmented ) {
             return fasta

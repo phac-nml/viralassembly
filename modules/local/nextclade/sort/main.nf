@@ -3,8 +3,8 @@ process NEXTCLADE_SORT {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/93/936786744b34cf016b948026a6b4e9489011424e15c28dfb2f7d03c31bb4afb5/data' :
-        'community.wave.seqera.io/library/nextclade:3.11.0--155203da8341cfe6' }"
+        'https://depot.galaxyproject.org/singularity/nextclade:3.9.1--h9ee0642_0' :
+        'biocontainers/nextclade:3.9.1--h9ee0642_0' }"
 
     input:
     tuple val(meta), path(fasta)
@@ -21,6 +21,7 @@ process NEXTCLADE_SORT {
     """
     nextclade \\
         sort \\
+        $args \\
         -r - \\
         $fasta | awk -F'\t' 'NR==2 {print \$3}'
 

@@ -248,7 +248,8 @@ workflow VIRALASSEMBLY {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     if ( ! params.skip_nextclade ) {
         WF_NEXTCLADE(
-            ch_consensus
+            ch_consensus,
+            segmented
         )
     }
 
