@@ -64,7 +64,7 @@ workflow WF_NANOPORE_AMPLICON {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     MINIMAP2_ALIGN(
         ch_fastqs,
-        ch_reference.collect{ _meta, ref -> ref }
+        ch_reference
     )
     ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
 
@@ -115,7 +115,7 @@ workflow WF_NANOPORE_AMPLICON {
             ch_versions = ch_versions.mix(MEDAKA_CONSENSUS.out.versions)
             MEDAKA_VARIANT(
                 MEDAKA_CONSENSUS.out.hdf,
-                ch_reference.collect{ _meta, ref -> ref }
+                ch_reference
             )
             ch_tmp_vcfs = MEDAKA_VARIANT.out.vcf
             ch_versions = ch_versions.mix(MEDAKA_VARIANT.out.versions)
@@ -129,7 +129,7 @@ workflow WF_NANOPORE_AMPLICON {
                     .combine(ch_trimmed_bams_w_pool, by: [0]),
                 ch_fast5s,
                 ch_seqSum,
-                ch_reference.collect{ _meta, ref -> ref },
+                ch_reference,
                 ch_refstats
             )
             ch_tmp_vcfs = NANOPOLISH_VARIANTS.out.vcf
@@ -164,7 +164,7 @@ workflow WF_NANOPORE_AMPLICON {
         // Run clair3
         CLAIR3_VARIANTS(
             ch_trimmed_bams_w_pool,
-            ch_reference.collect{ _meta, ref -> ref },
+            ch_reference,
             ch_ref_fai,
             ch_clair3_model,
             params.clair3_no_pool_split
@@ -199,7 +199,7 @@ workflow WF_NANOPORE_AMPLICON {
         LONGSHOT(
             ZIP_AND_INDEX_VCF.out.vcf
                 .join(ch_primertrimmed_bams, by: [0]),
-            ch_reference.collect{ _meta, ref -> ref },
+            ch_reference,
             ch_ref_fai
         )
         ch_merged_vcf = LONGSHOT.out.vcf
@@ -216,7 +216,7 @@ workflow WF_NANOPORE_AMPLICON {
 
     ARTIC_MAKE_DEPTH_MASK(
         ch_primertrimmed_bams,
-        ch_reference.collect{ _meta, ref -> ref }
+        ch_reference
     )
     ch_versions = ch_versions.mix(ARTIC_MAKE_DEPTH_MASK.out.versions)
 
@@ -226,7 +226,7 @@ workflow WF_NANOPORE_AMPLICON {
     ARTIC_MASK(
         ARTIC_MAKE_DEPTH_MASK.out.coverage_mask
             .join(CUSTOM_VCF_FILTER.out.fail_vcf, by: [0]),
-        ch_reference.collect{ _meta, ref -> ref }
+        ch_reference
     )
     ch_versions = ch_versions.mix(ARTIC_MASK.out.versions)
 

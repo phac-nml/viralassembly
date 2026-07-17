@@ -77,7 +77,7 @@ workflow WF_ILLUMINA_CONSENSUS {
     // MODULE: Create index of reference
     //
     BOWTIE2_BUILD(
-        ch_reference
+        ch_reference.map { ref -> tuple([], ref) }
     )
     ch_versions = ch_versions.mix(BOWTIE2_BUILD.out.versions)
 
@@ -87,7 +87,7 @@ workflow WF_ILLUMINA_CONSENSUS {
     BOWTIE2_ALIGN(
         ch_filtered_fastqs.pass,
         BOWTIE2_BUILD.out.index,
-        ch_reference,
+        ch_reference.map { ref -> tuple([], ref) },
         '',
         ''
     )
@@ -98,7 +98,7 @@ workflow WF_ILLUMINA_CONSENSUS {
     //
     SAMTOOLS_SORT(
         BOWTIE2_ALIGN.out.bam,
-        ch_reference,
+        ch_reference.map { ref -> tuple([], ref) },
         'bai'
     )
     ch_bam_bai = SAMTOOLS_SORT.out.bam.join(SAMTOOLS_SORT.out.bai, by: [0])
@@ -121,7 +121,7 @@ workflow WF_ILLUMINA_CONSENSUS {
         //
         IVAR_VARIANTS(
             ch_bam_bai,
-            ch_reference.collect{ _meta, ref -> ref },
+            ch_reference,
             ch_fai
         )
         ch_versions = ch_versions.mix(IVAR_VARIANTS.out.versions)
@@ -131,7 +131,7 @@ workflow WF_ILLUMINA_CONSENSUS {
         //
         IVAR_VARIANTS_TO_VCF(
             IVAR_VARIANTS.out.tsv,
-            ch_reference.collect{ _meta, ref -> ref }
+            ch_reference
         )
         ch_versions = ch_versions.mix(IVAR_VARIANTS_TO_VCF.out.versions)
 
@@ -168,7 +168,7 @@ workflow WF_ILLUMINA_CONSENSUS {
         //
         MAKE_BED_MASK(
             ch_bam_vcf,
-            ch_reference.collect{ _meta, ref -> ref }
+            ch_reference
         )
         ch_versions = ch_versions.mix(MAKE_BED_MASK.out.versions)
 
@@ -185,7 +185,7 @@ workflow WF_ILLUMINA_CONSENSUS {
         //
         BEDTOOLS_MASKFASTA(
             BEDTOOLS_MERGE.out.bed,
-            ch_reference.collect{ _meta, ref -> ref }
+            ch_reference
         )
         ch_versions = ch_versions.mix(BEDTOOLS_MASKFASTA.out.versions)
 
@@ -209,7 +209,7 @@ workflow WF_ILLUMINA_CONSENSUS {
         //
         FREEBAYES(
             ch_bam_bai,
-            ch_reference.collect{ _meta, ref -> ref }
+            ch_reference
         )
         ch_versions = ch_versions.mix(FREEBAYES.out.versions)
 
@@ -218,7 +218,7 @@ workflow WF_ILLUMINA_CONSENSUS {
         //
         PROCESS_VCF(
             FREEBAYES.out.vcf,
-            ch_reference.collect{ _meta, ref -> ref }
+            ch_reference
         )
         ch_versions = ch_versions.mix(PROCESS_VCF.out.versions)
         ch_vcf = PROCESS_VCF.out.consensus_vcf.map { meta, vcf, _tbi -> tuple(meta, vcf) }
@@ -228,7 +228,7 @@ workflow WF_ILLUMINA_CONSENSUS {
         //
         CUSTOM_MAKE_DEPTH_MASK(
             ch_bam_bai,
-            ch_reference.collect{ _meta, ref -> ref }
+            ch_reference
         )
         ch_versions = ch_versions.mix(CUSTOM_MAKE_DEPTH_MASK.out.versions)
 
@@ -238,7 +238,7 @@ workflow WF_ILLUMINA_CONSENSUS {
         BCFTOOLS_CONSENSUS(
             PROCESS_VCF.out.consensus_vcf
                 .join(CUSTOM_MAKE_DEPTH_MASK.out.coverage_mask, by: [0])
-                .combine( ch_reference.collect{ _meta, ref -> ref } )
+                .combine( ch_reference )
                 .map { meta, vcf, tbi, mask, fasta ->
                     [ meta, vcf, tbi, fasta, mask ]
                 }

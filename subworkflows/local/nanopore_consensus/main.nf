@@ -118,7 +118,7 @@ workflow WF_NANOPORE_CONSENSUS {
     } else {
         ARTIC_MINION(
             ch_filtered_fastqs.pass,
-            ch_reference.collect{ _meta, ref -> ref },
+            ch_reference,
             ch_primer_bed,
             ch_clair3_model.ifEmpty([])
         )

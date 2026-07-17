@@ -81,11 +81,6 @@ workflow VIRALASSEMBLY {
     // Create reference channel
     ch_reference = params.reference
         ? channel.value( file(params.reference, type: 'file', checkIfExists: true) )
-            .map { ref ->
-                segmented
-                    ? tuple([ id: ref.baseName, irida_id: ref.baseName ], ref)
-                    : tuple([ id: fastaHeaderId(ref)[0], irida_id: fastaHeaderId(ref)[0] ], ref)
-            }
         : []
 
     // Create amplicon channels
@@ -96,7 +91,7 @@ workflow VIRALASSEMBLY {
         // Amplicon information
         PRIMALBEDTOOLS_VALIDATE(
             ch_primer_bed,
-            ch_reference.collect{ _meta, ref -> ref }
+            ch_reference
         )
         PRIMALBEDTOOLS_AMPLICON(
             ch_primer_bed
@@ -108,7 +103,7 @@ workflow VIRALASSEMBLY {
     // Reference stats and files for various processes
     //  FAI, Ref-stats for nanopolish, genome.bed for bedtools
     GET_REF_STATS(
-        ch_reference.collect{ _meta, ref -> ref }
+        ch_reference
     )
     ch_fai = GET_REF_STATS.out.fai
     ch_refstats = GET_REF_STATS.out.refstats
@@ -169,7 +164,7 @@ workflow VIRALASSEMBLY {
 
         WF_NANOPORE_MINOR_VARIANTS(
             ch_bam,
-            ch_reference.collect{ _meta, ref -> ref },
+            ch_reference,
             GET_REF_STATS.out.fai,
             ch_vcf, // major variants from the main pipeline required for deduplication of vcfs
             ch_clairsto_model
@@ -196,7 +191,6 @@ workflow VIRALASSEMBLY {
 
         // Get reference ids
         ch_reference
-            .collect{ _meta, ref -> ref }
             .map{ ref -> fastaHeaderId(ref) }
             .flatten()
             .collect() // To collect segmented and turn to a value channel
@@ -204,7 +198,7 @@ workflow VIRALASSEMBLY {
 
         SNPEFF_DATABASE(
             ch_ref_ids,
-            ch_reference.collect{ _meta, ref -> ref },
+            ch_reference,
             ch_gff,
             segmented
         )
@@ -317,7 +311,7 @@ workflow VIRALASSEMBLY {
                 .collectFile(keepHeader: true, skip: 1, name: 'filter_tracking.csv')
                 .ifEmpty([]),
             ch_metadata,
-            ch_reference.collect{ _meta, ref -> ref },
+            ch_reference,
             params.neg_control_threshold,
             params.neg_ctrl_substrings
         )
