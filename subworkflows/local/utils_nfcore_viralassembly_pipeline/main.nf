@@ -123,15 +123,19 @@ workflow PIPELINE_COMPLETION {
 
 // Check if the virus is segmented
 def isSegmented(reference) {
-    file(reference)
+    def segmented = file(reference)
         .readLines()
         .findAll { it.startsWith('>') }
         .size() > 1
+
+    return segmented
 }
 
 // Get FASTA header
 def fastaHeaderId(fasta) {
-    fasta.readLines()
+    def headers = fasta.readLines()
         .findAll { it.startsWith('>') }
         .collect { it.substring(1).tokenize()[0] }
+
+    return headers
 }
