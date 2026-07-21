@@ -26,6 +26,7 @@ workflow WF_NEXTCLADE {
     ch_versions = channel.empty()
 
     // Split multi-FASTA (segmented viruses)
+    //  and add in file_name to meta for the final nextcalde output name
     ch_consensus = ch_consensus.flatMap { meta, fasta ->
         if ( segmented ) {
             return fasta
@@ -38,41 +39,61 @@ workflow WF_NEXTCLADE {
         }
     }
 
-    // Figure out the best dataset to use with Nextclade Sort or use a specified dataset
-    if ( segmented || !(params.nextclade_dataset_name || params.nextclade_dataset_dir) ) {
-        // MODULE: Define the most appropriate dataset for a sample or segment
-        NEXTCLADE_SORT(
-            ch_consensus
+    // Function to run Nextclade Sort
+    def run_nextclade_sort = !params.nextclade_dataset_dir &&
+        (segmented || !params.nextclade_dataset_name)
+
+    // Create / Download / Check nextclade dataset directory(s)
+    ch_dataset_name = params.nextclade_dataset_name ? params.nextclade_dataset_name : ''
+    ch_dataset_tag = params.nextclade_dataset_tag ? params.nextclade_dataset_tag : ''
+    if ( params.nextclade_dataset_dir ) {
+        ch_nextclade_dataset = Channel.value(
+            tuple('', file(params.nextclade_dataset_dir, type: 'dir', checkIfExists: true))
         )
-        ch_dataset_tag = ''
-        ch_dataset_name = NEXTCLADE_SORT.out.dataset_name
-            .map{ _meta, _fasta, stdout ->
-                stdout.toString().trim()
+    } else {
+        // Figure out the best dataset to use with Nextclade Sort
+        if ( run_nextclade_sort ) {
+            NEXTCLADE_SORT(
+                ch_consensus
+            )
+
+            // WARN that a sample didn't have hits
+            //  therefore there will be no nextclade output
+            NEXTCLADE_SORT.out.dataset_name.map { meta, fasta, dataset ->
+                if (dataset.isEmpty() ) {
+                    log.warn("${meta.id} has no matching nextclade datasets. No nextclade output will be available for this sample.")
+                }
+                tuple(meta, fasta, dataset)
             }
-            .filter { it }
-            .unique()
-    } else if ( !(segmented) && !(params.nextclade_dataset_dir) ) {
-        ch_dataset_name = params.nextclade_dataset_name ? params.nextclade_dataset_name : ''
-        ch_dataset_tag = params.nextclade_dataset_tag ? params.nextclade_dataset_tag : ''
+            ch_dataset_tag = ''
+            ch_dataset_name = NEXTCLADE_SORT.out.dataset_name
+                .map{ _meta, _fasta, dataset ->
+                    dataset.toString().trim()
+                }
+                .filter { it }
+                .unique()
+        }
+        // Actually download the dataset
+        NEXTCLADE_DATASETGET(
+            ch_dataset_name,
+            ch_dataset_tag
+        )
+        ch_versions = ch_versions.mix(NEXTCLADE_DATASETGET.out.versions)
+        ch_nextclade_dataset = NEXTCLADE_DATASETGET.out.dataset
+
     }
 
-    // MODULE: Download the specified dataset
-    NEXTCLADE_DATASETGET(
-        ch_dataset_name,
-        ch_dataset_tag
-    )
-    ch_versions = ch_versions.mix(NEXTCLADE_DATASETGET.out.versions)
-    ch_nextclade_dataset = params.nextclade_dataset_dir ?
-        Channel.value(file(params.nextclade_dataset_dir, type: 'dir', checkIfExists: true)) : NEXTCLADE_DATASETGET.out.dataset
-
+    // Mention if there were no datasets
+    //  May need an easier way to see this for troubleshooting later but ok for now
     ch_nextclade_dataset.ifEmpty {
         log.warn("There were no matching nextclade datasets for this virus. Skipping nextclade.")
     }
+
     // Define input for Nextclade run
-    if ( segmented ) {
+    if ( run_nextclade_sort ) {
         ch_nextclade_run_input = NEXTCLADE_SORT.out.dataset_name
-            .map{meta, fasta, stdout ->
-                tuple(stdout.trim(), meta, fasta)
+            .map{meta, fasta, dataset ->
+                tuple(dataset.trim(), meta, fasta)
             }
             .combine(ch_nextclade_dataset, by: 0)
             .map{ _dataset_name, meta, fasta, dataset_path ->
@@ -89,21 +110,13 @@ workflow WF_NEXTCLADE {
     )
     ch_versions = ch_versions.mix(NEXTCLADE_RUN.out.versions)
 
-    // Collate all results in a single output if virus is segmented
-    if ( segmented ) {
-        ch_csvs = NEXTCLADE_RUN.out.csv
+    // Collate all results in a single output for both segmented and non-segmented viruses
+    COLLATE_CSVS(
+        NEXTCLADE_RUN.out.csv
             .groupTuple()
-
-        // MODULE: Collate each segments output into a final csv file
-        COLLATE_CSVS(
-            ch_csvs
-        )
-        ch_nextclade_csv = COLLATE_CSVS.out.final_csv
-    } else {
-        ch_nextclade_csv = NEXTCLADE_RUN.out.csv
-    }
+    )
 
     emit:
-    csv      = ch_nextclade_csv // channel: [ val(meta), file(csv) ]
-    versions = ch_versions      // channel: [ path(versions.yml) ]
+    csv      = COLLATE_CSVS.out.final_csv // channel: [ val(meta), file(csv) ]
+    versions = ch_versions                // channel: [ path(versions.yml) ]
 }

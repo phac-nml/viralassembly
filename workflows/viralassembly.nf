@@ -3,6 +3,10 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+// Functions
+include { isSegmented               } from '../subworkflows/local/utils_nfcore_viralassembly_pipeline'
+include { fastaHeaderId             } from '../subworkflows/local/utils_nfcore_viralassembly_pipeline'
+
 // Utils / Custom checks / Primer Validate
 include { GET_REF_STATS             } from '../modules/local/custom/utils.nf'
 include { RENAME_FASTQ              } from '../modules/local/custom/utils.nf'
@@ -66,17 +70,7 @@ workflow VIRALASSEMBLY {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
     // Check if the reference is a segmented virus
-    def segmented = new File(params.reference)
-        .readLines()
-        .findAll { it.startsWith('>') }
-        .size() > 1
-
-    // Function: Get FASTA header and use that as ref_id
-    def fastaHeaderId = { Path fasta ->
-        fasta.readLines()
-            .findAll { it.startsWith('>') }
-            .collect { it.substring(1).tokenize()[0] }
-    }
+    def segmented = isSegmented(params.reference)
 
     // Create reference channel
     ch_reference = params.reference

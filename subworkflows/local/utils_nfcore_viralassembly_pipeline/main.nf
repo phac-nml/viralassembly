@@ -80,10 +80,7 @@ workflow PIPELINE_INITIALISATION {
     }
 
     // Nextclade input when virus is segmented
-    def segmented = new File(reference)
-        .readLines()
-        .findAll { it.startsWith('>') }
-        .size() > 1
+    def segmented = isSegmented(reference)
 
     if ( segmented && (params.nextclade_dataset_dir || params.nextclade_dataset_name) ) {
         log.error("The reference FASTA used is a segmented virus. Please remove the 'nextclade_dataset_dir' or 'nextclade_dataset_name' argument as the pipeline will assign the appropriate nextclade dataset to each segment.")
@@ -116,4 +113,25 @@ workflow PIPELINE_COMPLETION {
     workflow.onError {
         log.error "Pipeline failed. Please refer to troubleshooting docs: https://nf-co.re/docs/usage/troubleshooting"
     }
+}
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    FUNCTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+// Check if the virus is segmented
+def isSegmented(reference) {
+    file(reference)
+        .readLines()
+        .findAll { it.startsWith('>') }
+        .size() > 1
+}
+
+// Get FASTA header
+def fastaHeaderId(fasta) {
+    fasta.readLines()
+        .findAll { it.startsWith('>') }
+        .collect { it.substring(1).tokenize()[0] }
 }

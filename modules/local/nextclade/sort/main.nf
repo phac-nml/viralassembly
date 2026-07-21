@@ -10,7 +10,7 @@ process NEXTCLADE_SORT {
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path(fasta), stdout, emit: dataset_name
+    tuple val(meta), path(fasta), env('DATASET'), emit: dataset_name
     path "versions.yml", emit: versions
 
     when:
@@ -19,11 +19,13 @@ process NEXTCLADE_SORT {
     script:
     def args = task.ext.args ?: ''
     """
-    nextclade \\
-        sort \\
-        $args \\
-        -r - \\
-        $fasta | awk -F'\t' 'NR==2 {print \$3}'
+    DATASET=\$(
+        nextclade \\
+            sort \\
+            $args \\
+            -r - \\
+            $fasta | awk -F'\t' 'NR==2 {print \$3}'
+    )
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -33,7 +35,8 @@ process NEXTCLADE_SORT {
 
     stub:
     """
-    echo "No Dataset"
+    DATASET=""
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         nextclade: \$(echo \$(nextclade --version 2>&1) | sed 's/^.*nextclade //; s/ .*\$//')

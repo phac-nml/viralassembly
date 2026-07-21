@@ -571,7 +571,6 @@ nextflow_pipeline {
                 // Nextclade
                 "nextclade/nextstrain/sars-cov-2/wuhan-hu-1/orfs/reference.fasta",
                 "nextclade/sample1.csv",
-                "nextclade/reads_25.csv",
 
                 // Pipeline Info
                 "pipeline_info",
@@ -627,7 +626,6 @@ nextflow_pipeline {
 
             // Nextclade outputs
             assert path("$results/nextclade/sample1.csv").readLines().size() == 2
-            assert path("$results/nextclade/reads_25.csv").readLines().size() == 2
 
             // IRIDA Next output
             def iridanext = path("$results/iridanext.output.json").json

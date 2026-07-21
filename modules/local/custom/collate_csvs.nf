@@ -10,16 +10,17 @@ process COLLATE_CSVS {
     tuple val(meta), path(csvs, stageAs: 'segment_*.csv')
 
     output:
-    tuple val(meta), path("${meta.file_name}.csv"), emit: final_csv
+    tuple val(meta), path("${meta.file_name.replace('.consensus.fasta','')}.csv"), emit: final_csv
 
     script:
-    def filename = "${meta.file_name}.csv"
+    def filename = "${meta.file_name.replace('.consensus.fasta','')}.csv"
     """
     awk 'FNR==1 && NR!=1 { next } { print }' ${csvs.join(' ')} > ${filename}
     """
 
     stub:
+    def filename = "${meta.file_name.replace('.consensus.fasta','')}.csv"
     """
-    echo "nextclade.csv"
+    touch ${filename}
     """
 }
