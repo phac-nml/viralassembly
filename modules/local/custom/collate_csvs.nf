@@ -13,12 +13,13 @@ process COLLATE_CSVS {
     tuple val(meta), path(filename), emit: final_csv
 
     script:
-    filename = "${meta.file_name.replace('.consensus.fasta','')}.csv"
+    filename = "${meta.nextclade_file_name}.csv"
     """
     awk 'FNR==1 && NR!=1 { next } { print }' ${csvs.join(' ')} > ${filename}
     """
 
     stub:
+    filename = "${meta.nextclade_file_name}.csv"
     """
     touch ${filename}
     """

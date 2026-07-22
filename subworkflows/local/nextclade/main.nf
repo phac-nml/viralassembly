@@ -26,16 +26,16 @@ workflow WF_NEXTCLADE {
     ch_versions = channel.empty()
 
     // Split multi-FASTA (segmented viruses)
-    //  and add in file_name to meta for the final nextcalde output name
+    //  and add in nextclade_file_name to meta for the final nextcalde output name
     ch_consensus = ch_consensus.flatMap { meta, fasta ->
         if ( segmented ) {
             return fasta
                 .splitFasta(by: 1, file: true)
                 .collect { split_fasta ->
-                    tuple(meta + [file_name: fasta.name], split_fasta)
+                    tuple(meta + [nextclade_file_name: fasta.name.replace('.consensus.fasta','')], split_fasta)
                 }
         } else {
-            return [ tuple(meta + [file_name: fasta.name], fasta) ]
+            return [ tuple(meta + [nextclade_file_name: fasta.name.replace('.consensus.fasta','')], fasta) ]
         }
     }
 
