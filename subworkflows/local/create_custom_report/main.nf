@@ -47,7 +47,7 @@ workflow WF_CREATE_CUSTOM_REPORT {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     CREATE_READ_VARIATION_CSV(
         ch_bam,
-        ch_reference.collect{ _meta, ref -> ref }
+        ch_reference
     )
     ch_versions = ch_versions.mix(CREATE_READ_VARIATION_CSV.out.versions)
 

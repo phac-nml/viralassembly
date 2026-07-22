@@ -1,0 +1,69 @@
+nextflow_workflow {
+
+    name "Nextclade subworkflow for segmented virus test"
+    script "subworkflows/local/nextclade/main.nf"
+    workflow "WF_NEXTCLADE"
+
+    test("Nextclade subworkflow for segmented virus test") {
+        tag "nextclade"
+        tag "subworkflow"
+        tag "segmented"
+        tag "success"
+
+        when {
+            params {
+                outdir   = "results"
+            }
+            workflow {
+                """
+                input[0] = Channel.of([ [id: 'sample2'], file("${projectDir}/test_data/nextclade/PP_0078B9G.1.fa") ])
+                input[1] = true
+                """
+            }
+        }
+
+        then {
+            assert workflow.success
+
+            // Expected outputs
+            def results = "$launchDir/results"
+            [
+                "",
+
+                // Nextclade Datasets
+                "nextclade/nextstrain/orthohantavirus/andv/l/reference.fasta",
+                "nextclade/nextstrain/orthohantavirus/andv/m/reference.fasta",
+                "nextclade/nextstrain/orthohantavirus/andv/s/reference.fasta",
+
+                // Sample output
+                "nextclade/PP_0078B9G.1.fa.csv"
+            ].each {
+                assert path("$results/$it").exists()
+            }
+
+            // Ensure the three segments are collated into one file
+            assert path("$launchDir/results/nextclade/PP_0078B9G.1.fa.csv").readLines().size() == 4
+
+            // Check for specific outputs
+            def csv = path("$launchDir/results/nextclade/PP_0078B9G.1.fa.csv")
+            [
+                // Header Row until coverage
+                "index;seqName;clade;outbreak;qc.overallScore;qc.overallStatus;totalSubstitutions;totalDeletions;totalInsertions;totalFrameShifts;totalMissing;totalNonACGTNs",
+                ";totalAminoacidSubstitutions;totalAminoacidDeletions;totalAminoacidInsertions;totalUnknownAa;alignmentScore;alignmentStart;alignmentEnd;coverage",
+
+                // Sequence Names
+                "PP_0078B9G.1_M",
+                "PP_0078B9G.1_S",
+                "PP_0078B9G.1_L",
+
+                // Specific variants (one from each segment)
+                "C315T",
+                "A1734G",
+                "G3146A"
+            ].each {
+                assert csv.text.contains(it)
+            }
+        }
+    }
+
+}

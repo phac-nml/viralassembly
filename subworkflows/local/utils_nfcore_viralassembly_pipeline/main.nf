@@ -20,6 +20,7 @@ workflow PIPELINE_INITIALISATION {
     monochrome_logs   // boolean: Do not use coloured log outputs
     nextflow_cli_args // array: List of positional nextflow CLI args
     outdir            // string: The output directory where the results will be saved
+    reference         // path: The reference FASTA file
 
     main:
 
@@ -71,20 +72,19 @@ workflow PIPELINE_INITIALISATION {
             System.exit(1)
     }
 
-    // Skip nextlade while providing a nextclade dataset name or directory
-    if ( params.skip_nextclade && params.nextclade_dataset_name ) {
-        log.error("Remove '--skip_nextclade' to run nextclade or remove '--nextclade_dataset_name' to skip netxclade.")
-        System.exit(1)
-    } else if ( params.skip_nextclade && params.nextclade_dataset_dir ) {
-        log.error("Remove '--skip_nextclade' to run nextclade or remove '--nextclade_dataset_dir' to skip netxclade.")
-        System.exit(1)
-    }
-
     //
     // Summarize and Validate Params
     //
     if (validate_params) {
         validateParameters()
+    }
+
+    // Nextclade input when virus is segmented
+    def segmented = isSegmented(reference)
+
+    if ( segmented && (params.nextclade_dataset_dir || params.nextclade_dataset_name) ) {
+        log.error("The reference FASTA used is a segmented virus. Please remove the 'nextclade_dataset_dir' or 'nextclade_dataset_name' argument as the pipeline will assign the appropriate nextclade dataset to each segment.")
+        System.exit(1)
     }
 }
 
@@ -113,4 +113,29 @@ workflow PIPELINE_COMPLETION {
     workflow.onError {
         log.error "Pipeline failed. Please refer to troubleshooting docs: https://nf-co.re/docs/usage/troubleshooting"
     }
+}
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    FUNCTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+// Check if the virus is segmented
+def isSegmented(reference) {
+    def segmented = file(reference)
+        .readLines()
+        .findAll { it.startsWith('>') }
+        .size() > 1
+
+    return segmented
+}
+
+// Get FASTA header
+def fastaHeaderId(fasta) {
+    def headers = fasta.readLines()
+        .findAll { it.startsWith('>') }
+        .collect { it.substring(1).tokenize()[0] }
+
+    return headers
 }
