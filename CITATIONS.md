@@ -20,21 +20,35 @@
 
   > Quinlan AR, Hall IM. BEDTools: a flexible suite of utilities for comparing genomic features. Bioinformatics. 2010 Mar 15;26(6):841-2. doi: 10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed Central PMCID: PMC2832824.
 
-- [Clair3](https://github.com/HKU-BAL/Clair3)
+- [Bowtie 2](https://github.com/BenLangmead/bowtie2)
 
-  > Zheng, Z.; Li, S.; Su, J.; Leung, A. W.-S.; Lam, T.-W.; Luo, R. Symphonizing Pileup and Full-Alignment for Deep Learning-Based Long-Read Variant Calling. Nature Computational Science 2022, 2 (12), 797–803. https://doi.org/10.1038/s43588-022-00387-x.
+  > Ben Langmead, Christopher Wilks, Valentin Antonescu, Rone Charles, Scaling read aligners to hundreds of threads on general-purpose processors, Bioinformatics, Volume 35, Issue 3, February 2019, Pages 421–432, https://doi.org/10.1093/bioinformatics/bty648
 
 - [Chopper](https://academic.oup.com/bioinformatics/article/39/5/btad311/7160911?login=false)
 
   > Wouter De Coster, Rosa Rademakers, NanoPack2: population-scale evaluation of long-read sequencing data, Bioinformatics, Volume 39, Issue 5, May 2023, btad311, https://doi.org/10.1093/bioinformatics/btad311
 
+- [Clair3](https://github.com/HKU-BAL/Clair3)
+
+  > Zheng, Z.; Li, S.; Su, J.; Leung, A. W.-S.; Lam, T.-W.; Luo, R. Symphonizing Pileup and Full-Alignment for Deep Learning-Based Long-Read Variant Calling. Nature Computational Science 2022, 2 (12), 797–803. https://doi.org/10.1038/s43588-022-00387-x.
+
+- [ClairS-TO](https://github.com/HKU-BAL/ClairS-TO)
+
+  > Chen, L., Zheng, Z., Su, J. et al. ClairS-TO: a deep-learning method for long-read tumor-only somatic small variant calling. Nat Commun 16, 9630 (2025). https://doi.org/10.1038/s41467-025-64547-z
+
 - [Csvtk](https://github.com/shenwei356/csvtk)
 
-- [Longshot](https://www.nature.com/articles/s41467-019-12493-y)
+- [Fastp](https://github.com/OpenGene/fastp)
 
-  > Edge, P., Bansal, V. Longshot enables accurate variant calling in diploid genomes from single-molecule long read sequencing. Nat Commun 10, 4660 (2019). https://doi.org/10.1038/s41467-019-12493-y
+  > Chen, Shifu. 2025. fastp 1.0: An Ultra-Fast All-Round Tool for FASTQ Data Quality Control and Preprocessing. iMeta 4, e70078. https://doi.org/10.1002/imt2.70078
 
-- [Medaka](https://github.com/nanoporetech/medaka)
+- [FreeBayes](https://github.com/freebayes/freebayes)
+
+  > Garrison E, Marth G. Haplotype-based variant detection from short-read sequencing. arXiv preprint arXiv:1207.3907 [q-bio.GN] 2012. https://doi.org/10.48550/arXiv.1207.3907
+
+- [iVar](https://github.com/andersen-lab/ivar)
+
+  > Grubaugh, N.D., Gangavarapu, K., Quick, J. et al. An amplicon-based sequencing framework for accurately measuring intrahost virus diversity using PrimalSeq and iVar. Genome Biol 20, 8 (2019). https://doi.org/10.1186/s13059-018-1618-7
 
 - [Minimap2](https://academic.oup.com/bioinformatics/article/34/18/3094/4994778)
 
@@ -44,21 +58,25 @@
 
   > Ewels P, Magnusson M, Lundin S, Käller M. MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics. 2016 Oct 1;32(19):3047-8. doi: 10.1093/bioinformatics/btw354. Epub 2016 Jun 16. PubMed PMID: 27312411; PubMed Central PMCID: PMC5039924.
 
-- [Nanopolish](https://github.com/jts/nanopolish)
-
-  > Loman, Nicholas J., Joshua Quick, and Jared T. Simpson. “A complete bacterial genome assembled de novo using only nanopore sequencing data.” Nature methods 12.8 (2015): 733-735.
-
 - [Nanostat](https://github.com/wdecoster/nanostat?tab=readme-ov-file)
 
   > Wouter De Coster, Svenn D’Hert, Darrin T Schultz, Marc Cruts, Christine Van Broeckhoven, NanoPack: visualizing and processing long-read sequencing data, Bioinformatics, Volume 34, Issue 15, August 2018, Pages 2666–2669, https://doi.org/10.1093/bioinformatics/bty149
+
+- [Nextclade](https://github.com/nextstrain/nextclade)
+
+  > Aksamentov, I., Roemer, C., Hodcroft, E. B., & Neher, R. A., (2021). Nextclade: clade assignment, mutation calling and quality control for viral genomes. Journal of Open Source Software, 6(67), 3773, https://doi.org/10.21105/joss.03773
+
+- [Pangolin](https://github.com/cov-lineages/pangolin)
+
+  > Rambaut, A., Holmes, E.C., O’Toole, Á. et al. A dynamic nomenclature proposal for SARS-CoV-2 lineages to assist genomic epidemiology. Nat Microbiol 5, 1403–1407 (2020). https://doi.org/10.1038/s41564-020-0770-5
 
 - [PrimalBedTools](https://github.com/ChrisgKent/primalbedtools)
 
 - [Pysam](https://github.com/pysam-developers/pysam)
 
-[Python](https://github.com/python/)
+- [Python](https://github.com/python/)
 
-> Python Software Foundation. Python Language Reference, version 3.10. Available at http://www.python.org
+  > Python Software Foundation. Python Language Reference, version 3.10. Available at http://www.python.org
 
 - [Qualimap](https://academic.oup.com/bioinformatics/article/28/20/2678/206551)
 
@@ -75,6 +93,10 @@
 - [SnpEff](https://www.ncbi.nlm.nih.gov/pubmed/22728672/)
 
   > Cingolani P, Platts A, Wang le L, Coon M, Nguyen T, Wang L, Land SJ, Lu X, Ruden DM. A program for annotating and predicting the effects of single nucleotide polymorphisms, SnpEff: SNPs in the genome of Drosophila melanogaster strain w1118; iso-2; iso-3. Fly (Austin). 2012 Apr-Jun;6(2):80-92. doi: 10.4161/fly.19695. PubMed PMID: 22728672; PubMed Central PMCID: PMC3679285.
+
+- Tabix [(HTSlib)](https://github.com/samtools/htslib)
+
+  > James K Bonfield, John Marshall, Petr Danecek, Heng Li, Valeriu Ohan, Andrew Whitwham, Thomas Keane, Robert M Davies, HTSlib: C library for reading/writing high-throughput sequencing data, GigaScience, Volume 10, Issue 2, February 2021, giab007, https://doi.org/10.1093/gigascience/giab007
 
 ## Software packaging/containerisation tools
 
