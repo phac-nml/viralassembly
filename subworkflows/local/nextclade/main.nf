@@ -25,6 +25,9 @@ workflow WF_NEXTCLADE {
     // Version tracking
     ch_versions = channel.empty()
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Segmented Virus Handling
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Split multi-FASTA (segmented viruses)
     //  and add in nextclade_file_name to meta for the final nextcalde output name
     ch_consensus = ch_consensus.flatMap { meta, fasta ->
@@ -39,6 +42,9 @@ workflow WF_NEXTCLADE {
         }
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Dataset Specification & Download
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Function to run Nextclade Sort
     def run_nextclade_sort = !params.nextclade_dataset_dir &&
         (segmented || !params.nextclade_dataset_name)
@@ -89,6 +95,9 @@ workflow WF_NEXTCLADE {
         log.warn("There were no matching nextclade datasets for this virus. Skipping nextclade.")
     }
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Run Nextclade
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Define input for Nextclade run
     if ( run_nextclade_sort ) {
         ch_nextclade_run_input = NEXTCLADE_SORT.out.dataset_name

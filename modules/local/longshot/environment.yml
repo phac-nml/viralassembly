@@ -1,6 +1,0 @@
-name: longshot
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - bioconda::longshot=1.0.0

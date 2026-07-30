@@ -52,7 +52,9 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     ch_multiqc_overall_conf = file(params.multiqc_config_overall, checkIfExists: true)
     ch_multiqc_sample_conf = file(params.multiqc_config_sample, checkIfExists: true)
 
-    // Sample variant analysis
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Variant analysis
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     CREATE_READ_VARIATION_CSV(
         ch_bam,
         ch_reference
@@ -64,7 +66,9 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     )
     ch_versions = ch_versions.mix(CREATE_VARIANT_TSV.out.versions)
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Amplicon analysis
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ch_amplicon_completeness = channel.empty()
     if ( params.primer_bed ) {
         // Coverage
@@ -97,7 +101,9 @@ workflow WF_CREATE_MULTIQC_REPORTS {
         ch_sample_amplicon_depth = ch_bam.map{ meta, _bam, _bai -> [ meta, [] ] }
     }
 
-    // Stats from tools
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Summary stats
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     BCFTOOLS_STATS(
         ch_vcf,
         ch_reference
@@ -125,12 +131,16 @@ workflow WF_CREATE_MULTIQC_REPORTS {
     )
     ch_versions = ch_versions.mix(QUALIMAP_BAMQC.out.versions)
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Tracking versions
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     CUSTOM_DUMPSOFTWAREVERSIONS(
         ch_versions.unique().collectFile(name: 'collated_versions.yml')
     )
 
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Final Reports
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     MULTIQC_SAMPLE(
         ch_sample_csv
             .join(CREATE_READ_VARIATION_CSV.out.csv, by: [0])

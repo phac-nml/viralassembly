@@ -5,14 +5,14 @@ process ARTIC_MINION {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.8.5--pyhdfd78af_0' :
-        'biocontainers/artic:1.8.5--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.11.1--pyhdfd78af_0' :
+        'biocontainers/artic:1.11.1--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(fastq)
     path reference
     path primer_bed
-    path clair3_model_dir
+    path model
 
     output:
     tuple val(meta), path("${meta.id}.primertrimmed.rg.sorted.bam"), path("${meta.id}.primertrimmed.rg.sorted.bam.bai"), emit: bam
@@ -36,9 +36,9 @@ process ARTIC_MINION {
         argsList.add("--no-frameshifts")
     }
 
-    if ( clair3_model_dir ) {
+    if ( model ) {
         argsList.add("--model-dir ./")
-        argsList.add("--model ${clair3_model_dir}")
+        argsList.add("--model ${model}")
     }
     def argsConfig = argsList.join(" ")
 

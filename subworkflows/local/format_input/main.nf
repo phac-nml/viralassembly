@@ -120,7 +120,7 @@ workflow FORMAT_INPUT {
     }
 
     emit:
-    pass = ch_fastqs.pass     // channel: [ val(meta), file(fastq) ]
+    pass  = ch_fastqs.pass    // channel: [ val(meta), file(fastq) ]
     empty = ch_fastqs.empty   // channel: [ val(meta), file(fastq) ]
 }
 

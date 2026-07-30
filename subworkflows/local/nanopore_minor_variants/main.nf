@@ -11,7 +11,7 @@ include { CAT_VCF as CAT_FULL_VCF      } from '../../../modules/local/bcftools/c
 include { DEDUP_VCFS                   } from '../../../modules/local/nanopore_minor_variants/dedup_vcf/main'
 include { FIX_VCF                      } from '../../../modules/local/nanopore_minor_variants/fix_vcf/main'
 include { PASS_VCF                     } from '../../../modules/local/bcftools/pass/main'
-include { ZIP_AND_INDEX_VCF            } from '../../../modules/local/artic_subcommands/zip_and_index/main'
+include { ZIP_AND_INDEX_VCF            } from '../../../modules/local/artic/zip_and_index/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -20,11 +20,11 @@ include { ZIP_AND_INDEX_VCF            } from '../../../modules/local/artic_subc
 */
 workflow WF_NANOPORE_MINOR_VARIANTS {
     take:
-    ch_bam       // channel: [ val(meta), file(bam), file(bai) ]
-    ch_reference    // channel: [ file(reference) ]
-    ch_ref_fai      // channel: [ file(reference.fai) ]
-    ch_con_vcf          // channel: [  val(meta), file(vcf) ]
-    ch_clairSTO_model // channel:  val(model_name)
+    ch_bam              // channel: [ val(meta), file(bam), file(bai) ]
+    ch_reference        // channel: [ file(reference) ]
+    ch_ref_fai          // channel: [ file(reference.fai) ]
+    ch_con_vcf          // channel: [ val(meta), file(vcf) ]
+    ch_clairSTO_model   // channel: [ val(model_name) ]
 
     main:
 
@@ -83,6 +83,6 @@ workflow WF_NANOPORE_MINOR_VARIANTS {
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     emit:
-    vcf = ch_complete_min_vcf
-    versions = ch_versions
+    vcf         = ch_complete_min_vcf   // channel: [ val(meta), file(vcf) ]
+    versions    = ch_versions           // channel: [ path(versions.yml) ]
 }

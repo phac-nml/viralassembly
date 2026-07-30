@@ -13,9 +13,9 @@ nextflow_workflow {
         when {
             params {
                 outdir                  = "results"
-                clair3_model            = "r1041_e82_400bps_sup_v420"
+                model                   = "r1041_e82_400bps_sup_v420"
                 platform                = "nanopore"
-                clair3_no_pool_split    = true
+                no_pool_split           = true
                 primer_bed              = "${projectDir}/test_data/primer.bed"
                 // To keep consistent results from downsampled input
                 min_length              = 600
@@ -29,9 +29,8 @@ nextflow_workflow {
                 input[0] = Channel.of([ [id: 'sample2'], file("${projectDir}/test_data/nanopore/fastqs/sample2.fastq.gz") ])
                 input[1] = Channel.of([ file("${projectDir}/test_data/MN908947.3.reference.fasta") ])
                 input[2] = Channel.of([ file("${projectDir}/test_data/nanopore/MN908947.3.reference.fasta.fai") ])
-                input[3] = Channel.of([ file("${projectDir}/test_data/nanopore/refstats.txt") ])
-                input[4] = Channel.of([ file("${projectDir}/test_data/primer.bed") ])
-                input[5] = Channel.of([ file("${projectDir}/test_data/nanopore/amplicon.bed") ])
+                input[3] = Channel.of([ file("${projectDir}/test_data/primer.bed") ])
+                input[4] = Channel.of([ file("${projectDir}/test_data/nanopore/amplicon.bed") ])
                 """
             }
         }

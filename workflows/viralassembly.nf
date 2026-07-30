@@ -95,12 +95,10 @@ workflow VIRALASSEMBLY {
     }
 
     // Reference stats and files for various processes
-    //  FAI, Ref-stats for nanopolish, genome.bed for bedtools
     GET_REF_STATS(
         ch_reference
     )
     ch_fai = GET_REF_STATS.out.fai
-    ch_refstats = GET_REF_STATS.out.refstats
     ch_versions = ch_versions.mix(GET_REF_STATS.out.versions)
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
@@ -116,7 +114,6 @@ workflow VIRALASSEMBLY {
             ch_fastqs,
             ch_reference,
             ch_fai,
-            ch_refstats,
             ch_primer_bed,
             ch_amplicon_bed
         )

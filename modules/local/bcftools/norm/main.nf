@@ -16,7 +16,6 @@ process BCFTOOLS_NORM {
 
     script:
     """
-    # Fixes variants that are in both the pass and fail vcf that were masked #
     bcftools norm \\
         --check-ref s \\
         -f $preconsensus \\

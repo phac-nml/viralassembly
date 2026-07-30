@@ -1,4 +1,4 @@
-// Combine two vcfs into one, especailly useful for callers that output indels and snps separately
+// Combine two vcfs into one, especially useful for callers that output indels and snps separately
 process CAT_VCF {
     label 'process_single'
     label 'error_retry'
