@@ -23,10 +23,12 @@ process ARTIC_MINION {
     path "versions.yml", emit: versions
 
     script:
-    // Clair3 model is added conditonally if it's been set
-    //  as clair3 can detect the model from the fastq header
     // Setup args list
-    def argsList = []
+    def argsList = [
+        "--model-dir ./",
+        "--model ${model}"
+    ]
+
     if ( params.normalise ) {
         argsList.add("--normalise ${params.normalise}")
     } else {
@@ -36,10 +38,6 @@ process ARTIC_MINION {
         argsList.add("--no-frameshifts")
     }
 
-    if ( model ) {
-        argsList.add("--model-dir ./")
-        argsList.add("--model ${model}")
-    }
     def argsConfig = argsList.join(" ")
 
     // Cmd to run

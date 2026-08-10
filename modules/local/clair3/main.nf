@@ -26,14 +26,16 @@ process CLAIR3_VARIANTS {
     def has_pool = pool != null && pool.toString()
 
     // Define arguments needed if doing amplicon based variant calling
-    def bed_args = has_pool ?
-        """\
-        --bed_fn="${pool_bed}" \\
-        --ref_pct_full=1 \\
-        --var_pct_full=1 \\
-        --enable_variant_calling_at_sequence_head_and_tail
-        """
-        : ''
+    def bed_args = []
+
+    if (has_pool) {
+        bed_args.add("--bed_fn=${pool_bed}")
+        bed_args.add("--ref_pct_full=1")
+        bed_args.add("--var_pct_full=1")
+        bed_args.add("--enable_variant_calling_at_sequence_head_and_tail")
+    }
+
+    def argsbed = bed_args.join(" ")
 
     // Specify output name based on amplicon vs shotgun
     def output_vcf = "${meta.id}${has_pool ? ".${pool}" : ""}.vcf"
@@ -64,7 +66,7 @@ process CLAIR3_VARIANTS {
         --threads=${task.cpus} \\
         --model_path="$model" \\
         --output="${meta.id}-out" \\
-        ${bed_args}
+        ${argsbed}
 
     gunzip ${meta.id}-out/merge_output.vcf.gz
     ln -s ${meta.id}-out/merge_output.vcf "${output_vcf}"

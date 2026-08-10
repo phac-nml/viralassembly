@@ -235,7 +235,7 @@ workflow WF_NANOPORE_CONSENSUS {
             ch_filtered_fastqs.pass,
             ch_reference,
             ch_primer_bed,
-            ch_model.ifEmpty([])
+            ch_model
         )
         ch_consensus = ARTIC_MINION.out.consensus
         ch_bam = ARTIC_MINION.out.bam
