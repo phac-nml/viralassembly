@@ -2,43 +2,67 @@
 
 ## Introduction
 
-This pipeline is intended to be run on either Nanopore Amplicon Sequencing data or Basic Nanopore NGS Sequencing data that can utilize a reference genome for read mapping, variant calling, and other downstream analyses. It generates variant calls, consensus sequences, and quality control information based on the reference. To do this, there are three different variant callers that can be utilized which includes: `clair3`, `medaka`, and `nanopolish` (For R9.4.1 flowcells and below only). By default, `clair3` is used and highly recommended over the other two (as of December 2025). Their inclusion being for completeness with eventual removal from the workflow.
+This is a nextflow pipeline for viral reference-based asssembly and analysis of viral sequencing data generated using Oxford Nanopore or Illumina sequencing. The pipeline supports both amplicon and non-amplicon, or shotgun, sequencing data. It performs read processing and mapping, variant calling, consensus sequence generation, variant annotation, and quality-control reporting.
+
+For Oxford Nanopore Technology (ONT) data, consensus variants are called using Clair3. Medaka and Nanopolish were deprecated as variant callers in [`v2.0.0`](https://github.com/phac-nml/measeq/releases/tag/2.0.0). Illumina data uses FreeBayes as the default variant caller with iVar as an option using `--use_ivar`.
 
 For Amplicon Sequencing data it is at minimum required to:
 
 1. Specify a path to the reads/input file
-2. Specify the reference genome
-3. Specify the primer bed file that matches the amplicon sequencing scheme and reference genome
-4. Pick a variant caller and caller model
+2. Specify a path to the reference genome
+3. Specify an output directory
+4. Specify the sequencing platform as `illumina` or `nanopore`
+5. Specify the primer bed file that matches the amplicon sequencing scheme and reference genome
 
 For Basic NGS Sequencing data it is at minimum required to:
 
 1. Specify a path to the reads/input file
 2. Specify a path to the reference genome
-3. Pick a variant caller and caller model
+3. Specify an output directory
+4. Specify the sequencing platform as `illumina` or `nanopore`
+
+> [!NOTE]
+> For nanopore data, the pipeline uses `r1041_e82_400bps_sup_v420` as the clair3 model by default. This is a required option when running nanopore data and can be adjusted using `--model <MODEL_NAME>` or by specifying a directory for a local model using `--local_model <PATH/TO/MODEL>`
 
 ## Index
 
-- [Profiles](#profiles)
-- [Data Inputs](#data-inputs)
-  - [Fastq Pass Directory](#fastq-pass-directory---fastq_pass)
-  - [Input CSV](#input-csv---input)
-- [Variant Callers](#variant-callers)
-  - [Clair3](#clair3)
-  - [Medaka](#medaka)
-  - [Nanopolish](#nanopolish)
-- [Running the Pipeline](#running-the-pipeline)
-  - [Amplicon](#amplicon)
-  - [Non-Amplicon](#non-amplicon)
-  - [Other Run Note](#other-run-notes)
-  - [Updating the Pipeline](#updating-the-pipeline)
-  - [Reproducibility](#reproducibility)
-- [Input Parameters](#input-parameters)
-  - [All Parameters](#all-parameters)
-  - [Schemes and Reference](#schemes-and-reference)
-  - [Metadata](#metadata)
-  - [SnpEff](#snpeff)
-- [Core Nextflow Arguments](#core-nextflow-arguments)
+- [phac-nml/viralassembly: Usage](#phac-nmlviralassembly-usage)
+  - [Introduction](#introduction)
+  - [Index](#index)
+  - [Profiles](#profiles)
+  - [Data Inputs](#data-inputs)
+    - [Fastq Pass Directory (--fastq_pass)](#fastq-pass-directory---fastq_pass)
+      - [Nanopore Input](#nanopore-input)
+      - [Illumina Input](#illumina-input)
+    - [Input CSV (--input)](#input-csv---input)
+      - [Nanopore Example](#nanopore-example)
+      - [Illumina Paired-End Example](#illumina-paired-end-example)
+  - [Running the pipeline](#running-the-pipeline)
+    - [Nanopore Data](#nanopore-data)
+      - [Amplicon](#amplicon)
+      - [Non-Amplicon](#non-amplicon)
+    - [Illumina Data](#illumina-data)
+      - [Amplicon](#amplicon-1)
+      - [Non-Amplicon](#non-amplicon-1)
+    - [Variant Callers](#variant-callers)
+      - [Clair3 (Nanopore)](#clair3-nanopore)
+      - [FreeBayes (Illumina)](#freebayes-illumina)
+      - [iVar (Illumina)](#ivar-illumina)
+    - [Other Run Notes](#other-run-notes)
+    - [Updating the pipeline](#updating-the-pipeline)
+    - [Reproducibility](#reproducibility)
+  - [Input Parameters](#input-parameters)
+    - [All Parameters](#all-parameters)
+    - [Schemes and Reference](#schemes-and-reference)
+    - [Metadata](#metadata)
+    - [SnpEff](#snpeff)
+    - [Virus Specification](#virus-specification)
+      - [Currently supported viruses](#currently-supported-viruses)
+    - [Virus-specific Processes](#virus-specific-processes)
+    - [Nextclade](#nextclade)
+  - [Core Nextflow Arguments](#core-nextflow-arguments)
+    - [`-resume`](#-resume)
+    - [`-c`](#-c)
 
 ## Profiles
 
@@ -49,7 +73,7 @@ Available:
 - `conda`: Utilize conda to install dependencies and environment management
 - `mamba`: Utilize mamba to install dependencies and environment management
 - `singularity`: Utilize singularity for dependencies and environment management
-- `docker`: Utilize docker to for dependencies and environment management
+- `docker`: Utilize docker for dependencies and environment management
 
 ## Data Inputs
 
@@ -57,7 +81,11 @@ Two options for fastq data input: `--fastq_pass <FASTQ_PASS/>` or `--input <INPU
 
 ### Fastq Pass Directory (--fastq_pass)
 
-Specify fastq data to input based on a given directory. The directory can either contain barcoded directories (barcodexx), as would be seen after demultiplexing, or it could contain sample fastq files (one fastq per sample). The barcoded fastq data will be output with the barcode number but can be renamed with a [metadata tsv](#metadata) file input. The flat fastq files will keep their basename (separated out at the first `.`). Example:
+Specify fastq data to input based on a given directory. The expected directory structure depends on the selected sequencing platform.
+
+#### Nanopore Input
+
+The directory can either contain barcoded directories (barcodexx), as would be seen after demultiplexing, or it could contain sample fastq files (one fastq per sample). The barcoded fastq data will be output with the barcode number but can be renamed with a [metadata tsv](#metadata) file input. The flat fastq files will keep their basename (separated out at the first `.`). Example:
 
 Barcoded:
 
@@ -84,99 +112,153 @@ Flat:
 └── pos.fastq
 ```
 
+#### Illumina Input
+
+The directory should contain paired-end fastq files. Files are paired using `_R1` and `_R2` in their filenames.
+
+Example Illumina directory:
+
+```
+<fastq_pass>
+├── sample1_R1.fastq
+├── sample1_R2.fastq
+├── sample2_R1.fastq
+├── sample2_R2.fastq
+├── ntc_R1.fastq
+├── ntc_R2.fastq
+├── pos_R1.fastq
+└── pos_R2.fastq
+```
+
 ### Input CSV (--input)
 
-You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to pass in an input CSV file containing 2 columns, `sample`, and `fastq_1` where:
+You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to pass in an input CSV file containing columns as follows depending on the sequencing platform used
 
-- `sample` is the sample name to use
-- `fastq_1` is the path to one fastq file per sample in `.fastq*` format
+| Column  | Required                     | Description                                                       |
+| ------- | ---------------------------- | ----------------------------------------------------------------- |
+| sample  | Yes                          | Unique sample identifier                                          |
+| fastq_1 | Yes                          | Path to the first (or only) FastQ file (.fastq or .fq)            |
+| fastq_2 | Only for Illumina paired-end | Path to the second FastQ file for paired-end data (.fastq or .fq) |
 
-Ex.
-| sample | fastq_1 |
-| - | - |
-| sample1 | /path/to/sample.fastq |
+#### Nanopore Example
+
+| sample  | fastq_1                  |
+| ------- | ------------------------ |
+| sample1 | /path/to/sample.fastq    |
 | sample2 | /path/to/sample2-1.fastq |
-| sample2 | /path/to/sample-2.fastq |
-| ntc | /path/to/control.fastq |
-| pos | /path/to/pos.fastq |
+| sample3 | /path/to/sample-2.fastq  |
+| ntc     | /path/to/control.fastq   |
+| pos     | /path/to/pos.fastq       |
 
-## Variant Callers
+#### Illumina Paired-End Example
 
-Three different variant callers are available with slightly different options regarding running with them. For the most accurate results when running with `Clair3` or `medaka` pick a model that best matches the input data!! There is a default set for both but know your data and pick what suits it best!
+| sample  | fastq_1                    | fastq_2                    |
+| ------- | -------------------------- | -------------------------- |
+| sample1 | /path/to/sample_R2.fastq   | /path/to/sample_R2.fastq   |
+| sample2 | /path/to/sample2_R1.fastq  | /path/to/sample2_R2.fastq  |
+| sample3 | /path/to/sample-3_R1.fastq | /path/to/sample-3_R2.fastq |
+| ntc     | /path/to/control_R1.fastq  | /path/to/control_R2.fastq  |
+| pos     | /path/to/pos_R1.fastq      | /path/to/pos_R2.fastq      |
 
-### [Clair3](https://github.com/HKU-BAL/Clair3)
-
-Clair3 is a germline small variant caller for long-reads.
-
-Running with `clair3` requires the following parameters:
-
-- `--variant_caller clair3`: Sets clair3 as the variant caller
-
-And has the optional parameters of:
-
-- `--clair3_model <MODEL>`: Specify the base clair3 model
-- `--clair3_local_model </PATH/TO/downloaded_clair3_model>`: Specify the path to a local downloaded model directory
-- `--clair3_no_pool_split`: Do not split inputs into pools
-
-Clair3 comes with some models available and is defaulted to `r1041_e82_400bps_sup_v420`. Additional models can be downloaded from [ONT Rerio](https://github.com/nanoporetech/rerio/tree/master) and then specified in the `--clair3_local_model </PATH/TO/downloaded_clair3_model>` parameter shown above. Remember to pick a model that best represents the data!
-
-### [Medaka](https://github.com/nanoporetech/medaka)
-
-Medaka is a tool to create consensus sequences and variant calls from nanopore sequencing data using neural networks and provied by ONT.
-
-Running with `medaka` requires the following parameters:
-
-- `--variant_caller medaka`: Sets medaka as the variant caller
-
-And has the optional parameters of:
-`--medaka_model <MODEL>`: Specify the wanted medaka model
-
-Medaka models come built in with the tool itself with the default set to `r941_min_hac_g507` which can be changed with `--medaka_model <MODEL>` parameter shown above. More information on models [can be found here](https://github.com/nanoporetech/medaka#models). Remember to pick a model that best represents the data!
-
-### [Nanopolish](https://github.com/jts/nanopolish)
-
-Nanopolish is a software package for signal-level analysis of Oxford Nanopore sequencing data. It _does not presently support the R10.4 flowcells_ so as a variant caller it should only be used with R9.4 flowcells.
-
-Running with `nanopolish` requires the following parameters:
-
-- `--variant_caller nanopolish`
-- `--fast5_pass <FAST5_PASS/>`
-- `--sequencing_summary <SEQ_SUM.txt>`
-
-Nanopolish requires the fast5 directory along with the sequencing summary file to be used as input instead of a model. As such, nanopolish requires that the read ids in the fastq files are linked by the sequencing summary file to their signal-level data in the fast5 files. This makes it **a lot** easier to run using barcoded directories but it can be done with individual read files
+> [!NOTE]
+> For nanopore data, the `fastq_2` column is not required. However, it shouldn't cause any issues if the column is included but the values are empty.
 
 ## Running the pipeline
 
-### Amplicon
+### Nanopore Data
 
-The typical command for running the pipeline with an [amplicon scheme](#schemes-and-reference) using Clair3 (default variant caller) with Docker is as follows:
+#### Amplicon
+
+The typical command for running the pipeline with an [amplicon scheme](#schemes-and-reference) and a non-default Clair3 model with Docker for nanopore sequenced data is as follows:
 
 ```bash
 nextflow run phac-nml/viralassembly \
   -profile docker \
+  --platform nanopore \
   --fastq_pass FASTQ_PASS/ \
-  --clair3_model 'r1041_e82_400bps_sup_v4.3.0' \
+  --model 'r1041_e82_400bps_sup_v4.3.0' \
   --reference REF.fasta \
   --primer_bed PRIMER.bed \
   --outdir results
 ```
 
-This will launch the pipeline with the `docker` configuration profile, the `Clair3` variant caller, and use the reference and primer files supplied. Profile information [can be found above](#profiles)
+This will launch the pipeline with the `docker` configuration profile and use the reference and primer files supplied. Profile information [can be found above](#profiles)
 
-### Non-Amplicon
+#### Non-Amplicon
 
-The typical command for running the pipeline without an amplicon scheme using `Clair3` and a different clair3 model is as follows:
+The typical command for running the pipeline without an amplicon scheme with the default clair3 model for nanopore sequenced data is as follows:
 
 ```bash
 nextflow run phac-nml/viralassembly \
   -profile singularity \
+  --platform nanopore \
   --fastq_pass FASTQ_PASS/ \
-  --medaka_model 'r1041_e82_400bps_sup_v4.3.0' \
   --reference REF.fa \
   --outdir ./results
 ```
 
-This will launch the pipeline with the `singularity` configuration profile, the `Clair3` variant caller, and the specified reference. Profile information [can be found above](#profiles)
+This will launch the pipeline with the `singularity` configuration profile and the specified reference. Profile information [can be found above](#profiles)
+
+### Illumina Data
+
+#### Amplicon
+
+The typical command for running the pipeline with an [amplicon scheme](#schemes-and-reference) and iVar as the variant caller with Docker for illumina sequenced data is as follows:
+
+```bash
+nextflow run phac-nml/viralassembly \
+  -profile docker \
+  --platform illumina \
+  --fastq_pass FASTQ_PASS/ \
+  --reference REF.fasta \
+  --primer_bed PRIMER.bed \
+  --outdir results \
+  --use_ivar
+```
+
+This will launch the pipeline with the `docker` configuration profile and use the reference and primer files supplied. Profile information [can be found above](#profiles)
+
+#### Non-Amplicon
+
+The typical command for running the pipeline with an [amplicon scheme](#schemes-and-reference) and iVar as the variant caller with Docker for illumina sequenced data is as follows:
+
+```bash
+nextflow run phac-nml/viralassembly \
+  -profile docker \
+  --platform illumina \
+  --fastq_pass FASTQ_PASS/ \
+  --reference REF.fasta \
+  --outdir results
+```
+
+This will launch the pipeline with the `docker` configuration profile and use the reference supplied. Profile information [can be found above](#profiles)
+
+> [!TIP]
+> More example commands are available in the [example commands document](./example_commands.md).
+
+### Variant Callers
+
+The pipeline currently supports three different variant callers, one Nanopore specific (Clair3) and two Illumina specific (FreeBayes & iVar). As of [`v2.0.0`](https://github.com/phac-nml/measeq/releases/tag/2.0.0), Medaka and Nanopolish were deprecated as variant callers and Clair3 has been set as the default variant caller for Nanopore data.
+
+#### [Clair3](https://github.com/HKU-BAL/Clair3) (Nanopore)
+
+Clair3 is a germline small variant caller for long-reads.
+
+Running the pipeline with Nanopore data supports the following optional parameters related to Clair3:
+
+- `--model <MODEL>`: Specify the base clair3 model
+- `--local_model </PATH/TO/downloaded_clair3_model>`: Specify the path to a local downloaded model directory
+- `--no_pool_split`: Do not split inputs into pools
+
+Clair3 comes with some models available and is defaulted to `r1041_e82_400bps_sup_v420`. Additional models can be downloaded from [ONT Rerio](https://github.com/nanoporetech/rerio/tree/master) and then specified in the `--local_model </PATH/TO/downloaded_clair3_model>` parameter shown above. Remember to pick a model that best represents the data!
+
+#### [FreeBayes](https://github.com/freebayes/freebayes) (Illumina)
+
+FreeBayes is a Bayesian genetic variant detector designed to find small polymorphisms. FreeBayes is the default variant caller for Illumina data and requires no additional parameters.
+
+#### [iVar](https://github.com/andersen-lab/ivar) (Illumina)
+
+iVar variants is part of the iVAR computational package for viral sequencing functions. iVar is used as an alternate variant caller and can be invoked with the `--use_ivar` parameter.
 
 ### Other Run Notes
 
@@ -193,11 +275,10 @@ If you wish to repeatedly use the same parameters for multiple runs, rather than
 
 Pipeline settings can be provided in a `yaml` or `json` file via `-params-file <file>`.
 
-:::warning
-Do not use `-c <file>` to specify parameters as this will result in errors. Custom config files specified with `-c` must only be used for [tuning process resource specifications](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources), other infrastructural tweaks (such as output directories), or module arguments (args).
-:::
+> [!WARNING]
+> Do not use `-c <file>` to specify parameters as this will result in errors. Custom config files specified with `-c` must only be used for [tuning process resource specifications](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources), other infrastructural tweaks (such as output directories), or module arguments (args).
 
-The above pipeline run specified with a params file in yaml format:
+For example, an amplicon based nanopore sequencing pipeline run specified with a params file in yaml format:
 
 ```bash
 nextflow run phac-nml/viralassembly -profile docker -params-file params.yaml
@@ -206,16 +287,17 @@ nextflow run phac-nml/viralassembly -profile docker -params-file params.yaml
 with `params.yaml` containing:
 
 ```yaml
+platform: "nanopore"
 fastq_pass: "./fastq_pass"
-variant_caller: "clair3"
-clair3_model: "r1041_e82_400bps_sup_v4.3.0"
 reference: "reference.fa"
 outdir: "./results/"
+model: "r1041_e82_400bps_sup_v4.3.0"
+primer_bed: "PRIMER.bed"
 ```
 
 ### Updating the pipeline
 
-When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
+When you install the pipeline, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
 
 ```bash
 nextflow pull phac-nml/viralassembly
@@ -229,11 +311,10 @@ First, go to the [phac-nml/viralassembly releases page](https://github.com/phac-
 
 This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. For example, at the bottom of the MultiQC reports.
 
-To further assist in reproducbility, you can use share and re-use [parameter files](#running-the-pipeline) to repeat pipeline runs with the same settings without having to write out a command with every single parameter.
+To further assist in reproducability, you can use share and re-use [parameter files](#running-the-pipeline) to repeat pipeline runs with the same settings without having to write out a command with every single parameter.
 
-:::tip
-If you wish to share such profile (such as upload as supplementary material for academic publications), make sure to NOT include cluster specific paths to files, nor institutional specific profiles.
-:::
+> [!TIP]
+> If you wish to share such profile (such as upload as supplementary material for academic publications), make sure to NOT include cluster specific paths to files, nor institutional specific profiles.
 
 ## Input Parameters
 
@@ -243,38 +324,69 @@ Use `--version` to see version information
 
 ### All Parameters
 
-| Parameter               | Description                                                                                              | Type    | Default                     | Notes                                                                                                                                            |
-| ----------------------- | -------------------------------------------------------------------------------------------------------- | ------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| --fastq_pass            | Path to directory containing `barcode##` subdirectories OR Path to directory containing `*.fastq*` files | Path    | null                        | [Option for input params](#input-parameters)                                                                                                     |
-| --input                 | Path to samplesheet with information about the samples you would like to analyse                         | Path    | null                        | [Option for input params](#input-parameters)                                                                                                     |
-| --variant_caller        | Pick from the 3 variant callers: 'clair3', 'medaka', 'nanopolish'                                        | Choice  | 'clair3'                    | [Details above](#introduction)                                                                                                                   |
-| --reference             | Required: Specify the path to a reference fasta file to run pipeline                                     | Path    | ''                          | See [schemes and reference](#schemes-and-reference)                                                                                              |
-| --primer_bed            | Specify the path to an amplicon primer bed file associated with the reference                            | Path    | ''                          | See [schemes and reference](#schemes-and-reference)                                                                                              |
-| --clair3_model          | Clair3 base model to be used in the pipeline                                                             | String  | 'r1041_e82_400bps_sup_v420' | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
-| --clair3_local_model    | Path to clair3 additional model directory to use instead of a base model                                 | Path    | ''                          | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
-| --clair3_no_pool_split  | Do not split reads into separate pools                                                                   | Boolean | False                       | Clair3 amplicon sequencing only                                                                                                                  |
-| --min_qual_clair3       | Minumum Clair3 variant quality to keep a variant                                                         | Integer | 8                           |                                                                                                                                                  |
-| --min_frameshift_qual   | Minumum Clair3 variant quality to keep a frameshift variant                                              | Integer | 15                          | Frameshift defined as not divisible by 3                                                                                                         |
-| --min_allele_freq       | Minimum allele frequency to call a variant                                                               | Number  | 0.65                        |                                                                                                                                                  |
-| --medaka_model          | Medaka model to be used in the pipeline                                                                  | String  | 'r941_min_hac_g507'         | Default model will not work the best for all inputs. [See medaka docs](https://github.com/nanoporetech/medaka#models) for additional info        |
-| --skip_longshot         | Skip running longshot in medaka workflow                                                                 | Boolean | false                       | Medaka only                                                                                                                                      |
-| --fast5_pass            | Path to directory containing `barcode##` fast5 subdirectories                                            | Path    | null                        | Only for nanopolish                                                                                                                              |
-| --sequencing_summary    | Path to run `sequencing_summary*.txt` file                                                               | Path    | null                        | Only for nanopolish                                                                                                                              |
-| --min_length            | Minimum read length to be kept                                                                           | Integer | 200                         | For artic guppyplex                                                                                                                              |
-| --max_length            | Maximum read length to be kept                                                                           | Integer | 3000                        | For artic guppyplex                                                                                                                              |
-| --min_reads             | Minimum size selected reads to be used in pipeline                                                       | Integer | 20                          |                                                                                                                                                  |
-| --metadata              | Path to metadata TSV file with columns 'sample' and 'barcode'                                            | Path    | null                        | See [metadata](#metadata) for more info                                                                                                          |
-| --use_artic_tool        | Run the artic tool itself instead of nextflow implementation                                             | Bool    | False                       | Not available with clair3                                                                                                                        |
-| --normalise             | Artic minion normalise coverage option                                                                   | Integer | 1000                        | Entering `0` turns off normalisation. Only for amplicon sequencing                                                                               |
-| --no_frameshift         | Filter INDEL variants that are not divisible by 3                                                        | Boolean | False                       | Simple `%3 == 0` check for variants                                                                                                              |
-| --skip_snpeff           | Skip running SnpEff                                                                                      | Boolean | False                       |                                                                                                                                                  |
-| --gff                   | Path to gff3 formatted file to use in SnpEff database build                                              | Path    | False                       | Not required to run [SnpEff](#snpeff). See below for details                                                                                     |
-| --skip_qc               | Skip running all QC and reporting steps                                                                  | Boolean | false                       |                                                                                                                                                  |
-| --multiqc_report        | Run MultiQC report over custom report report                                                             | Boolean | false                       |                                                                                                                                                  |
-| --pcr_primer_bed        | Path to PCR primer bed file to check for mutations against                                               | Path    | null                        | For output QC checks                                                                                                                             |
-| --neg_control_threshold | Coverage threshold at which to fail negative control samples                                             | Number  | 0.10                        |                                                                                                                                                  |
-| --neg_ctrl_substrings   | Negative control sample substrings separated by a `,`                                                    | String  | 'ntc,neg,blank,water'       |                                                                                                                                                  |
-| --outdir                | Directory name to output results to                                                                      | String  | null                        | Required                                                                                                                                         |
+| Parameter                                                 | Description                                                                        | Type    | Default                     | Notes                                                                                                                                            |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Input and Output Parameters**                           |                                                                                    |         |                             |                                                                                                                                                  |
+| --fastq_pass                                              | Path to directory containing `barcode##` subdirectories OR `*.fastq*` files        | Path    | null                        | See [Option for input params](#input-parameters)                                                                                                 |
+| --input                                                   | Path to samplesheet with information about the samples you would like to analyse   | Path    | null                        | See [Option for input params](#input-parameters)                                                                                                 |
+| --outdir                                                  | Directory name to output results to                                                | String  | null                        | Required                                                                                                                                         |
+| --virus_name                                              | Virus name that sets virus specific processes and nextclade runs                   | String  | null                        | See [Virus Specification](#virus-specification)                                                                                                  |
+| **Required Parameters**                                   |                                                                                    |         |                             |                                                                                                                                                  |
+| --platform                                                | Sequencing platform                                                                | String  | null                        | Required: `nanopore` or `illumina`                                                                                                               |
+| --reference                                               | Path to a reference FASTA file to run pipeline                                     | Path    | null                        | Required: See [Schemes and Reference](#schemes-and-reference)                                                                                    |
+| **Amplicon Parameter**                                    |                                                                                    |         |                             |                                                                                                                                                  |
+| --primer_bed                                              | Path to an amplicon primer bed file associated with the reference                  | Path    | null                        | See [Schemes and Reference](#schemes-and-reference)                                                                                              |
+| **Nanopore Variant-Calling Parameters (Clair3)**          |                                                                                    |         |                             |                                                                                                                                                  |
+| --model                                                   | Clair3 model name                                                                  | String  | 'r1041_e82_400bps_sup_v420' | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
+| --local_model                                             | Path to clair3 local model directory to use instead of `--model`                   | Path    | ''                          | Default model will not work the best for all inputs. [See clair3 docs](https://github.com/HKU-BAL/Clair3#pre-trained-models) for additional info |
+| --no_pool_split                                           | Do not split reads into separate pools                                             | Boolean | False                       | Nanopore amplicon sequencing only                                                                                                                |
+| --min_qual_clair3                                         | Minumum Clair3 variant quality to keep a variant                                   | Integer | 7                           |                                                                                                                                                  |
+| --min_frameshift_qual                                     | Minumum Clair3 variant quality to keep a frameshift variant                        | Integer | 15                          | Frameshift defined as not divisible by 3                                                                                                         |
+| --min_allele_freq                                         | Minimum allele frequency to call a variant                                         | Number  | 0.60                        |                                                                                                                                                  |
+| --min_mask_freq                                           | Minimum allele frequency at which a position may be masked with N                  | Number  | 0.25                        |                                                                                                                                                  |
+| **Nanopore Minor Variant-Calling Parameters (ClairS-To)** |                                                                                    |         |                             |                                                                                                                                                  |
+| --minor_variants                                          | Enable Nanopore minor variant calling with ClairS-TO                               | Boolean | False                       |                                                                                                                                                  |
+| --clairsto_model                                          | ClairS-TO model name                                                               | String  | 'r1041_e82_400bps_sup_v420' | Default model will not work the best for all inputs.                                                                                             |
+| --min_snv_af_ClairS                                       | Minimum allele frequency for minor single nuclotide variants                       | Number  | 0.05                        |                                                                                                                                                  |
+| --min_indel_af_ClairS                                     | Minimum allele frequency for minor insertions and deletions                        | Number  | 0.15                        |                                                                                                                                                  |
+| --min_cov_ClairS                                          | Minimum coverage required for minor variants                                       | Integer | 20                          |                                                                                                                                                  |
+| --min_qual_ClairS                                         | Minimum quality required for minor variants                                        | Integer | 5                           |                                                                                                                                                  |
+| **Illumina Variant-Calling Parameters**                   |                                                                                    |         |                             |                                                                                                                                                  |
+| --use_ivar                                                | Use iVar as a variant caller instead of Freebayes                                  | Boolean | False                       |                                                                                                                                                  |
+| --min_ambiguity_threshold                                 | Minimum allele frequency for IUPAC ambiguity reporting instead of reference allele | Number  | 0.25                        |                                                                                                                                                  |
+| --max_ambiguity_threshold                                 | Maximum allele frequency for IUPAC ambiguity reporting instead of majority allele  | Number  | 0.75                        |                                                                                                                                                  |
+| --min_indel_threshold                                     | Minimum allele frequency threshold for retaining an indel                          | Number  | 0.60                        |                                                                                                                                                  |
+| --min_alt_threshold_illumina                              | Minimum fraction of observations supporting an alt allele to evaluate position     | Number  | 0.10                        |                                                                                                                                                  |
+| --min_variant_qual_freebayes                              | Minumum FreeBayes variant quality to keep a variant                                | Integer | 20                          |                                                                                                                                                  |
+| **Read Filtering Parameters**                             |                                                                                    |         |                             |                                                                                                                                                  |
+| --min_length                                              | Maximum read length to be kept                                                     | Integer | 8000                        |                                                                                                                                                  |
+| --max_length                                              | Maximum read length to be kept                                                     | Integer | Illumina: 50, Nanopore: 200 |                                                                                                                                                  |
+| --min_reads                                               | Minimum number of reads required for a sample after filtering                      | Integer | 20                          |                                                                                                                                                  |
+| --fastp_adapter                                           | Path to FASTA file containing adapter sequences for Fastp                          | Path    | null                        |                                                                                                                                                  |
+| **General Analysis Parameters**                           |                                                                                    |         |                             |                                                                                                                                                  |
+| --min_depth                                               | Minimum depth required to call a consensus position                                | Integer | 20                          | Positions with lower depth are masked with an N                                                                                                  |
+| --metadata                                                | Path to metadata TSV file with columns 'sample' and 'barcode'                      | Path    | null                        | See [Metadata](#metadata) for more info                                                                                                          |
+| --use_artic_tool                                          | Run the artic tool itself instead of nextflow implementation for nanopore data     | Boolean | False                       |                                                                                                                                                  |
+| --normalise                                               | Target amplicon coverage used for normalization                                    | Integer | 2000                        | Entering `0` turns off normalisation. Only for amplicon sequencing                                                                               |
+| --no_frameshift                                           | Filter INDEL variants that are not divisible by 3                                  | Boolean | False                       | Simple `%3 == 0` check for variants                                                                                                              |
+| **SnpEff Parameters**                                     |                                                                                    |         |                             |                                                                                                                                                  |
+| --skip_snpeff                                             | Skip running SnpEff                                                                | Boolean | False                       |                                                                                                                                                  |
+| --gff                                                     | Path to gff3 formatted file to use in SnpEff database build                        | Path    | ''                          | Not required to run [SnpEff](#snpeff). See below for details                                                                                     |
+| **Nextclade Parameters**                                  |                                                                                    |         |                             |                                                                                                                                                  |
+| --skip_nextclade                                          | Skip running Nextclade                                                             | Boolean | False                       |                                                                                                                                                  |
+| --nextclade_dataset_dir                                   | Path to local Nextclade dataset directory                                          | Path    | null                        | Not required to run [Nextclade](#nextclade). See below for details                                                                               |
+| --nextclade_dataset_name                                  | Name of the Nextclade dataset to use                                               | Sting   | null                        | Not required to run [Nextclade](#nextclade). See below for details                                                                               |
+| --nextclade_dataset_tag                                   | Dataset tag or version                                                             | String  | null                        | Not required to run [Nextclade](#nextclade). See below for details                                                                               |
+| **Virus-Specific Parameters**                             |                                                                                    |         |                             |                                                                                                                                                  |
+| --skip_pangolin                                           | Skip Pangolin analysis for SARS-Cov-2                                              | Boolean | False                       |                                                                                                                                                  |
+| --pango_database                                          | Path to local Pangolin data directory                                              | Path    | null                        | Not required to run [Pangolin](#virus-specific-processes). See below for details                                                                 |
+| **Quality-Control Parameters**                            |                                                                                    |         |                             |                                                                                                                                                  |
+| --skip_qc                                                 | Skip running all QC and reporting steps                                            | Boolean | False                       |                                                                                                                                                  |
+| --pcr_primer_bed                                          | Path to PCR primer bed file to check for mutations against                         | Path    | ''                          | For output QC checks                                                                                                                             |
+| --neg_control_threshold                                   | Coverage threshold at which to fail negative control samples                       | Number  | 0.10                        |                                                                                                                                                  |
+| --neg_ctrl_substrings                                     | Negative control sample substrings separated by a `,`                              | String  | 'ntc,neg,blank,water'       |                                                                                                                                                  |
+| **Reporting Parameters**                                  |                                                                                    |         |                             |                                                                                                                                                  |
+| --multiqc_report                                          | Run MultiQC report over custom report                                              | Boolean | False                       |                                                                                                                                                  |
 
 ### Schemes and Reference
 
@@ -298,7 +410,7 @@ Example primer file format:
 | MN908947.3 | 1183  | 1205 | nCoV-2019_1_RIGHT | 1           | -         | TTAAGCGCGC |
 | MN908947.3 | 1100  | 1128 | nCoV-2019_2_LEFT  | 2           | +         | AGGGTCAGCA |
 | MN908947.3 | 2244  | 2266 | nCoV-2019_2_RIGHT | 2           | -         | CCTAAGCTAG |
-| ...        | ...   | ...  | ...               | ...         | ...       | CCCTAGAAA  |
+| ...        | ...   | ...  | ...               | ...         | ...       | ...        |
 | REF ID     | Start | Stop | Primer Name       | Primer Pool | Direction | Primer Seq |
 
 ### Metadata
@@ -326,11 +438,66 @@ If building/downloading a database fails, the pipeline will skip over running Sn
 
 SnpEff can also be skipped entirely by passing the `--skip_snpeff` parameter
 
+### Virus Specification
+
+The pipeline currently supports specifying the virus name to run specific analyses. Presently, it is used mostly for Nextclade dataset configuration. However, future versions of this pipeline aim to use the virus specfication as a way to set pipeline defaults and run virus specific processes.
+
+#### Currently supported viruses
+
+The following is a list of viruses supported by the pipeline for automatic nextclade dataset configuration. The list includes the full virus name and the abbreviation to be used with the `--virus_name` argument.
+
+| Virus Name                    | Abbreviation for `--virus_name` |
+| ----------------------------- | ------------------------------- |
+| SARS-CoV-2                    | covid                           |
+| Respiratory syncytial virus A | rsv_a                           |
+| Respiratory syncytial virus B | rsv_b                           |
+| Mpox                          | mpox                            |
+| Ebola                         | ebola                           |
+| Bundibugyo ebolavirus         | bsbv                            |
+| Sudan                         | sudan                           |
+| Measles                       | measles                         |
+| Dengue                        | dengue                          |
+| Yellow Fever                  | yfv                             |
+| Human metapneumovirus         | hmpv                            |
+| Varicella-Zoster              | vzv                             |
+| Rubella                       | rubella                         |
+| Mumps                         | mumps                           |
+| West Nile                     | wnv                             |
+
+> [!NOTE]
+> The pipeline will run on any viral data. This list and the `--virus_name` parameter only affect the nextclade dataset used and any post-consensus virus specific processes.
+
+### Virus-specific Processes
+
+As indicated above, the pipeline aims to use the `--virus_name` parameter to run virus-specific processes. This is currently in the development phase and will be added as more virus-specific processes are identified based on needs at the National Microbiology Laboratory. We currently support [Pangolin](https://github.com/cov-lineages/pangolin) as a virus-specific process when the pipeline is invoked with `--virus_name covid` as a parameter. More details and processes will be added in later versions.
+
+### Nextclade
+
+Nextclade provides clade assignment, mutation calling, and consensus quality reporting. The pipeline can detect the best nextclade dataset to use for each sample (which is the default for segmented viruses) or a dataset can be specified through the `--virus_name` parameter ([See above](#currently-supported-viruses)).
+
+If a supported virus is not specified or if you wish to override the pipeline's configured nextclade dataset, you can provide a local nextclade dataset by specifying the path to the directory containing the dataset using:
+
+```bash
+--nextclade_dataset_dir <PATH/TO/DATASET>
+```
+
+Alternatively, a dataset can be downloaded directly by specifying:
+
+```bash
+--nextclade_dataset_name  <DATASET_NAME>
+--nextclade_dataset_tag   <TAG>           ##Optional
+```
+
+The optional dataset tag is used to download a specific version of the dataset from the nextclade datasets repository. The dataset tag can only be used together with the `--nextclade_dataset_name` parameter. If there is no tag specified, then the pipeline will download the latest version of the dataset specified.
+
+If a local dataset is specified with `--nextclade_dataset_dir`, it takes precedence over downloading a dataset.
+
+Nextclade can be skipped entirely by passing the `--skip_nextclade` parameter.
+
 ## Core Nextflow Arguments
 
-:::note
-These options are part of Nextflow and use a _single_ hyphen (pipeline parameters use a double-hyphen).
-:::
+> [!NOTE]
+> These options are part of Nextflow and use a _single_ hyphen (pipeline parameters use a double-hyphen).
 
 ### `-resume`
 
