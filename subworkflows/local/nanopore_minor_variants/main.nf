@@ -5,11 +5,11 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { CLAIRSTO_VARIANTS            } from '../../../modules/local/nanopore_minor_variants/clairS-TO/main'
+include { CLAIRSTO_VARIANTS            } from '../../../modules/local/clairS-TO/main'
 include { CAT_VCF                      } from '../../../modules/local/bcftools/cat/main'
 include { CAT_VCF as CAT_FULL_VCF      } from '../../../modules/local/bcftools/cat/main'
-include { DEDUP_VCFS                   } from '../../../modules/local/nanopore_minor_variants/dedup_vcf/main'
-include { FIX_VCF                      } from '../../../modules/local/nanopore_minor_variants/fix_vcf/main'
+include { DEDUP_VCFS                   } from '../../../modules/local/dedup_vcf/main'
+include { FIX_VCF                      } from '../../../modules/local/fix_vcf/main'
 include { PASS_VCF                     } from '../../../modules/local/bcftools/pass/main'
 include { ZIP_AND_INDEX_VCF            } from '../../../modules/local/artic/zip_and_index/main'
 
