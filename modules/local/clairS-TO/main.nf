@@ -7,8 +7,8 @@ process CLAIRSTO_VARIANTS {
     tag "${meta.id}"
     // Only Docker container available - no conda or singularity support
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://hkubal/clairs-to:v0.4.2' :
-        'docker.io/hkubal/clairs-to:v0.4.2' }"
+        'docker://hkubal/clairs-to:v0.4.4' :
+        'docker.io/hkubal/clairs-to:v0.4.4' }"
 
     input:
     tuple val(meta), path(bam), path(bai)
