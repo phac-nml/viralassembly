@@ -13,7 +13,7 @@ nextflow_workflow {
         when {
             params {
                 outdir                  = "results"
-                model                   = "r1041_e82_400bps_sup_v420"
+                local_model             = "${projectDir}/test_data/clair3_models/r1041_e82_400bps_sup_v420"
                 platform                = "nanopore"
                 no_pool_split           = true
                 primer_bed              = "${projectDir}/test_data/primer.bed"
