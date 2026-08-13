@@ -17,7 +17,7 @@ The directories listed below are created within the directory specified by `--ou
 
 ## Pipeline overview
 
-The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps (where a `*` indicates a final output kept in the top level results directory):
+The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
 
 - [phac-nml/viralassembly: Output](#phac-nmlviralassembly-output)
   - [Introduction](#introduction)
@@ -35,7 +35,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
       - [BCFtools Norm](#bcftools-norm)
       - [BCFtools Consensus](#bcftools-consensus)
     - [Illumina Consensus Generation](#illumina-consensus-generation)
-      - [Read Mapping](#read-mapping)
+      - [Bowtie2](#bowtie2)
       - [Artic Align Trim](#artic-align-trim-1)
       - [FreeBayes](#freebayes)
       - [iVar Variant Calling](#ivar-variant-calling)
@@ -50,8 +50,6 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
       - [Custom Report](#custom-report)
     - [Pipeline information](#pipeline-information)
 
-Additionally [Pipeline information](#pipeline-information) which includes report metrics generated during the workflow execution can also be found
-
 ### Reference and Primer Processing
 
 Initial processing steps to index the reference fasta and validate the primer file.
@@ -62,8 +60,6 @@ Initial processing steps to index the reference fasta and validate the primer fi
 <summary>Output files</summary>
 
 - `reference/`
-  - `genome.bed`: Genomic information in bed format
-  - `refstats.txt`: Genomic information
   - `*.fai`: Samtools faidx fai file for reference genome
   </details>
 
@@ -82,7 +78,7 @@ The validation and processing is done through [primalbedtools](https://github.co
 
 ### Nanopore Consensus Generation
 
-The followiing steps are specific to the Nanopore consensus generation workflow invoked with `--platform nanopore`
+The following steps are specific to the Nanopore consensus generation workflow invoked with `--platform nanopore`
 
 #### Nanostat
 
@@ -167,9 +163,9 @@ Final output consensus sequence for the sample with variants applied and low cov
 
 ### Illumina Consensus Generation
 
-The followiing steps are specific to the Illumina consensus generation workflow invoked with `--platform illumina`
+The following steps are specific to the Illumina consensus generation workflow invoked with `--platform illumina`
 
-#### Read Mapping
+#### Bowtie2
 
 <details markdown="1">
 <summary>Output files</summary>
@@ -251,11 +247,12 @@ Filtered VCF file with variants to be used in consensus generation. [BCFtools](h
   - `*.consensus.fasta`: Fasta file containing the final output consensus sequence with applied variants and masked sites
   </details>
 
-Final output consensus sequence for the sample with variants applied and low coverage/failing variants masked with N's. [BCFtools](https://samtools.github.io/bcftools/bcftools.html#norm)
+Final output consensus sequence for the sample with variants applied, low coverage/failing variants masked with N's, and mixed/ambiguous sites with their corresponding IUPAC code. [BCFtools](https://samtools.github.io/bcftools/bcftools.html#norm)
 
 ### QC and Reporting
 
-All QC and reporting is only currently done on non-segmented viruses
+> [!WARNING]
+> QC and reporting for segmented viruses is not yet enabled for the IRIDA Next JSON output.
 
 #### SnpEff
 

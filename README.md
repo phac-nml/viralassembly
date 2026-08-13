@@ -49,11 +49,11 @@ Data can be ingested by the pipeline in two different ways:
 
 1. Passing `--fastq_pass </PATH/TO/fastq_pass>` where `fastq_pass` is a directory containing `barcode##` subdirectories with fastq files or containing named `*.fastq*` files
    - Sample names are based off of the file names
-   - Samples can be renamed by passing in the [`--metadata` parameter](./docs/usage.md#metadata) with a TSV file mapping the barcode to the sample name
+   - Barcoded directories (`barcodexx`) can be renamed by passing in the [`--metadata` parameter](./docs/usage.md#metadata) with a TSV file mapping the barcode to the sample name
 2. Passing `--input <samplesheet.csv>` where `samplesheet.csv` is a CSV file with three columns
    1. `sample` - The name of the sample
-   2. `fastq_1` - Path to the first (or only) FastQ file (.fastq or .fq)
-   3. `fastq_2` - Path to the second FastQ file for paired-end data (.fastq or .fq)
+   2. `fastq_1` - Path to the first (or only) FastQ file (`.fastq`, `.fq`, `.fastq.gz`, `fq.gz`)
+   3. `fastq_2` - Path to the second FastQ file for paired-end data (`.fastq`, `.fq`, `.fastq.gz`, `fq.gz`)
 
 > [!NOTE] >
 > All detailed running information is available in the [usage docs](./docs/usage.md).
@@ -108,8 +108,8 @@ Outputs include:
 Current limitations include:
 
 1. Currently runs for viruses using a reference genome
-   - Segmented viruses will exit before the QC section for now while looking into how to best report them
-2. SnpEff and database building/downloading can be finicky
+2. Reporting for segmented viruses is still being evaluated and may be improved in future versions
+3. SnpEff and database building/downloading can be finicky
    - Database building/downloading requires one of three things:
      - The reference ID is in the SnpEff database
        - This allows the database to be downloaded

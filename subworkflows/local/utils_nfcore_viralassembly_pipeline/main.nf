@@ -57,7 +57,7 @@ workflow PIPELINE_INITIALISATION {
     // Multiple Nextclade Inputs
     if (! params.skip_nextclade && (
         (params.nextclade_dataset_dir && params.nextclade_dataset_name))) {
-            log.error("Please pass only one of the following to run nextclade: `--nextclade_dataset_name', '--nextclade_dataset_dir', or '--virus_name'")
+            log.error("Please pass only one of the following to run nextclade: `--nextclade_dataset_name' or '--nextclade_dataset_dir'")
             System.exit(1)
     }
 

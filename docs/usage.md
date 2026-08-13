@@ -2,9 +2,9 @@
 
 ## Introduction
 
-This is a nextflow pipeline for viral reference-based asssembly and analysis of viral sequencing data generated using Oxford Nanopore or Illumina sequencing. The pipeline supports both amplicon and non-amplicon, or shotgun, sequencing data. It performs read processing and mapping, variant calling, consensus sequence generation, variant annotation, and quality-control reporting.
+This nextflow pipeline is intended for the reference-based assembly and analysis of viral sequencing data generated using either the Oxford Nanopore or Illumina sequencing platforms. The pipeline supports both amplicon and basic whole genome sequencing data for both platforms. It performs read processing, amplicon primer trimming, variant calling, consensus generation, variant annotation, and final quality-control reporting.
 
-For Oxford Nanopore Technology (ONT) data, consensus variants are called using Clair3. Medaka and Nanopolish were deprecated as variant callers in [`v2.0.0`](https://github.com/phac-nml/measeq/releases/tag/2.0.0). Illumina data uses FreeBayes as the default variant caller with iVar as an option using `--use_ivar`.
+For Oxford Nanopore Technology (ONT) data, consensus variants are called using Clair3. Medaka and Nanopolish were deprecated as variant callers in [`v2.0.0`](https://github.com/phac-nml/measeq/releases/tag/2.0.0). Illumina data calls variants using FreeBayes by default with iVar as an option using `--use_ivar`.
 
 For Amplicon Sequencing data it is at minimum required to:
 
@@ -60,6 +60,8 @@ For Basic NGS Sequencing data it is at minimum required to:
       - [Currently supported viruses](#currently-supported-viruses)
     - [Virus-specific Processes](#virus-specific-processes)
     - [Nextclade](#nextclade)
+      - [Explicitly Specifying Nextclade Dataset](#explicitly-specifying-nextclade-dataset)
+      - [Dataset Selection Precedence](#dataset-selection-precedence)
   - [Core Nextflow Arguments](#core-nextflow-arguments)
     - [`-resume`](#-resume)
     - [`-c`](#-c)
@@ -134,11 +136,11 @@ Example Illumina directory:
 
 You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to pass in an input CSV file containing columns as follows depending on the sequencing platform used
 
-| Column  | Required                     | Description                                                       |
-| ------- | ---------------------------- | ----------------------------------------------------------------- |
-| sample  | Yes                          | Unique sample identifier                                          |
-| fastq_1 | Yes                          | Path to the first (or only) FastQ file (.fastq or .fq)            |
-| fastq_2 | Only for Illumina paired-end | Path to the second FastQ file for paired-end data (.fastq or .fq) |
+| Column  | Required                     | Description                                                                               |
+| ------- | ---------------------------- | ----------------------------------------------------------------------------------------- |
+| sample  | Yes                          | Unique sample identifier                                                                  |
+| fastq_1 | Yes                          | Path to the first (or only) FastQ file (`.fastq`, `.fq`, `.fastq.gz`, `fq.gz`)            |
+| fastq_2 | Only for Illumina paired-end | Path to the second FastQ file for paired-end data (`.fastq`, `.fq`, `.fastq.gz`, `fq.gz`) |
 
 #### Nanopore Example
 
@@ -203,7 +205,7 @@ This will launch the pipeline with the `singularity` configuration profile and t
 
 #### Amplicon
 
-The typical command for running the pipeline with an [amplicon scheme](#schemes-and-reference) and iVar as the variant caller with Docker for illumina sequenced data is as follows:
+The typical command for running the pipeline with an [amplicon scheme](#schemes-and-reference) with Docker for illumina sequenced data is as follows:
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -212,15 +214,14 @@ nextflow run phac-nml/viralassembly \
   --fastq_pass FASTQ_PASS/ \
   --reference REF.fasta \
   --primer_bed PRIMER.bed \
-  --outdir results \
-  --use_ivar
+  --outdir results
 ```
 
 This will launch the pipeline with the `docker` configuration profile and use the reference and primer files supplied. Profile information [can be found above](#profiles)
 
 #### Non-Amplicon
 
-The typical command for running the pipeline with an [amplicon scheme](#schemes-and-reference) and iVar as the variant caller with Docker for illumina sequenced data is as follows:
+The typical command for running the pipeline without an amplicon scheme with Docker for illumina sequenced data is as follows:
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -248,9 +249,9 @@ Running the pipeline with Nanopore data supports the following optional paramete
 
 - `--model <MODEL>`: Specify the base clair3 model
 - `--local_model </PATH/TO/downloaded_clair3_model>`: Specify the path to a local downloaded model directory
-- `--no_pool_split`: Do not split inputs into pools
+- `--no_pool_split`: Do not split reads and variant calls by amplicon primer pool, instead call all variants at once
 
-Clair3 comes with some models available and is defaulted to `r1041_e82_400bps_sup_v420`. Additional models can be downloaded from [ONT Rerio](https://github.com/nanoporetech/rerio/tree/master) and then specified in the `--local_model </PATH/TO/downloaded_clair3_model>` parameter shown above. Remember to pick a model that best represents the data!
+Clair3 comes with some models available and is defaulted to `r1041_e82_400bps_sup_v420`. Additional models available using the `--model` command will be automatically downloaded from source. You can also manually download models and then specify them with `--local_model </PATH/TO/downloaded_clair3_model>` to save having to download it each time or to use other models. Remember to pick a model that best represents the data!
 
 #### [FreeBayes](https://github.com/freebayes/freebayes) (Illumina)
 
@@ -311,7 +312,7 @@ First, go to the [phac-nml/viralassembly releases page](https://github.com/phac-
 
 This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. For example, at the bottom of the MultiQC reports.
 
-To further assist in reproducability, you can use share and re-use [parameter files](#running-the-pipeline) to repeat pipeline runs with the same settings without having to write out a command with every single parameter.
+To further assist in reproducibility, you can use share and re-use [parameter files](#running-the-pipeline) to repeat pipeline runs with the same settings without having to write out a command with every single parameter.
 
 > [!TIP]
 > If you wish to share such profile (such as upload as supplementary material for academic publications), make sure to NOT include cluster specific paths to files, nor institutional specific profiles.
@@ -440,7 +441,7 @@ SnpEff can also be skipped entirely by passing the `--skip_snpeff` parameter
 
 ### Virus Specification
 
-The pipeline currently supports specifying the virus name to run specific analyses. Presently, it is used mostly for Nextclade dataset configuration. However, future versions of this pipeline aim to use the virus specfication as a way to set pipeline defaults and run virus specific processes.
+While the pipeline will run on any viral data, it also currently supports specifying a virus name to run specific analyses. Presently, it is used mostly for Nextclade dataset configuration. However, future versions of this pipeline aim to use the virus specfication as a way to set pipeline defaults and run virus specific processes.
 
 #### Currently supported viruses
 
@@ -464,35 +465,66 @@ The following is a list of viruses supported by the pipeline for automatic nextc
 | Mumps                         | mumps                           |
 | West Nile                     | wnv                             |
 
-> [!NOTE]
-> The pipeline will run on any viral data. This list and the `--virus_name` parameter only affect the nextclade dataset used and any post-consensus virus specific processes.
-
 ### Virus-specific Processes
 
 As indicated above, the pipeline aims to use the `--virus_name` parameter to run virus-specific processes. This is currently in the development phase and will be added as more virus-specific processes are identified based on needs at the National Microbiology Laboratory. We currently support [Pangolin](https://github.com/cov-lineages/pangolin) as a virus-specific process when the pipeline is invoked with `--virus_name covid` as a parameter. More details and processes will be added in later versions.
 
 ### Nextclade
 
-Nextclade provides clade assignment, mutation calling, and consensus quality reporting. The pipeline can detect the best nextclade dataset to use for each sample (which is the default for segmented viruses) or a dataset can be specified through the `--virus_name` parameter ([See above](#currently-supported-viruses)).
+Nextclade provides clade assignment, mutation calling, and consensus quality reporting. By default, the pipeline uses [`nextclade sort`](https://docs.nextstrain.org/projects/nextclade/en/stable/user/nextclade-cli/reference.html#nextclade-sort) to detect the most appropriate Nextclade dataset for each sample. For segmented viruses, dataset detection is performed seperately for each segment.
 
-If a supported virus is not specified or if you wish to override the pipeline's configured nextclade dataset, you can provide a local nextclade dataset by specifying the path to the directory containing the dataset using:
+#### Explicitly Specifying Nextclade Dataset
+
+The Nextclade dataset can also be specified explicitly in multiple ways. This is useful in cases where you want to ensure a particular dataset is used. For example, SARS-CoV-2 has multiple datasets available in the Nextclade datasets repository and `nextclade sort` may select an alternative SARS-CoV-2 dataset when processing a COVID-19 sample. As such, a dataset can be explicitly specified through one of the following methods:
+
+1. A dataset can be downloaded directly by specifying:
+
+   ```bash
+   --nextclade_dataset_name  <DATASET_NAME>
+   --nextclade_dataset_tag   <TAG>           ##Optional
+   ```
+
+   > [!NOTE]
+   > The optional dataset tag is used to download a specific version of the dataset from the Nextclade datasets repository. The dataset tag can only be used together with the `--nextclade_dataset_name` parameter. If there is no tag specified, then the pipeline will download the latest version of the dataset specified.
+
+2. A locally downloaded or custom Nextclade dataset can be supplied by specifying the directory containg the dataset:
+
+   ```bash
+   --nextclade_dataset_dir <PATH/TO/DATASET>
+   ```
+
+3. A virus name value with the `--virus_name` parameter
+
+   ```bash
+   --virus_name <VIRUS_NAME>
+   ```
+
+   Specifying the `--virus_name` parameter selects the pipeline's configured default nextclade dataset for that virus. [See above for more information](#currently-supported-viruses).
+
+#### Dataset Selection Precedence
+
+> [!WARNING]
+> The `--nextclade_dataset_dir` and `--nextclade_dataset_name` parameters are mutually exclusive and can't be specified in the same run. They have the same level of precedence when determining which Nextclade dataset is used.
+
+The dataset selection precedence is:
+
+1. `--nextclade_dataset_dir` or `--nextclade_dataset_name`
+2. Dataset configured through `--virus_name`
+3. Automatic dataset detection using `nextclade sort`
+
+`--virus_name` can be used together with either `--nextclade_dataset_dir` or `--nextclade_dataset_name`. In this case, the explicitly supplied nextclade dataset takes precedence only for Nextclade dataset selection, while the other virus-specific processes associated with `--virus_name` will continue to run normally.
+
+For example:
 
 ```bash
---nextclade_dataset_dir <PATH/TO/DATASET>
+--virus_name covid
+--nextclade_dataset_name <DATASET_NAME>
 ```
 
-Alternatively, a dataset can be downloaded directly by specifying:
+will use `<DATASET_NAME>` for nextclade instead of the dataset configured by `--virus_name covid`, while any other SARS-CoV-2 virus-specific processes enabled by `--virus_name` will still be performed.
 
-```bash
---nextclade_dataset_name  <DATASET_NAME>
---nextclade_dataset_tag   <TAG>           ##Optional
-```
-
-The optional dataset tag is used to download a specific version of the dataset from the nextclade datasets repository. The dataset tag can only be used together with the `--nextclade_dataset_name` parameter. If there is no tag specified, then the pipeline will download the latest version of the dataset specified.
-
-If a local dataset is specified with `--nextclade_dataset_dir`, it takes precedence over downloading a dataset.
-
-Nextclade can be skipped entirely by passing the `--skip_nextclade` parameter.
+> [!TIP]
+> Nextclade can be skipped entirely by passing the `--skip_nextclade` parameter.
 
 ## Core Nextflow Arguments
 

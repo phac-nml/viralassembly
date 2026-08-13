@@ -18,7 +18,7 @@ A variety of example commands using different parameter options to display how t
 
 ### Non-Amplicon
 
-Minimal Nanopore Run
+Minimal input Nanopore run - Containerization with Singularity, input reads with samplesheet, calls variants using clair3 with a default model of `r1041_e82_400bps_sup_v420`, attempts to run SnpEff and Nextclade using output consensus sequences, and creates a custom final report
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -29,7 +29,7 @@ nextflow run phac-nml/viralassembly \
   --outdir ./results
 ```
 
-Run with input samplesheet, different Clair3 model, gff for SnpEff, local nextclade dataset, singularity and custom final report
+Input samplesheet run, containerization with Singularity, calls variants using a non-default Clair3 model, runs SnpEff with gff file and Nextclade using a local nextclade dataset, and creates a custom final report
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -45,7 +45,7 @@ nextflow run phac-nml/viralassembly \
 
 ### Amplicon
 
-Run with a local Clair3 model, fastq directory, a specific nextclade dataset, conda and the multiqc report output
+Fastq directory input run, Conda as a dependency manager, calls variants using a local Clair3 model, attempts to run SnpEff, runs Nextclade using the latest version of a specific Nextclade dataset downloaded from Nextstrain, and creates a final multiqc report output
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -60,7 +60,7 @@ nextflow run phac-nml/viralassembly \
   --outdir ./results
 ```
 
-Run with Clair3 primer-pool splitting disabled, minor variant calling enabled, nextclade skipped, metadata file, docker, and custom final report
+Fastq directory input run for barcoded directories with a metadata file for sample names, containerization with Docker, calls variants using clair3 with a default model of `r1041_e82_400bps_sup_v420` with Clair3 primer-pool splitting disabled, attempts to run SnpEff, minor variant calling enabled, Nextclade skipped, and creates a custom final report
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -82,7 +82,7 @@ nextflow run phac-nml/viralassembly \
 
 ### Non-Amplicon
 
-Minimal Illumina Run
+Minimal input Illumina run - Containerization with Singularity, input reads with samplesheet, calls variants using FreeBayes as the default variant caller for Illumina data, attempts to run SnpEff and Nextclade using output consensus sequences, and creates a custom final report
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -93,7 +93,7 @@ nextflow run phac-nml/viralassembly \
   --outdir ./results
 ```
 
-Run with input samplesheet, automatic nextclade dataset detection, freebayes variant caller (default), skipping SnpEff annotation, skipping QC, singularity, and multiqc report
+Input samplesheet run, containerization with Singularity, calls variants using FreeBayes (default), runs Nextclade using output consensus sequences, skips SnpEff annotation, skips QC, and creates a final multiqc report output
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -109,7 +109,7 @@ nextflow run phac-nml/viralassembly \
 
 ### Amplicon
 
-Run with input samplesheet, virus name for nextclade dataset specification and virus specific processes, freebayes variant caller (default), docker, and multiqc report
+Input samplesheet run, containerization with Docker, virus name for nextclade dataset specification and virus specific processes, calls variants using FreeBayes (default), attempts to run SnpEff, and creates a final multiqc report output
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -123,7 +123,7 @@ nextflow run phac-nml/viralassembly \
   --outdir ./results
 ```
 
-Run with fastq_directory, gff for SnpEff, iVar variant caller, nextclade dataset with name and tag, conda, and custom report
+Fastq directory input run, Conda as a dependency manager, calls variants using iVar variant caller, runs SnpEff with gff file, runs Nextclade using a specific version of a specific nextclade dataset downloaded from Nextstrain and creates custom final report
 
 ```bash
 nextflow run phac-nml/viralassembly \
