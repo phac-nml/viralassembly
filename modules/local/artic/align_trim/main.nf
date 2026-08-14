@@ -4,8 +4,8 @@ process ARTIC_ALIGN_TRIM {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.8.5--pyhdfd78af_0' :
-        'biocontainers/artic:1.8.5--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.11.1--pyhdfd78af_0' :
+        'biocontainers/artic:1.11.1--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(bam), path(bai)
@@ -25,7 +25,6 @@ process ARTIC_ALIGN_TRIM {
         argsList.add("--normalise 0")
     }
     outName = "${meta.id}.trimmed.rg.sorted.bam"
-    // Start mode = Trim to start of primers instead of ends
     if ( mode == "primers" ) {
         outName = "${meta.id}.primertrimmed.rg.sorted.bam"
     } else {

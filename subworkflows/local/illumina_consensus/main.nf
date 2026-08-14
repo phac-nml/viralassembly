@@ -1,8 +1,6 @@
-//
-// Subworkflow for amplicon and non-amplicon consensus sequence generation for Illumina data
-//
-
 /*
+    Subworkflow for amplicon and non-amplicon consensus sequence generation for Illumina data
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -31,7 +29,7 @@ include { BEDTOOLS_MASKFASTA            } from '../../../modules/nf-core/bedtool
 // Variant Calling (Freebayes) and Consensus Generation
 include { FREEBAYES                     } from '../../../modules/local/freebayes/main'
 include { PROCESS_VCF                   } from '../../../modules/local/process_vcf/main'
-include { CUSTOM_MAKE_DEPTH_MASK        } from '../../../modules/local/artic_subcommands/make_depth_mask/main'
+include { CUSTOM_MAKE_DEPTH_MASK        } from '../../../modules/local/artic/make_depth_mask/main'
 
 // Output Final Consensus
 include { BCFTOOLS_CONSENSUS            } from '../../../modules/local/bcftools/consensus/main'
@@ -53,9 +51,10 @@ workflow WF_ILLUMINA_CONSENSUS {
     main:
     ch_versions = Channel.empty()
 
-    //
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Read QC
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // MODULE: Run fastp for read quality filtering
-    //
     FASTP(
         ch_fastqs,
         params.fastp_adapter ? file(params.fastp_adapter, type: 'file', checkIfExists: true) : [],
@@ -73,9 +72,10 @@ workflow WF_ILLUMINA_CONSENSUS {
             empty: fastq[0].countFastq() < params.min_reads
         }.set{ ch_filtered_fastqs }
 
-    //
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Alignment
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // MODULE: Create index of reference
-    //
     BOWTIE2_BUILD(
         ch_reference.map { ref -> tuple([], ref) }
     )
@@ -105,6 +105,9 @@ workflow WF_ILLUMINA_CONSENSUS {
     ch_versions = ch_versions.mix(SAMTOOLS_SORT.out.versions)
 
     if ( params.primer_bed ) {
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        // Amplicon Specific Alignment Processing
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
         ARTIC_ALIGN_TRIM(
             ch_bam_bai,
             ch_primer_bed,
@@ -116,9 +119,10 @@ workflow WF_ILLUMINA_CONSENSUS {
     }
 
     if (params.use_ivar) {
-        //
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        // Variant Calling & Handling - iVar
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
         // MODULE: Call variants with iVar
-        //
         IVAR_VARIANTS(
             ch_bam_bai,
             ch_reference,
@@ -189,24 +193,19 @@ workflow WF_ILLUMINA_CONSENSUS {
         )
         ch_versions = ch_versions.mix(BEDTOOLS_MASKFASTA.out.versions)
 
-        //
-        // MODULE: Create final consensus sequence with all variants
-        //
+        // Create BCFTools Consensus input channel
         ch_bcfcons_in = BEDTOOLS_MASKFASTA.out.fasta
             .join(BCFTOOLS_FILTER.out.vcf, by: [0])
             .join(TABIX_TABIX.out.tbi, by: [0])
             .map { meta, fasta, vcf, tbi ->
                 [ meta, vcf, tbi, fasta, [] ]
             }
-        BCFTOOLS_CONSENSUS(
-            ch_bcfcons_in
-        )
-        ch_consensus = BCFTOOLS_CONSENSUS.out.consensus
-        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS.out.versions)
+
     } else {
-        //
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        // Variant Calling & Handling - FreeBayes
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
         // MODULE: Run Freebayes to call variants
-        //
         FREEBAYES(
             ch_bam_bai,
             ch_reference
@@ -232,20 +231,24 @@ workflow WF_ILLUMINA_CONSENSUS {
         )
         ch_versions = ch_versions.mix(CUSTOM_MAKE_DEPTH_MASK.out.versions)
 
-        //
-        // MODULE: Create final consensus sequence with all variants
-        //
-        BCFTOOLS_CONSENSUS(
-            PROCESS_VCF.out.consensus_vcf
-                .join(CUSTOM_MAKE_DEPTH_MASK.out.coverage_mask, by: [0])
-                .combine( ch_reference )
-                .map { meta, vcf, tbi, mask, fasta ->
-                    [ meta, vcf, tbi, fasta, mask ]
-                }
-        )
-        ch_consensus = BCFTOOLS_CONSENSUS.out.consensus
-        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS.out.versions)
+        // Create BCFTools Consensus input channel
+        ch_bcfcons_in = PROCESS_VCF.out.consensus_vcf
+            .join(CUSTOM_MAKE_DEPTH_MASK.out.coverage_mask, by: [0])
+            .combine( ch_reference )
+            .map { meta, vcf, tbi, mask, fasta ->
+                [ meta, vcf, tbi, fasta, mask ]
+            }
     }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Consensus Generation
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // MODULE: Create final consensus sequence with all variants
+    BCFTOOLS_CONSENSUS(
+        ch_bcfcons_in
+    )
+    ch_consensus = BCFTOOLS_CONSENSUS.out.consensus
+    ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS.out.versions)
 
     emit:
     consensus               = ch_consensus              // channel: [ val(meta), file(consensus) ]

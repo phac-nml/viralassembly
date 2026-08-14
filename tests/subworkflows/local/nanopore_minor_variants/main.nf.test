@@ -18,7 +18,7 @@ nextflow_workflow {
                 input[1] = file("${projectDir}/test_data/MN908947.3.reference.fasta")
                 input[2] = file("${projectDir}/test_data/nanopore/MN908947.3.reference.fasta.fai")
                 input[3] = Channel.of([ [id: 'sample1'], file("${projectDir}/test_data/nanopore/vcfs/sample1.pass.norm.vcf.gz")])
-                input[4] = Channel.value('r1041_e82_400bps_sup_v420')
+                input[4] = Channel.value('ont_r10_dorado_sup_5khz')
                 """
             }
         }

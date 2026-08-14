@@ -1,6 +1,6 @@
-name: artic
+name: clair3
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::artic=1.11.1
+  - bioconda::clair3=2.0.2

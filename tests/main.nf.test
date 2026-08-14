@@ -76,7 +76,7 @@ nextflow_pipeline {
                 outdir       = "results"
                 fastq_pass   = "${projectDir}/test_data/nanopore/fastq_pass"
                 reference    = "${projectDir}/test_data/MN908947.3.reference.fasta"
-                clair3_model = "this_is_not_a_model"
+                model        = "this_is_not_a_model"
                 platform     = "nanopore"
             }
         }
@@ -85,7 +85,7 @@ nextflow_pipeline {
             assert workflow.failed
 
             // Message
-            assert workflow.stderr.any { it.contains("* --clair3_model (this_is_not_a_model): Expected any of") }
+            assert workflow.stderr.any { it.contains("* --model (this_is_not_a_model): Expected any of") }
         }
     }
 
@@ -129,7 +129,7 @@ nextflow_pipeline {
                 outdir          = "results"
                 input           = "${projectDir}/test_data/nanopore/input.csv"
                 reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
-                clair3_model    = "r1041_e82_400bps_sup_v420"
+                local_model     = "${projectDir}/test_data/clair3_models/r1041_e82_400bps_sup_v420"
                 platform        = "nanopore"
                 nextclade_dataset_name = "nextstrain/sars-cov-2/wuhan-hu-1/orfs"
                 nextclade_dataset_tag = "2026-01-06--14-59-32Z"
@@ -266,7 +266,7 @@ nextflow_pipeline {
             params {
                 outdir          = "results"
                 input           = "${projectDir}/test_data/nanopore/input.csv"
-                clair3_model    = "r1041_e82_400bps_sup_v420"
+                local_model     = "${projectDir}/test_data/clair3_models/r1041_e82_400bps_sup_v420"
                 reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
                 primer_bed      = "${projectDir}/test_data/primer.bed"
                 metadata        = "${projectDir}/test_data/nanopore/metadata.tsv"
@@ -413,7 +413,7 @@ nextflow_pipeline {
                 outdir          = "results"
                 input           = "${projectDir}/test_data/nanopore_segmented/samplesheet.csv"
                 reference       = "${projectDir}/test_data/rvfv.reference.fasta"
-                clair3_model    = "r1041_e82_400bps_sup_v420"
+                local_model     = "${projectDir}/test_data/clair3_models/r1041_e82_400bps_sup_v420"
                 platform        = "nanopore"
                 skip_nextclade  = true
                 // To keep consistent results from downsampled input

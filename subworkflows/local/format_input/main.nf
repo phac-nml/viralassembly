@@ -23,7 +23,7 @@ workflow FORMAT_INPUT {
     if ( params.fastq_pass && params.platform == 'nanopore' ) {
         // Create fastqs channel based on if barcode dirs or .fastq/.fq files found in input
         nanoporeBarcodeDirs = file("${params.fastq_pass}/barcode*", type: 'dir', maxdepth: 1 )
-        nanoporeFastqs = file("${params.fastq_pass}/*.{fastq, fq}*", type: 'file', maxdepth: 1)
+        nanoporeFastqs = file("${params.fastq_pass}/*.{fastq,fq}{,.gz}", type: 'file', maxdepth: 1)
         // Barcode DIRs
         if ( nanoporeBarcodeDirs ) {
             channel.fromPath( nanoporeBarcodeDirs )
@@ -36,7 +36,7 @@ workflow FORMAT_INPUT {
         // FASTQS
         } else if ( nanoporeFastqs ) {
             channel.fromPath( nanoporeFastqs )
-                .map{ fastq -> [ [id: fastq.baseName.replaceAll(~/\.fastq.*$/, '')], file(fastq) ] }
+                .map{ fastq -> [ [id: fastq.baseName.replaceAll(~/\.(fastq|fq)(\.gz)?$/, '')], file(fastq) ] }
                 .branch{ _meta, fastq ->
                     pass: fastq.countFastq() >= 1
                     empty: fastq.countFastq() == 0
@@ -48,9 +48,9 @@ workflow FORMAT_INPUT {
         }
     } else if ( params.fastq_pass && params.platform == 'illumina' ) {
         // Create fastqs channel based on if .fastq/.fq files found in input
-        illuminaFastqs = file("${params.fastq_pass}/*.{fastq, fq}*", type: 'file', maxdepth: 1)
+        illuminaFastqs = file("${params.fastq_pass}/*.{fastq,fq}{,.gz}", type: 'file', maxdepth: 1)
         if (illuminaFastqs){
-            channel.fromFilePairs("${params.fastq_pass}/*_{R1,R2}*.{fastq, fq}*", size: 2)
+            channel.fromFilePairs("${params.fastq_pass}/*_{R1,R2}*.{fastq,fq}{,.gz}", size: 2)
                 .map{ id, fastqs -> [ [id: id], fastqs ] }
                 .branch{ _meta, fastqs ->
                     pass: fastqs[0].countFastq() >= 1 && fastqs[1].countFastq() >= 1
@@ -120,7 +120,7 @@ workflow FORMAT_INPUT {
     }
 
     emit:
-    pass = ch_fastqs.pass     // channel: [ val(meta), file(fastq) ]
+    pass  = ch_fastqs.pass    // channel: [ val(meta), file(fastq) ]
     empty = ch_fastqs.empty   // channel: [ val(meta), file(fastq) ]
 }
 

@@ -1,23 +1,41 @@
 /*
+    Subworkflow for amplicon and non-amplicon consensus sequence generation for Nanopore data
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+// Clair3 model
+include { ARTIC_GET_MODELS          } from '../../../modules/local/artic/get_model/main'
+
 // Read QC
+include { ARTIC_GUPPYPLEX           } from '../../../modules/local/artic/guppyplex/main'
 include { CHOPPER                   } from '../../../modules/local/chopper/main'
 include { NANOSTAT                  } from '../../../modules/local/nanostat/main'
 include { RENAME_FASTQ              } from '../../../modules/local/custom/utils.nf'
 
-// Clair3 model
-include { GET_MODEL                 } from '../../../modules/local/get_model/main'
+// Alignment
+include { MINIMAP2_ALIGN            } from '../../../modules/local/minimap2/main'
 
-// Artic related
-include { ARTIC_GUPPYPLEX           } from '../../../modules/local/artic/guppyplex/main'
+// Amplicon Specific Tools
+include { ARTIC_ALIGN_TRIM          } from '../../../modules/local/artic/align_trim/main'
+include { SPLIT_BED_BY_POOL         } from '../../../modules/local/custom/utils.nf'
+include { CREATE_TILING_BED         } from '../../../modules/local/custom/utils.nf'
+include { ARTIC_VCF_MERGE           } from '../../../modules/local/artic/vcf_merge/main'
+include { ARTIC_MAKE_DEPTH_MASK     } from '../../../modules/local/artic/make_depth_mask/main'
+
+// Variant Calling & Handling
+include { CLAIR3_VARIANTS           } from '../../../modules/local/clair3/main'
+include { ARTIC_VCF_FILTER         } from '../../../modules/local/artic/vcf_filter/main'
+include { CUSTOM_MAKE_DEPTH_MASK    } from '../../../modules/local/artic/make_depth_mask/main'
+
+// Consensus Generation
+include { ARTIC_MASK                } from '../../../modules/local/artic/mask/main'
+include { BCFTOOLS_NORM             } from '../../../modules/local/bcftools/norm/main'
+include { BCFTOOLS_CONSENSUS        } from '../../../modules/local/bcftools/consensus/main'
+
+// Artic Analysis Pipeline
 include { ARTIC_MINION              } from '../../../modules/local/artic/minion/main'
-
-// Subworkflows
-include { WF_NANOPORE_AMPLICON      } from '../../../subworkflows/local/nanopore_amplicon'
-include { WF_NANOPORE_SHOTGUN       } from '../../../subworkflows/local/nanopore_shotgun'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -29,31 +47,26 @@ workflow WF_NANOPORE_CONSENSUS {
     ch_fastqs       // channel: [ val(meta), file(fastqs) ]
     ch_reference    // channel: [ val(meta), file(reference) ]
     ch_fai          // channel: [ file(fai) ]
-    ch_refstats     // channel: [ file(refstats) ]
     ch_primer_bed   // channel: [ file(primer.bed) ]
     ch_amplicon_bed // channel: [ file(amplicon.bed) ]
 
     main:
-
-    // Nanopolish required channels, will be ignored when running clair3 or medaka but still passed to the workflow
-    ch_fast5s = params.fast5_pass ? file(params.fast5_pass, type: 'dir', checkIfExists: true) : []
-    ch_seqsum = params.sequencing_summary ? file(params.sequencing_summary, type: 'file', checkIfExists: true) : []
-
     // Tool version tracking
     ch_versions = channel.empty()
 
     // Clair3 model
-    ch_clair3_model = channel.empty()
-    if ( params.clair3_local_model ) {
-        ch_clair3_model = file(params.clair3_local_model, type: 'dir', checkIfExists: true)
+    ch_model = channel.empty()
+    if ( params.local_model ) {
+        ch_model = file(params.local_model, type: 'dir', checkIfExists: true)
     } else {
-        GET_MODEL(params.clair3_model)
-        ch_clair3_model = GET_MODEL.out.model
+        ARTIC_GET_MODELS(params.model)
+        ch_model = ARTIC_GET_MODELS.out.model
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Read QC and Statistics
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+    // Filter reads by read lengths
     ARTIC_GUPPYPLEX(
         ch_fastqs
     )
@@ -61,8 +74,7 @@ workflow WF_NANOPORE_CONSENSUS {
     ch_versions = ch_versions.mix(ARTIC_GUPPYPLEX.out.versions)
 
 
-    // Chopper may be useless as we already filter based on length earlier
-    //  But it also does add quality filtering
+    // Filter reads by quality
     CHOPPER(
         ch_fastqs
     )
@@ -82,52 +94,154 @@ workflow WF_NANOPORE_CONSENSUS {
     )
     ch_versions = ch_versions.mix(NANOSTAT.out.versions)
 
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    // Chose which pipeline to run based on input params
-    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-    if ( !params.primer_bed ) {
-        WF_NANOPORE_SHOTGUN(
+    if ( !params.use_artic_tool ) {
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        // Alignment
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        // Align reads to the reference
+        MINIMAP2_ALIGN(
             ch_filtered_fastqs.pass,
-            ch_fast5s,
-            ch_seqsum,
+            ch_reference
+        )
+        ch_versions = ch_versions.mix(MINIMAP2_ALIGN.out.versions)
+        ch_bam = MINIMAP2_ALIGN.out.bam
+        ch_clair3_input = ch_bam
+            .map { meta, bam, bai ->
+                tuple(meta, bam, bai, '', [])
+            }
+
+        if ( params.primer_bed ) {
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+            // Amplicon Specific Alignment Processing
+            // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+            // Softmask read alignments within their derived amplicon with additional softmasking to exclude primer sequences
+            ARTIC_ALIGN_TRIM (
+                ch_bam,
+                ch_primer_bed,
+                'primers',
+                params.platform
+            )
+            ch_bam = ARTIC_ALIGN_TRIM.out.bam
+            ch_versions = ch_versions.mix(ARTIC_ALIGN_TRIM.out.versions)
+
+            // For clair3 need bed files for each amplicon pool named <POOL>.bed
+            //  Clair3 doesn't seem to be dealing with the bed files as expected
+            //  As such, add option to not split by pool and instead use the whole tiling region
+            if ( ! params.no_pool_split ) {
+                SPLIT_BED_BY_POOL(
+                    ch_amplicon_bed
+                )
+                ch_bed_pools = SPLIT_BED_BY_POOL.out.bed
+                    .flatten()
+                    .map{ bed -> [ bed.baseName.replaceAll(~/\.bed$/, ''), file(bed) ] }
+            } else {
+                CREATE_TILING_BED(
+                    ch_amplicon_bed
+                )
+                ch_bed_pools = CREATE_TILING_BED.out.bed
+                    .map { bed -> [ bed.baseName.replaceAll(~/\.bed$/, ''), file(bed) ] }
+            }
+
+            // Clair3 also uses the primer trimmed bams
+            //  Based on testing, the way the pools and clair3 work, having the primer trimmed bams as input
+            //  allows better and consistent calling in SNPs in primers
+            ch_clair3_input = ch_bam
+                .combine(ch_bed_pools) // channel: [ val(meta), path(bam), path(bai), val(pool), path(pool_bed) ]
+        }
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        // Variant Calling
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        CLAIR3_VARIANTS(
+            ch_clair3_input,
             ch_reference,
             ch_fai,
-            ch_refstats,
-            ch_clair3_model
+            ch_model,
+            params.no_pool_split
         )
-        ch_consensus = WF_NANOPORE_SHOTGUN.out.consensus
-        ch_bam = WF_NANOPORE_SHOTGUN.out.bam
-        ch_vcf = WF_NANOPORE_SHOTGUN.out.vcf
-        ch_versions = ch_versions.mix(WF_NANOPORE_SHOTGUN.out.versions)
-    } else if ( !params.use_artic_tool ) {
-        WF_NANOPORE_AMPLICON(
-            ch_filtered_fastqs.pass,
-            ch_fast5s,
-            ch_seqsum,
-            ch_reference,
-            ch_fai,
-            ch_refstats,
-            ch_primer_bed,
-            ch_amplicon_bed,
-            ch_clair3_model
+        ch_primary_vcf = CLAIR3_VARIANTS.out.vcf
+        ch_versions = ch_versions.mix(CLAIR3_VARIANTS.out.versions)
+
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        // Variant Handling
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        if ( params.primer_bed ) {
+            // Utilizing transformVCFList function to merge vcfs based on how artic handles input data
+            ARTIC_VCF_MERGE(
+                ch_primary_vcf
+                    .groupTuple(),
+                ch_primer_bed
+            )
+            ch_versions = ch_versions.mix(ARTIC_VCF_MERGE.out.versions)
+            ch_primary_vcf = ARTIC_VCF_MERGE.out.vcf
+        }
+
+        // Filter VCF variants on depth, quality, and frequency
+        ARTIC_VCF_FILTER(
+            ch_primary_vcf
         )
-        ch_consensus = WF_NANOPORE_AMPLICON.out.consensus
-        ch_bam = WF_NANOPORE_AMPLICON.out.bam
-        ch_vcf = WF_NANOPORE_AMPLICON.out.vcf
-        ch_versions = ch_versions.mix(WF_NANOPORE_AMPLICON.out.versions)
+        ch_versions = ch_versions.mix(ARTIC_VCF_FILTER.out.versions)
+
+        // Make depth mask based on minimum depth to call position
+        if ( params.primer_bed ) {
+            ARTIC_MAKE_DEPTH_MASK(
+                ch_bam,
+                ch_reference
+            )
+            ch_depth_mask = ARTIC_MAKE_DEPTH_MASK.out.coverage_mask
+            ch_versions = ch_versions.mix(ARTIC_MAKE_DEPTH_MASK.out.versions)
+        } else {
+            CUSTOM_MAKE_DEPTH_MASK(
+                ch_bam,
+                ch_reference
+            )
+            ch_depth_mask = CUSTOM_MAKE_DEPTH_MASK.out.coverage_mask
+            ch_versions = ch_versions.mix(CUSTOM_MAKE_DEPTH_MASK.out.versions)
+        }
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        // Consensus Generation
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+        // Apply Masking
+        ARTIC_MASK(
+            ch_depth_mask
+                .join(ARTIC_VCF_FILTER.out.fail_vcf, by: [0]),
+            ch_reference
+        )
+        ch_versions = ch_versions.mix(ARTIC_MASK.out.versions)
+
+        // Normalize variants for consensus generation
+        BCFTOOLS_NORM(
+            ARTIC_MASK.out.preconsensus
+                .join(ARTIC_VCF_FILTER.out.pass_vcf, by: [0])
+        )
+        ch_versions = ch_versions.mix(BCFTOOLS_NORM.out.versions)
+
+        // Create final consensus sequence with all variants
+        BCFTOOLS_CONSENSUS(
+            ARTIC_MASK.out.preconsensus
+                .join(ch_depth_mask, by: [0])
+                .join(BCFTOOLS_NORM.out.vcf, by: [0])
+                .map { meta, fasta, mask, vcf, tbi ->
+                    [ meta, vcf, tbi, fasta, mask ]
+                }
+        )
+        ch_consensus = BCFTOOLS_CONSENSUS.out.consensus
+        ch_versions = ch_versions.mix(BCFTOOLS_CONSENSUS.out.versions)
+
+        // Remove tabix index from vcf as it is not needed
+        ch_vcf = ARTIC_VCF_FILTER.out.pass_vcf
+            .map { meta, vcf, _tbi -> [ meta, vcf ] }
     } else {
         ARTIC_MINION(
             ch_filtered_fastqs.pass,
             ch_reference,
             ch_primer_bed,
-            ch_clair3_model.ifEmpty([])
+            ch_model
         )
         ch_consensus = ARTIC_MINION.out.consensus
         ch_bam = ARTIC_MINION.out.bam
         ch_vcf = ARTIC_MINION.out.vcf
         ch_versions = ch_versions.mix(ARTIC_MINION.out.versions)
     }
-
     emit:
     consensus             = ch_consensus                // channel: [ val(meta), file(consensus) ]
     bam                   = ch_bam                      // channel: [ val(meta), file(bam), file(bai) ]
