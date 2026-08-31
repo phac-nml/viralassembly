@@ -45,7 +45,7 @@ nextflow run phac-nml/viralassembly \
 
 ### Amplicon
 
-Fastq directory input run, Conda as a dependency manager, calls variants using a local Clair3 model, attempts to run SnpEff, runs Nextclade using the latest version of a specific Nextclade dataset downloaded from Nextstrain, and creates a final multiqc report output
+Fastq directory input run, Conda as a dependency manager, calls variants using a local Clair3 model, attempts to run SnpEff, runs Nextclade using the latest version of a specific Nextclade dataset downloaded from Nextstrain, and creates a custom final report
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -56,7 +56,6 @@ nextflow run phac-nml/viralassembly \
   --reference REF.fa \
   --primer_bed PRIMER.bed \
   --nextclade_dataset_name DATASET_NAME \
-  --multiqc_report \
   --outdir ./results
 ```
 
@@ -93,7 +92,7 @@ nextflow run phac-nml/viralassembly \
   --outdir ./results
 ```
 
-Input samplesheet run, containerization with Singularity, calls variants using FreeBayes (default), runs Nextclade using output consensus sequences, skips SnpEff annotation, skips QC, and creates a final multiqc report output
+Input samplesheet run, containerization with Singularity, calls variants using FreeBayes (default), runs Nextclade using output consensus sequences, skips SnpEff annotation, skips QC, and creates a custom final report
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -103,13 +102,12 @@ nextflow run phac-nml/viralassembly \
   --reference REF.fa \
   --skip_qc \
   --skip_snpeff \
-  --multiqc_report \
   --outdir ./results
 ```
 
 ### Amplicon
 
-Input samplesheet run, containerization with Docker, virus name for nextclade dataset specification and virus specific processes, calls variants using FreeBayes (default), attempts to run SnpEff, and creates a final multiqc report output
+Input samplesheet run, containerization with Docker, virus name for nextclade dataset specification and virus specific processes, calls variants using FreeBayes (default), attempts to run SnpEff, and creates a custom final report
 
 ```bash
 nextflow run phac-nml/viralassembly \
@@ -119,7 +117,6 @@ nextflow run phac-nml/viralassembly \
   --reference REF.fa \
   --primer_bed PRIMER.bed \
   --virus_name VIRUS_NAME \
-  --multiqc_report
   --outdir ./results
 ```
 

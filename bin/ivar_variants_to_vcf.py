@@ -5,7 +5,6 @@
 # Asjustments:
 # - Support for empty iVar TSV files by writing a header-only VCF
 # - Added zero values for SNP, INS, DEL reporting for empty inputs
-# - MultiQC summary output is seperated from VCF Generation
 
 import os
 import sys
@@ -739,35 +738,6 @@ class IvarVariants:
 
         return
 
-    def write_stdout(self):
-        """Summarize variant counts to pass to MultiQC"""
-        variant_types = ["SNP", "DEL", "INS"]
-
-        # Handle empty dataframe case
-        if self.raw_ivar_df.empty or self.processed_vcf is None:
-            var_count_dict = {var_type: 0 for var_type in variant_types}
-        else:
-            variant_col: pd.Series = self.processed_vcf["INFO"].str.replace("TYPE=", "")
-            variant_counts = variant_col.value_counts().to_dict()
-            var_count_dict = {var_type: variant_counts.get(var_type, 0) for var_type in variant_types}
-
-        var_count_list = [(k, str(v)) for k, v in sorted(var_count_dict.items())]
-
-        def create_f_string(str_size, placement="^"):
-            row_size = "{: " + placement + str(str_size) + "}"
-            return row_size
-
-        row = create_f_string(30, "<")  # an arbitraily long value to fit most sample names
-        row += create_f_string(10) * len(var_count_list)  # A spacing of ten looks pretty
-
-        headers = ["sample"]
-        headers.extend([x[0] for x in var_count_list])
-        data = [self.basename]
-        data.extend([x[1] for x in var_count_list])
-        print(row.format(*headers))
-        print(row.format(*data))
-
-
     def write_vcf(self):
         """Process ivar.tsv, merge the vcf header and table and write them into a file"""
         if self.raw_ivar_df.empty:
@@ -839,7 +809,6 @@ def main(args=None):
         fasta=args.fasta,
     )
     ivar_to_vcf.write_vcf()
-    ivar_to_vcf.write_stdout()
     return
 
 

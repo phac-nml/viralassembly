@@ -98,7 +98,7 @@ Outputs include:
 - Bam files
 - Variant annotation files
 - Nextclade results
-- HTML summary files (either custom or MultiQC)
+- HTML summary files
 
 > [!NOTE]
 > More output information on pipeline steps and output files can be found in the [output docs](./docs/output.md).
