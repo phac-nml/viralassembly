@@ -256,7 +256,7 @@ nextflow_pipeline {
     }
 
     //--- Test 7 ----------------------------------------------------------------------------
-    test("Nanopore Amplicon Workflow with MultiQC") {
+    test("Nanopore Amplicon Workflow") {
         tag "success"
         tag "amplicon"
         tag "here"
@@ -271,7 +271,6 @@ nextflow_pipeline {
                 primer_bed      = "${projectDir}/test_data/primer.bed"
                 metadata        = "${projectDir}/test_data/nanopore/metadata.tsv"
                 gff             = "${projectDir}/test_data/MN908947.3.gff3"
-                multiqc_report  = true
                 platform        = "nanopore"
                 virus_name      = "covid"
                 // To keep consistent results from downsampled input
@@ -293,15 +292,14 @@ nextflow_pipeline {
                 // Summary Reports
                 "",
                 "overall.qc.csv",
-                "Overall-Run-MultiQC.report.html",
-                "sample_mqc/sample1.report.html",
-                "sample_mqc/sample2.report.html",
+                "reportDashboard.html",
+                "sample_reports/sample1.html",
+                "sample_reports/sample2.html",
                 "iridanext.output.json",
 
                 // Reference files
                 "reference/MN908947.3.reference.fasta.fai",
                 "reference/genome.bed",
-                "reference/refstats.txt",
 
                 // Amplicon
                 "bed/1.bed",
@@ -342,7 +340,6 @@ nextflow_pipeline {
             // Intermediate generated reference files
             assert path("$launchDir/results/reference/MN908947.3.reference.fasta.fai").text.contains("MN908947.3\t29903\t12\t60\t61")
             assert path("$launchDir/results/reference/genome.bed").text.contains("MN908947.3\t0\t29903")
-            assert path("$launchDir/results/reference/refstats.txt").text.contains("MN908947.3:1-29904")
 
             // Intermediate generated bed files
             assert path("$launchDir/results/bed/1.bed").readLines().size() == 15
@@ -384,14 +381,14 @@ nextflow_pipeline {
             // IRIDA Next output
             //
             def iridanext = path("$launchDir/results/iridanext.output.json").json
-            assert iridanext.files.global.any { it.path == "Overall-Run-MultiQC.report.html" }
+            assert iridanext.files.global.any { it.path == "reportDashboard.html" }
             assert iridanext.files.global.any { it.path == "pipeline_info/software_versions.yml" }
             ["reads_100", "sample1", "sample2"].each { sample ->
                 assert iridanext.files.samples[sample].any { it.path == "consensus/${sample}.consensus.fasta" }
                 assert iridanext.files.samples[sample].any { it.path == "vcf/final/${sample}.consensus.norm.vcf.gz" }
             }
-            assert iridanext.files.samples.sample1.any { it.path == "sample_mqc/sample1.report.html" }
-            assert iridanext.files.samples.sample2.any { it.path == "sample_mqc/sample2.report.html" }
+            assert iridanext.files.samples.sample1.any { it.path == "sample_reports/sample1.html" }
+            assert iridanext.files.samples.sample2.any { it.path == "sample_reports/sample2.html" }
             assert iridanext.metadata.samples.reads_100.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
             assert iridanext.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.negative_ctrl.neg_control_info == "PASS"
@@ -435,13 +432,11 @@ nextflow_pipeline {
                 // Summary Reports
                 "",
                 "overall.qc.csv",
-                "reportDashboard.html",
                 "iridanext.output.json",
 
                 // Reference files
                 "reference/rvfv.reference.fasta.fai",
                 "reference/genome.bed",
-                "reference/refstats.txt",
 
                 // Consensus
                 "consensus/ERR14941536.consensus.fasta",
@@ -490,15 +485,6 @@ nextflow_pipeline {
                 "NC_014397.1\t0\t6404"
             ].each {
                 assert genbed.text.contains(it)
-            }
-
-            def refstats = path("$launchDir/results/reference/refstats.txt")
-            [
-                "NC_014395.1:1-1691",
-                "NC_014396.1:1-3886",
-                "NC_014397.1:1-6405"
-            ].each {
-                assert refstats.text.contains(it)
             }
 
             //  Fasta file
@@ -648,7 +634,7 @@ nextflow_pipeline {
     }
 
     //--- Test 10 ----------------------------------------------------------------------------
-    test("Illumina Amplicon Workflow with iVar and MultiQC") {
+    test("Illumina Amplicon Workflow with iVar") {
         tag "success"
         tag "amplicon"
         tag "here"
@@ -661,7 +647,6 @@ nextflow_pipeline {
                 reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
                 primer_bed      = "${projectDir}/test_data/primer.bed"
                 gff             = "${projectDir}/test_data/MN908947.3.gff3"
-                multiqc_report  = true
                 platform        = "illumina"
                 virus_name      = "covid"
                 use_ivar        = true
@@ -678,14 +663,13 @@ nextflow_pipeline {
                 // Summary Reports
                 "",
                 "overall.qc.csv",
-                "Overall-Run-MultiQC.report.html",
-                "sample_mqc/sample1.report.html",
+                "reportDashboard.html",
+                "sample_reports/sample1.html",
                 "iridanext.output.json",
 
                 // Reference files
                 "reference/MN908947.3.reference.fasta.fai",
                 "reference/genome.bed",
-                "reference/refstats.txt",
 
                 // Amplicon
                 "bed/amplicon.bed",
@@ -719,7 +703,6 @@ nextflow_pipeline {
             // Intermediate generated reference files
             assert path("$launchDir/results/reference/MN908947.3.reference.fasta.fai").text.contains("MN908947.3\t29903\t12\t60\t61")
             assert path("$launchDir/results/reference/genome.bed").text.contains("MN908947.3\t0\t29903")
-            assert path("$launchDir/results/reference/refstats.txt").text.contains("MN908947.3:1-29904")
 
             // Intermediate generated bed file
             assert path("$launchDir/results/bed/amplicon.bed").readLines().size() == 29
@@ -763,7 +746,7 @@ nextflow_pipeline {
 
             // IRIDA Next output
             def iridanext = path("$launchDir/results/iridanext.output.json").json
-            assert iridanext.files.global.any { it.path == "Overall-Run-MultiQC.report.html" }
+            assert iridanext.files.global.any { it.path == "reportDashboard.html" }
             assert iridanext.files.global.any { it.path == "pipeline_info/software_versions.yml" }
             ["reads_25", "sample1"].each { sample ->
                 assert iridanext.files.samples[sample].any { it.path == "consensus/${sample}.consensus.fasta" }
@@ -771,7 +754,7 @@ nextflow_pipeline {
             }
 
             // IRIDA metadata
-            assert iridanext.files.samples.sample1.any { it.path == "sample_mqc/sample1.report.html" }
+            assert iridanext.files.samples.sample1.any { it.path == "sample_reports/sample1.html" }
             assert iridanext.metadata.samples.sample1.qc_pass == "PASS"
             assert iridanext.metadata.samples.reads_25.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
             assert iridanext.metadata.samples.sample1.num_snps == "118"
@@ -795,7 +778,6 @@ nextflow_pipeline {
                 reference       = "${projectDir}/test_data/rvfv.reference.fasta"
                 platform        = "illumina"
                 skip_nextclade  = true
-                multiqc_report  = true
             }
         }
         then {
@@ -809,13 +791,11 @@ nextflow_pipeline {
                 // Summary Reports
                 "",
                 "overall.qc.csv",
-                "Overall-Run-MultiQC.report.html",
                 "iridanext.output.json",
 
                 // Reference files
                 "reference/rvfv.reference.fasta.fai",
                 "reference/genome.bed",
-                "reference/refstats.txt",
 
                 // Consensus
                 "consensus/sample1.consensus.fasta",
@@ -865,15 +845,6 @@ nextflow_pipeline {
                 "NC_014397.1\t0\t6404"
             ].each {
                 assert genbed.text.contains(it)
-            }
-
-            def refstats = path("$launchDir/results/reference/refstats.txt")
-            [
-                "NC_014395.1:1-1691",
-                "NC_014396.1:1-3886",
-                "NC_014397.1:1-6405"
-            ].each {
-                assert refstats.text.contains(it)
             }
 
             //  Fasta file

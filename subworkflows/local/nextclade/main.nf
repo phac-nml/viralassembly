@@ -25,11 +25,14 @@ workflow WF_NEXTCLADE {
     // Version tracking
     ch_versions = channel.empty()
 
+    // Keep a record of all samples to output later
+    ch_samples = ch_consensus.map { meta, _fasta -> tuple(meta.id, meta) }
+
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Segmented Virus Handling
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Split multi-FASTA (segmented viruses)
-    //  and add in nextclade_file_name to meta for the final nextcalde output name
+    //  and add in nextclade_file_name to meta for the final nextclade output name
     ch_consensus = ch_consensus.flatMap { meta, fasta ->
         if ( segmented ) {
             return fasta
@@ -124,8 +127,20 @@ workflow WF_NEXTCLADE {
         NEXTCLADE_RUN.out.csv
             .groupTuple()
     )
+    ch_nextclade_csv = ch_samples
+        .join(
+            COLLATE_CSVS.out.final_csv.map{
+                meta, csv -> tuple(meta.id, csv)
+            },
+            by: 0,
+            remainder: true
+        )
+        .map{ _id, meta, csv ->
+            meta.remove('nextclade_file_name')
+            tuple(meta, csv ?: [])
+        }
 
     emit:
-    csv      = COLLATE_CSVS.out.final_csv // channel: [ val(meta), file(csv) ]
-    versions = ch_versions                // channel: [ path(versions.yml) ]
+    csv      = ch_nextclade_csv // channel: [ val(meta), file(csv) ]
+    versions = ch_versions      // channel: [ path(versions.yml) ]
 }

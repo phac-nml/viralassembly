@@ -31,7 +31,6 @@ include { WF_SNPEFF_ANNOTATE        } from '../subworkflows/local/snpeff_annotat
 include { WF_SNPEFF_ANNOTATE as   WF_SNPEFF_ANNOTATE_MIN    } from '../subworkflows/local/snpeff_annotate'
 include { WF_NEXTCLADE              } from '../subworkflows/local/nextclade'
 include { WF_VIRUS_COVID            } from '../subworkflows/local/virus_specific/covid'
-include { WF_CREATE_MULTIQC_REPORTS } from '../subworkflows/local/create_multiqc_reports'
 include { WF_CREATE_CUSTOM_REPORT   } from '../subworkflows/local/create_custom_report'
 
 /*
@@ -94,7 +93,7 @@ workflow VIRALASSEMBLY {
         ch_versions = ch_versions.mix(PRIMALBEDTOOLS_AMPLICON.out.versions)
     }
 
-    // Reference stats and files for various processes
+    // Index reference and generate .bed file with coordinates
     GET_REF_STATS(
         ch_reference
     )
@@ -121,7 +120,6 @@ workflow VIRALASSEMBLY {
         ch_bam = WF_NANOPORE_CONSENSUS.out.bam
         ch_vcf = WF_NANOPORE_CONSENSUS.out.vcf
         ch_filtered_fastqs_empty = WF_NANOPORE_CONSENSUS.out.empty_filtered_fastqs
-        ch_reads_stats = WF_NANOPORE_CONSENSUS.out.stats
         ch_versions = ch_versions.mix(WF_NANOPORE_CONSENSUS.out.versions)
 
     } else if( params.platform == 'illumina' ) {
@@ -138,7 +136,6 @@ workflow VIRALASSEMBLY {
         ch_bam = WF_ILLUMINA_CONSENSUS.out.bam
         ch_vcf = WF_ILLUMINA_CONSENSUS.out.vcf
         ch_filtered_fastqs_empty = WF_ILLUMINA_CONSENSUS.out.empty_filtered_fastqs
-        ch_reads_stats = ch_consensus.map { meta, _fasta -> tuple(meta, []) }
         ch_versions = ch_versions.mix(WF_ILLUMINA_CONSENSUS.out.versions)
 
     } else {
@@ -156,7 +153,7 @@ workflow VIRALASSEMBLY {
         WF_NANOPORE_MINOR_VARIANTS(
             ch_bam,
             ch_reference,
-            GET_REF_STATS.out.fai,
+            ch_fai,
             ch_vcf, // major variants from the main pipeline required for deduplication of vcfs
             ch_clairsto_model
         )
@@ -236,7 +233,9 @@ workflow VIRALASSEMBLY {
             ch_consensus,
             segmented
         )
+        ch_nextclade_csv = WF_NEXTCLADE.out.csv
     }
+
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Virus specific tools
@@ -278,18 +277,26 @@ workflow VIRALASSEMBLY {
         ch_versions = ch_versions.mix(SAMTOOLS_DEPTH.out.versions)
 
         // Pass minor vcf to qc or create dummy channel if not running minor_variants
-        ch_min_vcf_for_qc = params.minor_variants ? ch_min_vcf
+        ch_min_vcf_for_qc = params.minor_variants
+            ? ch_min_vcf
             : ch_consensus.map { meta, _consensus -> [meta, []] }
+
+        // Pass nextclade csv to qc or create dummy channel if using skip_nextclade
+        ch_nextclade_for_qc = params.skip_nextclade
+            ? ch_consensus.map { meta, _consensus -> [meta, []] }
+            : ch_nextclade_csv
 
         MAKE_SAMPLE_QC_CSV(
             ch_consensus
                 .join(ch_bam, by: [0])
                 .join(SAMTOOLS_DEPTH.out.bed, by: [0])
                 .join(ch_vcf, by: [0])
-                .join(ch_min_vcf_for_qc, by: [0]),
+                .join(ch_min_vcf_for_qc, by: [0])
+                .join(ch_nextclade_for_qc, by: [0]),
             ch_primer_bed,
             ch_metadata,
-            ch_pcr_primer_bed
+            ch_pcr_primer_bed,
+            params.skip_nextclade
         )
         ch_versions = ch_versions.mix(MAKE_SAMPLE_QC_CSV.out.versions)
 
@@ -309,33 +316,19 @@ workflow VIRALASSEMBLY {
         ch_versions = ch_versions.mix(FINAL_QC_CSV.out.versions)
 
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-        // Final reports workflow
+        // Final report workflow
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
-        if ( params.multiqc_report ) {
-            WF_CREATE_MULTIQC_REPORTS(
-                ch_consensus,
-                ch_bam,
-                ch_vcf,
-                MAKE_SAMPLE_QC_CSV.out.csv,
-                ch_reads_stats,
-                ch_snpeff_csv,
-                ch_reference,
-                ch_amplicon_bed,
-                FINAL_QC_CSV.out.csv,
-                ch_pangolin_report,
-                ch_versions
-            )
-        } else {
-            WF_CREATE_CUSTOM_REPORT(
-                ch_consensus,
-                ch_bam,
-                ch_vcf,
-                ch_reference,
-                GET_REF_STATS.out.genome_bed,
-                ch_amplicon_bed,
-                FINAL_QC_CSV.out.csv,
-                ch_versions
-            )
-        }
+        WF_CREATE_CUSTOM_REPORT(
+            ch_consensus,
+            ch_bam,
+            ch_vcf,
+            ch_reference,
+            GET_REF_STATS.out.genome_bed,
+            ch_amplicon_bed,
+            MAKE_SAMPLE_QC_CSV.out.csv,
+            FINAL_QC_CSV.out.csv,
+            segmented,
+            ch_versions
+        )
     }
 }

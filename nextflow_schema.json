@@ -441,32 +441,6 @@
                 }
             }
         },
-        "report_generation_options": {
-            "title": "Report generation options",
-            "type": "object",
-            "description": "Options pertaining to final report generation",
-            "default": "",
-            "properties": {
-                "multiqc_report": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-file-signature",
-                    "description": "Create MultiQC report instead of custom report"
-                },
-                "multiqc_config_overall": {
-                    "type": "string",
-                    "format": "file-path",
-                    "description": "MultiQC overall run config yaml file",
-                    "hidden": true
-                },
-                "multiqc_config_sample": {
-                    "type": "string",
-                    "format": "file-path",
-                    "description": "MultiQC sample config yaml file",
-                    "hidden": true
-                }
-            },
-            "fa_icon": "fas fa-file-code"
-        },
         "generic_options": {
             "title": "Generic options",
             "type": "object",
@@ -551,9 +525,6 @@
         },
         {
             "$ref": "#/$defs/qc_options"
-        },
-        {
-            "$ref": "#/$defs/report_generation_options"
         },
         {
             "$ref": "#/$defs/generic_options"

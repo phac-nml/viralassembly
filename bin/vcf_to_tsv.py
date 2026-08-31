@@ -74,6 +74,21 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
         return {}
     variants_analyzed.append(variant_str)
 
+    # Since outputs of Illumina and Nanopore are different for now, extract depth and allele frequency
+    #   from either INFO or SAMPLE. Future implementations will probably modify the VCF processing to be the same.
+    vcf_sample_field = var.samples[0].data
+
+    depth = getattr(vcf_sample_field, 'DP', None)
+    if depth is None:
+        depth = var.INFO.get('DP', '')
+
+    af = getattr(vcf_sample_field, 'AF', None)
+    if af is None:
+        af = var.INFO.get('VAF', '')
+
+    depth = int(depth) if depth else ''
+    vaf = round(af[0], 4) if af else ''
+
     # Non-annotated we just need the info in TSV format
     if not annotated:
         out = {
@@ -81,7 +96,9 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
             'Pos': int(var.POS),
             'Ref': str(var.REF),
             'Alt': str(var.ALT[0]),
-            'Qual': str(var.QUAL)
+            'Qual': str(var.QUAL),
+            'Depth': depth,
+            'Alt Allele Fraction': vaf
         }
         return out
 
@@ -96,7 +113,9 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
             'Consequence': '',
             'Ref': str(var.REF),
             'Alt': str(var.ALT[0]),
-            'Qual': str(var.QUAL)
+            'Qual': str(var.QUAL),
+            'Depth': depth,
+            'Alt Allele Fraction': vaf
         }
         return out
     ann_list = var_ann[0].split('|')
@@ -117,7 +136,9 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
         'Consequence': consequence,
         'Ref': str(var.REF),
         'Alt': str(var.ALT[0]),
-        'Qual': str(var.QUAL)
+        'Qual': str(var.QUAL),
+        'Depth': depth,
+        'Alt Allele Fraction': vaf
     }
     return out
 

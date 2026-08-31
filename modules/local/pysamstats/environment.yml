@@ -1,6 +1,6 @@
-name: qualimap_bamqc
+name: pysamstats
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::qualimap=2.3
+  - bioconda::pysamstats=1.1.2

@@ -6,6 +6,7 @@ import statistics
 import subprocess
 import pandas as pd
 import vcf
+import re
 
 from Bio import SeqIO, SeqRecord
 from collections import defaultdict
@@ -86,6 +87,17 @@ def init_parser() -> argparse.ArgumentParser:
         required=False,
         type=str,
         help='Input PCR bed file to test variants against'
+    )
+    parser.add_argument(
+        '--add_nextclade_columns',
+        action='store_true',
+        help='Add nextclade columns to the final output only if params.skip_nextclade is not invoked'
+    )
+    parser.add_argument(
+        '--nextclade_csv',
+        required=False,
+        type=str,
+        help='Nextclade CSV file'
     )
     return parser
 
@@ -446,6 +458,39 @@ def count_minor_variants(vcf_file: str, chrom: str) -> Tuple[int, int]:
 
     return snps, indels
 
+def get_nextclade_vals(nextclade_csv: str) -> Tuple[str, str, str]:
+    '''
+    Purpose:
+    --------
+    Parse custom nextclade CSV file to find information on potential issue sites
+
+    Parameters:
+    -----------
+    nextclade_csv (str): Path to nextclade CSV file. ';' delimited
+
+    Returns:
+    --------
+    Tuple[str, str, str]: frameshifts, stop codons, and mutated stop codons
+    '''
+    # Nextclade CDS Checks
+    ## To look back at for segmented viruses since it now just uses the second line
+    with open(nextclade_csv, 'r') as handle:
+        reader = csv.DictReader(handle, delimiter=';')
+        d = next(reader, None)
+
+    if d:
+        aa_mutations = d['aaSubstitutions']
+        frameshifts = d['qc.frameShifts.frameShifts']
+        stop_codons = d['qc.stopCodons.stopCodons']
+
+        stop_codon_pattern = ':\\*'
+        mutated_stop_codons_match = re.findall(stop_codon_pattern, aa_mutations)
+        mutated_stop_codons = '|'.join(mutated_stop_codons_match)
+
+        return frameshifts, stop_codons, mutated_stop_codons
+    else:
+        return '', '', ''
+
 def main() -> None:
     """Main entry to the program"""
     # Init Parser and set arguments
@@ -485,6 +530,12 @@ def main() -> None:
             if args.min_vcf:
                 minor_snps, minor_indels = count_minor_variants(args.min_vcf, chrom)
 
+            # Nextclade mutations (if provided)
+            if args.add_nextclade_columns and args.nextclade_csv:
+               frameshifts, stop_codons, mutated_stop_codons = get_nextclade_vals(args.nextclade_csv)
+            elif args.add_nextclade_columns and not args.nextclade_csv:
+                frameshifts, stop_codons, mutated_stop_codons = '', '', ''
+
             # Grade qc
             mean_depth = depth_dict[chrom].get('mean', 0)
             median_depth = depth_dict[chrom].get('median', 0)
@@ -506,18 +557,26 @@ def main() -> None:
                 'num_deletions': var_count_dict['num_deletions'],
                 'num_deletion_sites': var_count_dict['num_deletion_sites'],
                 'num_insertions': var_count_dict['num_insertions'],
-                'num_insertion_sites': var_count_dict['num_insertion_sites'],
-                'variants': variants,
-                'possible_frameshift_variants': frameshift_variants,
-                'sequencing_primer_variants': seq_primer_overlap,
-                'diagnostic_primer_variants': pcr_primer_overlap,
-                'irida_id': args.irida_id
+                'num_insertion_sites': var_count_dict['num_insertion_sites']
             }
+
+            # Conditionally add nextclade mutation data
+            if args.add_nextclade_columns:
+                sample_data['frameshifts'] = frameshifts
+                sample_data['premature_stop_codons'] = stop_codons
+                sample_data['mutated_stop_codons'] = mutated_stop_codons
 
             # Conditionally add the minor variant data
             if args.min_vcf:
                 sample_data['minor_snps'] = minor_snps
                 sample_data['minor_indels'] = minor_indels
+
+            # Add remaining columns
+            sample_data['variants'] = variants
+            sample_data['possible_frameshift_variants'] = frameshift_variants
+            sample_data['sequencing_primer_variants'] = seq_primer_overlap
+            sample_data['diagnostic_primer_variants'] = pcr_primer_overlap
+            sample_data['irida_id'] = args.irida_id
 
             final_out.append(sample_data)
 

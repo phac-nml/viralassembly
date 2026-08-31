@@ -1,0 +1,107 @@
+<!-- Dynamically add in negative control data if negative controls are used -->
+Negative Controls
+==============================
+
+Row
+------------------------------
+
+### Total Negative Controls
+```{r, total_controls, echo=FALSE, error=TRUE}
+total_controls <- nrow(control_df)
+valueBox(total_controls, icon = "")
+```
+
+### Negative Control Status
+```{r, controls_status, echo=FALSE, error=TRUE}
+# Based on run satus, set colour and icon
+run_status = control_df[1, 'run_status']
+if ( run_status == 'PASS' ) {
+    sec_icon = ""
+    sec_color = "success"
+} else if ( run_status == 'WARN' ) {
+    sec_icon = ""
+    sec_color = "warning"
+} else {
+    sec_icon = ""
+    sec_color = "danger"
+}
+valueBox(
+  run_status,
+  icon = sec_icon,
+  color = sec_color
+)
+```
+
+### Negative Control Info
+```{r, controls_info, echo=FALSE, error=TRUE}
+control_info <- control_df[1, 'run_summary']
+sec_color <- "warning"
+if ( is.na(control_info) ) {
+  control_info <- "Meets Requirements"
+  sec_color <- "success"
+}
+valueBox(
+  control_info,
+  color = sec_color,
+  icon = ""
+)
+```
+
+Column {.sidebar}
+------------------------------
+**Negative Control Information**
+
+Negative controls are identified using the control identifiers specified by the user when running the pipeline using the --neg_ctrl_substrings parameter. For this sequencing run, the following identifiers were used to identify negative control samples: **`r paste(control_substrings)`**.
+
+Negative controls are expected to contain little to no target sequence. A negative control is flagged if its genome completeness is ≥ 10%, indicating that a substantial portion of the reference genome was recovered.
+
+The table here summarizes sequencing and QC metrics for all samples identified as negative controls. Unexpected sequencing signal in these samples may indicate contamination, non-specific amplification, or other run-related issues.
+
+Future iterations of this pipeline aim to include more checks for negative controls.
+
+Row {data-height=500}
+------------------------------
+
+### **Table 1.** Negative Controls
+```{r, n_table, echo=FALSE, error=TRUE}
+df <- control_df %>%
+    select(any_of(c("sample", "neg_control_info", "mean_sequencing_depth", "median_sequencing_depth",
+        "num_aligned_reads", "total_variants", "genome_completeness", "qc_pass"))
+    ) %>%
+    rename(
+        "Sample" = sample,
+        "Negative Control Info" = neg_control_info,
+        "Mean Depth" = mean_sequencing_depth,
+        "Median Depth" = median_sequencing_depth,
+        "Total Aligned Reads" = num_aligned_reads,
+        "Variant Count" = total_variants,
+        "Genome Completeness" = genome_completeness,
+        "QC Pass" = qc_pass
+    )
+
+# Add color to table
+df$completeness_int_color <- add_pass_value_int(df, 'QC Pass')
+
+# Using datatable, removing the index row and adding in highlights for the status
+summary_dt <- df %>%
+  DT::datatable(rownames = FALSE,
+    options = list(
+      scrollX = FALSE,
+      columnDefs = list(
+        list(className = 'dt-left', targets = "_all"),
+        list(visible=FALSE, targets='completeness_int_color')
+    ))) %>%
+    formatStyle('completeness_int_color',
+      target = 'row',
+      backgroundColor = styleEqual(c(1, 2, 3, 0),
+      c('', 'orange', '#FFFF66', '#FF6666')
+    )) %>%
+    formatStyle('Genome Completeness',
+      background = styleColorBar(range(0,1), 'lightblue', angle = -90),
+      backgroundSize = '88% 88%',
+      backgroundRepeat = 'no-repeat',
+      backgroundPosition = 'left'
+  )
+
+summary_dt
+```
