@@ -58,7 +58,7 @@
                     "format": "file-path",
                     "exists": true,
                     "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?$",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
                     "description": "Path to reference genome fasta file",
                     "fa_icon": "fas fa-font"
                 },
@@ -327,6 +327,7 @@
                 },
                 "metadata": {
                     "type": "string",
+                    "format": "file-path",
                     "fa_icon": "fas fa-file-csv",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.tsv$",

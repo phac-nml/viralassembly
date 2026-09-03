@@ -55,6 +55,10 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_vira
 //
 workflow PHACNML_VIRALASSEMBLY {
 
+    take:
+    ch_reference
+    segmented
+
     main:
     // Format the input to match based on the type of input - folder, file, or samplesheet
     FORMAT_INPUT()
@@ -64,7 +68,9 @@ workflow PHACNML_VIRALASSEMBLY {
     //
     VIRALASSEMBLY (
         FORMAT_INPUT.out.pass,
-        FORMAT_INPUT.out.empty
+        FORMAT_INPUT.out.empty,
+        ch_reference,
+        segmented
     )
 }
 
@@ -86,14 +92,16 @@ workflow {
         params.validate_params,
         params.monochrome_logs,
         args,
-        params.outdir,
-        params.reference
+        params.outdir
     )
 
     //
     // WORKFLOW: Run main workflow
     //
-    PHACNML_VIRALASSEMBLY()
+    PHACNML_VIRALASSEMBLY(
+        PIPELINE_INITIALISATION.out.reference,
+        PIPELINE_INITIALISATION.out.segmented
+    )
 
     //
     // Final pipeline completion
