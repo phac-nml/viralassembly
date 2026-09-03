@@ -13,7 +13,7 @@ valueBox(total_controls, icon = "")
 
 ### Negative Control Status
 ```{r, controls_status, echo=FALSE, error=TRUE}
-# Based on run satus, set colour and icon
+# Based on run status, set colour and icon
 run_status = control_df[1, 'run_status']
 if ( run_status == 'PASS' ) {
     sec_icon = ""
@@ -62,7 +62,7 @@ Future iterations of this pipeline aim to include more checks for negative contr
 Row {data-height=500}
 ------------------------------
 
-### **Table 1.** Negative Controls
+### **Table `r table_number <- table_number + 1; as.roman(table_number)`.** Negative Controls
 ```{r, n_table, echo=FALSE, error=TRUE}
 df <- control_df %>%
     select(any_of(c("sample", "neg_control_info", "mean_sequencing_depth", "median_sequencing_depth",

@@ -10,6 +10,17 @@ params:
     min_allele_freq: 0.65
 ---
 
+<!-- Style updates mostly to make sure the caption boxes are all matching -->
+<style>
+.value-box .caption {
+  font-size: 24px;
+  color: white
+}
+.value-box .value {
+    color: white;
+}
+</style>
+
 ```{r, setup, include=FALSE}
 # Load in libraries
 library(flexdashboard)

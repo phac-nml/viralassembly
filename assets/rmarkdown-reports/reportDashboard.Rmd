@@ -44,6 +44,9 @@ knitr::opts_chunk$set(dev = 'jpeg')
 
 ```{r, global, include=FALSE, echo=FALSE, error=TRUE}
 # Create global variables and functions
+# Set Table number to account for optional tables
+table_number <- 0
+
 # Read QC csv file
 summary_df <- read.table(params$summary_df, header = TRUE, sep = ",")
 
@@ -191,10 +194,10 @@ p
 Row
 ------------------------------
 
-### **Table I.** All Samples Data Summary
+### **Table `r table_number <- table_number + 1; as.roman(table_number)`.** All Samples Data Summary
 ```{r, data_table, echo=FALSE, error=TRUE}
 # Create an interactive table of all samples with the different qc statuses highlighted
-df <- summary_df[!is_control, ] %>%
+df <- summary_df %>%
   select(any_of(c('sample', 'qc_pass', 'mean_sequencing_depth', 'median_sequencing_depth',
                   'num_aligned_reads', 'total_variants', 'num_snps', 'num_deletions',
                   'num_deletion_sites', 'num_insertions', 'num_insertion_sites',
@@ -289,7 +292,7 @@ plot_ly(summary_depth_df, x = ~position, text = ~paste0(
   add_ribbons(ymin = ~ymin, ymax = ~ymax, fillcolor = "rgba(0, 0, 255, 0.25)", line = list(color = "transparent"), name = "Mean ± SD", hoverinfo = "skip") %>%
   add_lines(y =~median, line = list(color = "blue"), name = "Median read depth") %>%
   layout(title = list(text= "Median genomic read depth with deviation", x = 0.5),
-    xaxis = list(title = "Genome Position", range = c(0, genome_length), nticks = 10, showgrid = FALSE, gridcolor = "#dadce0", griddash = "dot"),
+    xaxis = list(title = "Genome Position", range = c(0, genome_length), nticks = 10, showgrid = FALSE, gridcolor = "#dadce0", griddash = "dot", tickformat = ".0f"),
     yaxis = list(title = "Median read depth", rangemode = "tozero", showgrid = FALSE),
     showlegend = FALSE
   )
@@ -350,7 +353,7 @@ valueBox(params$nf_version, "Nextflow Version")
 
 ## Row
 
-### **Table 1.** Software Versions {data-height=550}
+### **Table `r table_number <- table_number + 1; as.roman(table_number)`.** Software Versions {data-height=550}
 
 ```{r, software_ver, echo=FALSE, error=TRUE}
 # Read the YAML file
