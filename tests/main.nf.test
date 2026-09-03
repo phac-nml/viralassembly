@@ -267,7 +267,7 @@ nextflow_pipeline {
                 outdir          = "results"
                 input           = "${projectDir}/test_data/nanopore/input.csv"
                 local_model     = "${projectDir}/test_data/clair3_models/r1041_e82_400bps_sup_v420"
-                reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
+                reference       = "${projectDir}/test_data/MN908947.3.reference.fasta.gz"
                 primer_bed      = "${projectDir}/test_data/primer.bed"
                 metadata        = "${projectDir}/test_data/nanopore/metadata.tsv"
                 gff             = "${projectDir}/test_data/MN908947.3.gff3"
@@ -792,7 +792,7 @@ nextflow_pipeline {
             params {
                 outdir          = "results"
                 input           = "${projectDir}/test_data/illumina_segmented/illumina_segmented.csv"
-                reference       = "${projectDir}/test_data/rvfv.reference.fasta"
+                reference       = "${projectDir}/test_data/rvfv.reference.fasta.gz"
                 platform        = "illumina"
                 skip_nextclade  = true
                 multiqc_report  = true
