@@ -310,7 +310,7 @@ It is a good idea to specify a pipeline version when running the pipeline on you
 
 First, go to the [phac-nml/viralassembly releases page](https://github.com/phac-nml/viralassembly/releases) and find the latest pipeline version - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`. Of course, you can switch to another version by changing the number after the `-r` flag.
 
-This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. For example, at the bottom of the MultiQC reports.
+This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. For example, in the Tool Versions page of the final report.
 
 To further assist in reproducibility, you can use share and re-use [parameter files](#running-the-pipeline) to repeat pipeline runs with the same settings without having to write out a command with every single parameter.
 
@@ -386,8 +386,6 @@ Use `--version` to see version information
 | --pcr_primer_bed                                          | Path to PCR primer bed file to check for mutations against                         | Path    | ''                          | For output QC checks                                                                                                                             |
 | --neg_control_threshold                                   | Coverage threshold at which to fail negative control samples                       | Number  | 0.10                        |                                                                                                                                                  |
 | --neg_ctrl_substrings                                     | Negative control sample substrings separated by a `,`                              | String  | 'ntc,neg,blank,water'       |                                                                                                                                                  |
-| **Reporting Parameters**                                  |                                                                                    |         |                             |                                                                                                                                                  |
-| --multiqc_report                                          | Run MultiQC report over custom report                                              | Boolean | False                       |                                                                                                                                                  |
 
 ### Schemes and Reference
 

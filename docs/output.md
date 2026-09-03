@@ -11,7 +11,7 @@ The pipeline supports both:
 
 As Nanopore and Illumina data use seperate consensus generation workflows before converging on common downstream steps, the pipeline output may vary slightly.
 
-Most QC plots and summary tables are included in either the MultiQC report or the custom report generated at the end of the pipeline.
+Most QC plots and summary tables are included in the custom reports generated at the end of the pipeline.
 
 The directories listed below are created within the directory specified by `--outdir` after the pipeline has finished. All paths are relative to the top-level results directory.
 
@@ -26,7 +26,8 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
       - [Reference Stats](#reference-stats)
       - [Primer Validation and Processing](#primer-validation-and-processing)
     - [Nanopore Consensus Generation](#nanopore-consensus-generation)
-      - [Nanostat](#nanostat)
+      - [Artic Guppyplex](#artic-guppyplex)
+      - [Chopper](#chopper)
       - [Minimap2](#minimap2)
       - [Artic Align Trim](#artic-align-trim)
       - [Clair3](#clair3)
@@ -34,19 +35,23 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
       - [Artic Mask](#artic-mask)
       - [BCFtools Norm](#bcftools-norm)
       - [BCFtools Consensus](#bcftools-consensus)
+    - [Artic Minion](#artic-minion)
     - [Illumina Consensus Generation](#illumina-consensus-generation)
-      - [Bowtie2](#bowtie2)
+      - [FastP](#fastp)
+      - [Bowtie2 \& Samtools Sort](#bowtie2--samtools-sort)
       - [Artic Align Trim](#artic-align-trim-1)
       - [FreeBayes](#freebayes)
       - [iVar Variant Calling](#ivar-variant-calling)
       - [Process VCF and BCFtools Norm](#process-vcf-and-bcftools-norm)
       - [BCFtools Filter](#bcftools-filter)
+      - [Tabix](#tabix)
+      - [Masking](#masking)
+      - [Make](#make)
       - [BCFtools Consensus](#bcftools-consensus-1)
     - [QC and Reporting](#qc-and-reporting)
       - [SnpEff](#snpeff)
       - [Nextclade](#nextclade)
       - [QC Compilation](#qc-compilation)
-      - [MultiQC](#multiqc)
       - [Custom Report](#custom-report)
     - [Pipeline information](#pipeline-information)
 
@@ -60,6 +65,7 @@ Initial processing steps to index the reference fasta and validate the primer fi
 <summary>Output files</summary>
 
 - `reference/`
+  - `genome.bed`: Genomic information in bed format that has the coordiantes of the reference genome
   - `*.fai`: Samtools faidx fai file for reference genome
   </details>
 
@@ -80,11 +86,13 @@ The validation and processing is done through [primalbedtools](https://github.co
 
 The following steps are specific to the Nanopore consensus generation workflow invoked with `--platform nanopore`
 
-#### Nanostat
+#### Artic Guppyplex
 
-[Nanostat](https://github.com/wdecoster/nanostat) generates plots and statistics on trimmed fastq files for the final multiqc reports.
+[Artic Guppyplex](https://github.com/artic-network/fieldbioinformatics/blob/master/artic/guppyplex.py) filters Nanopore reads by specified read length.
 
-![nanostats_mqc](./images/nanostat_mqc.png)
+#### Chopper
+
+[Chopper](https://github.com/wdecoster/chopper/) filters Nanopore reads based on sequencing quality.
 
 #### Minimap2
 
@@ -95,7 +103,7 @@ The following steps are specific to the Nanopore consensus generation workflow i
   - `*.sorted.bam`: Sorted bam file from minimap2 and samtools
   </details>
 
-The sorted BAM file from minimap2 and samtools.
+[Minimap2](https://github.com/lh3/minimap2) aligns the filtered Nanopore reads to the reference genome and produces a sorted BAM file.
 
 #### Artic Align Trim
 
@@ -148,7 +156,7 @@ Mask low depth and failing variants to create a preconsensus sequence for BCFtoo
   - `*.consensus.norm.vcf.gz`: VCF file containing variants passing quality filters that have their indels normalized and reference positions fixed
   </details>
 
-BCFtools norm is utilized to fix locations in which two variants overlap which during BCFtools consensus would crash the pipeline previously. [BCFtools](https://samtools.github.io/bcftools/bcftools.html#norm)
+[BCFtools](https://samtools.github.io/bcftools/bcftools.html#norm) Norm is utilized to fix locations in which two variants overlap which during BCFtools consensus would crash the pipeline previously.
 
 #### BCFtools Consensus
 
@@ -159,13 +167,34 @@ BCFtools norm is utilized to fix locations in which two variants overlap which d
   - `*.consensus.fasta`: Fasta file containing the final output consensus sequence with applied variants and masked sites
   </details>
 
-Final output consensus sequence for the sample with variants applied and low coverage/failing variants masked with N's. [BCFtools](https://samtools.github.io/bcftools/bcftools.html#norm)
+[BCFtools](https://samtools.github.io/bcftools/bcftools.html#norm) creates the final output consensus sequence for the sample with variants applied and low coverage/failing variants masked with N's.
+
+### Artic Minion
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `consensus/`
+  - `*.consensus.fasta`: Fasta file containing the final output consensus sequence with applied variants and masked sites
+- `bam/`
+  - `*.bam`: Aligned BAM file
+- `vcf/`
+  - `*.pass.vcf.gz`: VCF file containing variants passing quality filters
+  - `*.pass.vcf.gz.tbi`: VCF index file containing variants passing quality filters
+  - `*.fail.vcf`: VCF file containing variants failing quality filters
+  </details>
+
+Runs Artic Minion analysis workflow to perform alignment, variant calling, and consensus generation instead of the adapted Nanopore consensus generation workflow.
 
 ### Illumina Consensus Generation
 
 The following steps are specific to the Illumina consensus generation workflow invoked with `--platform illumina`
 
-#### Bowtie2
+#### FastP
+
+Performs quality filtering and adapter trimming of Illumina reads.
+
+#### Bowtie2 & Samtools Sort
 
 <details markdown="1">
 <summary>Output files</summary>
@@ -174,7 +203,7 @@ The following steps are specific to the Illumina consensus generation workflow i
   - `*.sorted.bam`: Sorted bam file from bowtie2 and samtools
   </details>
 
-The sorted BAM file from bowtie2 and samtools.
+The sorted BAM file from [bowtie2](https://github.com/BenLangmead/bowtie2) and [SAMtools](https://github.com/samtools/samtools).
 
 #### Artic Align Trim
 
@@ -212,7 +241,7 @@ _Optional Illumina Variant Caller: iVar_
   - `*.vcf`: Called variants by Ivar
   </details>
 
-Initial variant calls in VCF format.
+Initial variant calls in VCF format through iVar and Bcftools Sort
 
 #### Process VCF and BCFtools Norm
 
@@ -223,7 +252,7 @@ Initial variant calls in VCF format.
   - `*.consensus.norm.vcf.gz`: VCF file containing variants passing quality filters that have their indels normalized and reference positions fixed
   </details>
 
-Uses both a custom python script based on a script from [Jared Simpson](https://github.com/jts/ncov2019-artic-nf/blob/be26baedcc6876a798a599071bb25e0973261861/bin/process_gvcf.py) and BCFtools Norm to process and normalize the variants for consensus generation
+Uses both a custom python script based on a script from [Jared Simpson](https://github.com/jts/ncov2019-artic-nf/blob/be26baedcc6876a798a599071bb25e0973261861/bin/process_gvcf.py) and [BCFtools](https://samtools.github.io/bcftools/bcftools.html#filter) Norm to process and normalize the variants for consensus generation
 
 #### BCFtools Filter
 
@@ -236,7 +265,35 @@ _Optional Illumina Variant Caller: iVar_
   - `*.consensus.filtered.vcf.gz`: VCF file containing variants passing quality filters
   </details>
 
-Filtered VCF file with variants to be used in consensus generation. [BCFtools](https://samtools.github.io/bcftools/bcftools.html#filter)
+[BCFtools](https://samtools.github.io/bcftools/bcftools.html#filter) genrates a filtered VCF file with variants to be used in consensus generation.
+
+#### Tabix
+
+_Optional Illumina Variant Caller: iVar_
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `vcf/final`
+  - `*.consensus.filtered.vcf.gz`: VCF file containing variants passing quality filters
+  </details>
+
+[Tabix](https://github.com/samtools/tabix) indexes the filtered VCF file
+
+#### Masking
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `/depth_mask`
+  - `*coverage_mask.txt`: Coordinates of the locations to mask where the depth is less than required to call a base
+- `/consensus/mask`
+  - `*.bed`: Primary unfiltered BED file with regions to mask
+  - `*.merged.bed`: Filtered BED file containing merged regions of overlapping or adjacent interval masking regions
+  - `*.fa`: Preconsensus sequence of the reference with the identified intervals masked
+  </details>
+
+Identify low-confidence or low-depth regions and mask them from the final consensus sequence
 
 #### BCFtools Consensus
 
@@ -247,7 +304,7 @@ Filtered VCF file with variants to be used in consensus generation. [BCFtools](h
   - `*.consensus.fasta`: Fasta file containing the final output consensus sequence with applied variants and masked sites
   </details>
 
-Final output consensus sequence for the sample with variants applied, low coverage/failing variants masked with N's, and mixed/ambiguous sites with their corresponding IUPAC code. [BCFtools](https://samtools.github.io/bcftools/bcftools.html#norm)
+[BCFtools](https://samtools.github.io/bcftools/bcftools.html#norm) creates the final output consensus sequence for the sample with variants applied, low coverage/failing variants masked with N's, and mixed/ambiguous sites with their corresponding IUPAC code.
 
 ### QC and Reporting
 
@@ -266,8 +323,6 @@ Final output consensus sequence for the sample with variants applied, low covera
 
 [SnpEff](https://pcingola.github.io/SnpEff/) is a genetic variant annotation and functional effect prediction toolbox. It annotates and predicts the effects of genetic variants on genes and proteins (such as amino acid changes).
 
-![snpeff_mqc](./images/snpeff_mqc.png)
-
 #### Nextclade
 
 <details markdown="1">
@@ -278,7 +333,7 @@ Final output consensus sequence for the sample with variants applied, low covera
   - `nextstrain/`: Downloaded dataset
   </details>
 
-Nextclade is used for clade assignments and gene mutation detection.
+[Nextclade](https://github.com/nextstrain/nextclade) is used for clade assignments and gene mutation detection.
 
 #### QC Compilation
 
@@ -292,37 +347,25 @@ Nextclade is used for clade assignments and gene mutation detection.
 
 Final CSV file(s) for both individual samples and the overall run that combines and checks a variety of metrics giving a final QC value for each sample.
 
-![qc_mqc](./images/qc_mqc.png)
-
-#### MultiQC
-
-<details markdown="1">
-<summary>Output files</summary>
-
-- `sample_mqc/`
-  - `*.report.html`: Sample specific MultiQC HTML report containing visuals and tables
-- `Overall-Run-MultiQC.report.html`: Final overall MultiQC report containing visuals and tables for all samples combined
-</details>
-
-Final output reports generated by [MultiQC](https://multiqc.info/docs/) based on the [overall config](../assets/multiqc_config_overall.yaml) and the [sample config](../assets/multiqc_config_sample.yaml) files which collate all of the outputs of the pipeline
-
-![sample_mqc_mqc](./images/sample_mqc_mqc.png)
-
 #### Custom Report
 
 <details markdown="1">
 <summary>Output files</summary>
 
-- `reportDashboard.html`: Custom report dashboard displaying run metrics overall and for each sample
+- `reportDashboard.html`: Custom report dashboard displaying overall run metrics
+- `/sample_reports/*.html`: Custom report displaying sample specific metrics
 </details>
 
-Custom RMarkdown report that contains sample and run information. Currently it can only be generated when running with `conda` so it is an output that has to be specified. It also still has a few issues relating to load times.
+Custom RMarkdown reports that contain sample and run information.
 
 ![run_summary_custom](./images/run_summary_custom.png)
 Run summary page
 
-![sample_custom](./images/sample_custom.png)
+![sample_custom](./images/sample_custom1.png)
 Example sample page
+
+![sample_custom](./images/sample_custom2.png)
+Example sample page (Continued)
 
 ![amplicons_custom](./images/amplicons_custom.png)
 Amplicons page

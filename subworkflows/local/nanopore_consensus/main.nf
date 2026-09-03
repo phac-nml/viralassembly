@@ -11,8 +11,6 @@ include { ARTIC_GET_MODELS          } from '../../../modules/local/artic/get_mod
 // Read QC
 include { ARTIC_GUPPYPLEX           } from '../../../modules/local/artic/guppyplex/main'
 include { CHOPPER                   } from '../../../modules/local/chopper/main'
-include { NANOSTAT                  } from '../../../modules/local/nanostat/main'
-include { RENAME_FASTQ              } from '../../../modules/local/custom/utils.nf'
 
 // Alignment
 include { MINIMAP2_ALIGN            } from '../../../modules/local/minimap2/main'
@@ -87,12 +85,6 @@ workflow WF_NANOPORE_CONSENSUS {
             pass: fastq.countFastq() >= params.min_reads
             empty: fastq.countFastq() < params.min_reads
         }.set{ ch_filtered_fastqs }
-
-    // Stats on final reads
-    NANOSTAT(
-        ch_filtered_fastqs.pass
-    )
-    ch_versions = ch_versions.mix(NANOSTAT.out.versions)
 
     if ( !params.use_artic_tool ) {
         // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
@@ -247,6 +239,5 @@ workflow WF_NANOPORE_CONSENSUS {
     bam                   = ch_bam                      // channel: [ val(meta), file(bam), file(bai) ]
     vcf                   = ch_vcf                      // channel: [ val(meta), file(vcf) ]
     empty_filtered_fastqs = ch_filtered_fastqs.empty    // channel: [ val(meta), file(fastqs) ]
-    stats                 = NANOSTAT.out.stats          // channel: [ val(meta), file(nanostat.txt) ]
     versions              = ch_versions                 // channel: [ path(versions.yml) ]
 }

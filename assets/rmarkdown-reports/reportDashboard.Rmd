@@ -8,7 +8,10 @@ output:
 params:
     summary_df: 'overall.qc.csv'
     run_amplicons: FALSE
-    min_allele_freq: 0.65
+    version: ""
+    revision: ""
+    nf_version: ""
+    neg_ctrl_substrings: ""
 ---
 
 <!-- Style updates mostly to make sure the caption boxes are all matching -->
@@ -40,12 +43,23 @@ knitr::opts_chunk$set(dev = 'jpeg')
 ```
 
 ```{r, global, include=FALSE, echo=FALSE, error=TRUE}
-# Control Substrings
-control_substrings = c("neg", "ntc", "blank")
-
 # Create global variables and functions
-#  Likely move these elsewhere later (like to a functions R file)
+# Set Table number to account for optional tables
+table_number <- 0
+
+# Read QC csv file
 summary_df <- read.table(params$summary_df, header = TRUE, sep = ",")
+
+# Specify and create a df with negative controls
+control_substrings = trimws(strsplit(params$neg_ctrl_substrings, "[,;|]+")[[1]])
+control_regex = paste(control_substrings, collapse = "|")
+is_control <- grepl(
+  control_regex,
+  summary_df$sample,
+  ignore.case = TRUE
+)
+has_controls <- any(is_control)
+control_df <- summary_df[is_control, ]
 
 # Genome completeness colour palette
 get_genome_completeness_color <- function(value) {
@@ -113,19 +127,19 @@ Row
 ------------------------------
 
 ### Total Samples
-```{r, echo=FALSE, error=TRUE}
+```{r, samples_box, echo=FALSE, error=TRUE}
 total_samples <- nrow(summary_df)
 valueBox(total_samples, icon = "")
 ```
 
 ### Total Passing Samples
-```{r, echo=FALSE, error=TRUE}
+```{r, passing_box, echo=FALSE, error=TRUE}
 passing_samples <- sum(summary_df[["qc_pass"]] == "PASS", na.rm = FALSE)
 valueBox(passing_samples, icon = "")
 ```
 
 ### Run Name
-```{r, echo=FALSE, error=TRUE}
+```{r, run_name_box, echo=FALSE, error=TRUE}
 if ("run_name" %in% colnames(summary_df)) {
   run_name <- summary_df[1, 'run_name']
 } else {
@@ -135,7 +149,7 @@ valueBox(run_name, icon = "")
 ```
 
 ### Negative Control Status
-```{r, echo=FALSE, error=TRUE}
+```{r, controls_status_box, echo=FALSE, error=TRUE}
 # Based on run satus, set colour and icon
 run_status = summary_df[1, 'run_status']
 if ( run_status == 'PASS' ) {
@@ -177,191 +191,31 @@ p
 > **Figure 1.** Per Sample Genome Completeness. Comparison of the percentage of bases called in the consensus sequence of each sample.
 > The dashed lines at 50% and 90% show the cut-offs for an incomplete genome and a partial genome respectively.
 
-Row {data-height=500}
+Row
 ------------------------------
 
-### **Table 1.** All Samples Data Summary
+### **Table `r table_number <- table_number + 1; as.roman(table_number)`.** All Samples Data Summary
 ```{r, data_table, echo=FALSE, error=TRUE}
 # Create an interactive table of all samples with the different qc statuses highlighted
 df <- summary_df %>%
   select(any_of(c('sample', 'qc_pass', 'mean_sequencing_depth', 'median_sequencing_depth',
                   'num_aligned_reads', 'total_variants', 'num_snps', 'num_deletions',
                   'num_deletion_sites', 'num_insertions', 'num_insertion_sites',
-                  'genome_completeness', 'minor_snps', 'minor_indels')))
+                  'genome_completeness')))
 
-if ("minor_snps" %in% colnames(df)) {
-    df <- df %>%
-    rename(
-      "Sample" = sample,
-      "QC Pass" = qc_pass,
-      "Mean Depth" = mean_sequencing_depth,
-      "Median Depth" = median_sequencing_depth,
-      "Total Aligned Reads" = num_aligned_reads,
-      "Variant Count" = total_variants,
-      "# SNPs" = num_snps,
-      "# Del" = num_deletions,
-      "# Del Sites" = num_deletion_sites,
-      "# Ins" = num_insertions,
-      "# Ins Sites" = num_insertion_sites,
-      "Genome Completeness" = genome_completeness,
-      "# Minor SNPs" = minor_snps,
-      "# Minor Indels" = minor_indels
-    )
-} else {
-  df <- df %>%
-    rename(
-      "Sample" = sample,
-      "Mean Depth" = mean_sequencing_depth,
-      "Median Depth" = median_sequencing_depth,
-      "Total Aligned Reads" = num_aligned_reads,
-      "Variant Count" = total_variants,
-      "# SNPs" = num_snps,
-      "# Del" = num_deletions,
-      "# Del Sites" = num_deletion_sites,
-      "# Ins" = num_insertions,
-      "# Ins Sites" = num_insertion_sites,
-      "Genome Completeness" = genome_completeness,
-      "QC Pass" = qc_pass
-    )
-}
-
-# Add color to table
-df$completeness_int_color <- add_pass_value_int(df, 'QC Pass')
-
-# Using datatable, removing the index row and adding in highlights for the status
-summary_dt <- df %>%
-  DT::datatable(rownames = FALSE,
-    options = list(
-      scrollX = FALSE,
-      columnDefs = list(
-        list(className = 'dt-left', targets = "_all"),
-        list(visible=FALSE, targets='completeness_int_color')
-    ))) %>%
-    formatStyle('completeness_int_color',
-      target = 'row',
-      backgroundColor = styleEqual(c(1, 2, 3, 0),
-      c('', 'orange', '#FFFF66', '#FF6666')
-    )) %>%
-    formatStyle('Genome Completeness',
-      background = styleColorBar(range(0,1), 'lightblue', angle = -90),
-      backgroundSize = '88% 88%',
-      backgroundRepeat = 'no-repeat',
-      backgroundPosition = 'left'
-  )
-
-summary_dt
-```
-
-<!-- ---------------------------------------------------------- -->
-<!-- Create Individual samples pages with the below code blocks -->
-<!-- ---------------------------------------------------------- -->
-
-```{r, render subpages, include=FALSE, echo=FALSE, error=TRUE}
-# Code block to generate sample subpages - https://somtom.github.io/post/using-dynamically-rendered-r-markdown-childs-for-reports/
-subpages = NULL
-# Set knitr options to allow duplicate labels
-options(knitr.duplicate.label = 'allow')
-# Create temporary environment which we use for knitting subpages.RMD
-subpage_env <- new.env()
-
-# Create subpages
-for ( samplev in summary_df$sample ) {
-  # Filter data for sample
-  sample_df <- summary_df %>%
-    filter(sample == samplev)
-
-  # Assign data to subpage_env
-  assign("sample_df", sample_df, subpage_env)
-  assign("sample", samplev, subpage_env)
-  assign("min_allele_freq", params$min_allele_freq, subpage_env)
-
-  # Knit sample subpage using the subpage_env and add result to out vector
-  subpages = c(subpages, knitr::knit_child('sampleSubpage.Rmd', envir = subpage_env))
-}
-```
-
-`r paste(knitr::knit_child(text = subpages), collapse = '')`
-
-<!-- ---------------------- -->
-<!-- Back to normal Rmd doc -->
-<!-- ---------------------- -->
-
-Negative Controls
-==============================
-
-Row
-------------------------------
-
-### Total Negative Controls
-```{r, echo=FALSE, error=TRUE}
-total_controls <- sum(sapply(control_substrings, function(pattern) any(grepl(pattern, summary_df$sample, ignore.case = TRUE))))
-valueBox(total_controls, icon = "")
-```
-
-### Negative Control Status
-```{r, echo=FALSE, error=TRUE}
-# Based on run satus, set colour and icon
-run_status = summary_df[1, 'run_status']
-if ( run_status == 'PASS' ) {
-    sec_icon = ""
-    sec_color = "success"
-} else if ( run_status == 'WARN' ) {
-    sec_icon = ""
-    sec_color = "warning"
-} else {
-    sec_icon = ""
-    sec_color = "danger"
-}
-valueBox(
-  run_status,
-  icon = sec_icon,
-  color = sec_color
-)
-```
-
-### Negative Control Info
-```{r, echo=FALSE, error=TRUE}
-control_info <- summary_df[1, 'run_summary']
-sec_color <- "warning"
-if ( is.na(control_info) ) {
-  control_info <- "Meets Requirements"
-  sec_color <- "success"
-}
-valueBox(
-  control_info,
-  color = sec_color,
-  icon = ""
-)
-```
-
-Column {.sidebar}
-------------------------------
-**Negative Control Information**
-
-Negative controls are found through the use of matching the sample name to a list of negative control substrings including: "`r control_substrings`".
-Currently, negative controls will fail if they have a genome completeness >= 0.10 (10% of the bases called).
-
-More checks will be added in the future
-
-Row {data-height=500}
-------------------------------
-
-### **Table 1.** Negative Controls
-```{r, n_table, echo=FALSE, error=TRUE}
-# Have to concat the substrings to grep with
-substring_regex <- paste(control_substrings, collapse = "|")
-df <- select(summary_df, sample, neg_control_info, mean_sequencing_depth, median_sequencing_depth, num_aligned_reads, total_variants, genome_completeness, qc_pass)
+# Rename column names
 df <- df %>%
-  filter(
-    grepl(substring_regex, sample, ignore.case = TRUE)
-  ) %>%
   rename(
     "Sample" = sample,
-    "Negative Control Info" = neg_control_info,
     "Mean Depth" = mean_sequencing_depth,
     "Median Depth" = median_sequencing_depth,
     "Total Aligned Reads" = num_aligned_reads,
     "Variant Count" = total_variants,
+    "# SNPs" = num_snps,
+    "# Del" = num_deletions,
+    "# Del Sites" = num_deletion_sites,
+    "# Ins" = num_insertions,
+    "# Ins Sites" = num_insertion_sites,
     "Genome Completeness" = genome_completeness,
     "QC Pass" = qc_pass
   )
@@ -393,16 +247,113 @@ summary_dt <- df %>%
 summary_dt
 ```
 
+Row
+------------------------------
+
+### {-}
+```{r median-depth-plot, error=TRUE, echo=FALSE}
+# Getting all the depth TSV files
+files <- list.files("base_coverages", pattern = "\\.bed$", full.names = TRUE)
+
+# Combine all dfs
+long_df <- rbindlist(
+  lapply(files, fread,
+    select = c("reference_name", "position", "depth"),
+    colClasses = c(
+      reference_name = "character",
+      position = "integer",
+      depth = "integer"
+    )
+  )
+)
+
+# Summarize positions
+#  Ymin and Ymax for drawing the stdev region
+#  Ymin should not be below 0
+summary_depth_df <- long_df %>%
+  group_by(position) %>%
+  summarise(
+    mean = mean(depth, na.rm = TRUE),
+    sd = sd(depth, na.rm = TRUE),
+    median = median(depth, na.rm = TRUE),
+    ymin = pmax(mean - sd, 0),
+    ymax = mean + sd,
+    .groups = "drop"
+  )
+
+# Get maximum genome_length for x-axis
+genome_length <- max(summary_depth_df$position, na.rm = TRUE)
+
+# Plot figure
+plot_ly(summary_depth_df, x = ~position, text = ~paste0(
+  "<b>Position: </b>", position,
+  "<br><b>Mean ± SD: </b>", round(mean, 2), " ± ", round(sd, 2)
+), hoverinfo = "text") %>%
+  add_ribbons(ymin = ~ymin, ymax = ~ymax, fillcolor = "rgba(0, 0, 255, 0.25)", line = list(color = "transparent"), name = "Mean ± SD", hoverinfo = "skip") %>%
+  add_lines(y =~median, line = list(color = "blue"), name = "Median read depth") %>%
+  layout(title = list(text= "Median genomic read depth with deviation", x = 0.5),
+    xaxis = list(title = "Genome Position", range = c(0, genome_length), nticks = 10, showgrid = FALSE, gridcolor = "#dadce0", griddash = "dot", tickformat = ".0f"),
+    yaxis = list(title = "Median read depth", rangemode = "tozero", showgrid = FALSE),
+    showlegend = FALSE
+  )
+```
+
+
+> **Figure 2.** Median summarized genomic read depth with standard deviation. The median depth and standard deviation were calculated for each genomic position and plotted such that the median depth is highlighted plus and minus 1 standard deviation.
+
+<!-- ---------------------------------------------------------- -->
+<!-- Create Optional pages with child documents -->
+<!-- ---------------------------------------------------------- -->
+
+<!-- ------------------ -->
+<!-- Negative Controls if given -->
+<!-- ------------------ -->
+```{r, neg_controls, child="sampleNegative.Rmd", params=params, eval=has_controls}
+```
+
+
 <!-- ------------------ -->
 <!-- Amplicons if given -->
 <!-- ------------------ -->
 ```{r, amplicons, child="sampleAmplicons.Rmd", params=params, eval=params$run_amplicons}
 ```
 
+<!-- ---------------------- -->
+<!-- Back to normal Rmd doc -->
+<!-- ---------------------- -->
+
 Tool Versions
 ==============================
 
-### **Table 1.** Software Versions {data-height=800}
+## Row
+
+### {-}
+
+```{r pipeline-name}
+valueBox('phac-nml/viralassembly', "Pipeline Name")
+```
+
+### {-}
+
+```{r pipeline-version}
+valueBox(params$version, "Pipeline Version")
+```
+
+### {-}
+
+```{r pipeline-rev}
+valueBox(params$revision, "Pipeline Revision")
+```
+
+### {-}
+
+```{r nfversion}
+valueBox(params$nf_version, "Nextflow Version")
+```
+
+## Row
+
+### **Table `r table_number <- table_number + 1; as.roman(table_number)`.** Software Versions {data-height=550}
 
 ```{r, software_ver, echo=FALSE, error=TRUE}
 # Read the YAML file
@@ -427,7 +378,7 @@ for (key_process in names(yaml_data)) {
   }
 }
 
-# DF
+# Create table
 df <- data.frame("Process Name" = process, "Software" = softwares, "Version" = versions)
 ddt <- df %>%
   DT::datatable(rownames = FALSE, class = 'cell-border stripe',

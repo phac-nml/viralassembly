@@ -74,6 +74,10 @@
 
 - [Pysam](https://github.com/pysam-developers/pysam)
 
+- [pysamstats](https://github.com/alimanfoo/pysamstats)
+
+  > Miles A. (2014). pysamstats. Available at https://github.com/alimanfoo/pysamstats
+
 - [Python](https://github.com/python/)
 
   > Python Software Foundation. Python Language Reference, version 3.10. Available at http://www.python.org

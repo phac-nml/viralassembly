@@ -1,11 +1,72 @@
-<!-- Dynamically create individual sample rmd pages under the same datanav menu -->
-`r paste0('# ', sample, '{data-navmenu="Individual Samples"}')`
+---
+title: "Sample Report"
+output:
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+    mathjax: NULL
+params:
+    sample_df: NULL
+    min_allele_freq: 0.65
+---
 
-```{r, sample_setup, include=FALSE, echo=FALSE}
-cov_f <- paste0("./base_coverages/", sample, ".per_base_coverage.bed")
-run_depth_plot <- FALSE
-if (file.exists(cov_f)) {
-  run_depth_plot <- TRUE
+<!-- Style updates mostly to make sure the caption boxes are all matching -->
+<style>
+.value-box .caption {
+  font-size: 24px;
+  color: white
+}
+.value-box .value {
+    color: white;
+}
+</style>
+
+```{r, setup, include=FALSE}
+# Load in libraries
+library(flexdashboard)
+library(plotly)
+library(dplyr)
+library(DT)
+library(knitr)
+library(ggplot2)
+library(data.table)
+
+# Set to the jpeg as its smaller
+knitr::opts_chunk$set(dev = 'jpeg')
+
+# Set parameters
+sample_df <- fread(params$sample_df, header = TRUE)
+sample <- sample_df$sample[[1]]
+min_allele_freq <- params$min_allele_freq
+
+# Horizontal Line function for plotly
+hline <- function(y = 0, color = "black") {
+  list(
+    type = "line",
+    x0 = 0,
+    x1 = 1,
+    xref = "paper",
+    y0 = y,
+    y1 = y,
+    line = list(color = color, dash = "dash")
+  )
+}
+
+# Genome completeness colour palette
+get_genome_completeness_color <- function(value) {
+  # Create the Red to Yellow to Green color palette for 100 values
+  red_to_green_palette <- colorRampPalette(c("#FF0039", "#FF7518", "#3FB618"))(100)
+
+  # Calculate the index of the color in the palette based on the input value
+  if (value == 0) {
+    value <- value + 0.00001
+  }
+  color_index <- ceiling(value * 100)
+
+  # Return the corresponding color with alpha 0.7
+  selected_color <- red_to_green_palette[color_index]
+  selected_color <- adjustcolor(selected_color, alpha = 0.7)
+  return(selected_color)
 }
 ```
 
@@ -13,12 +74,12 @@ Row
 ------------------------------
 
 ### Sample Name
-```{r, echo=FALSE, error=TRUE}
+```{r, sample_name_box, echo=FALSE, error=TRUE}
 valueBox(sample, icon = "")
 ```
 
 ### Genome Completeness
-```{r, echo=FALSE, error=TRUE}
+```{r, genome_completeness_box, echo=FALSE, error=TRUE}
 completeness <- sample_df$genome_completeness[1]
 sec_color <- get_genome_completeness_color(completeness)
 valueBox(
@@ -29,7 +90,7 @@ valueBox(
 ```
 
 ### Sample Status
-```{r, echo=FALSE, error=TRUE}
+```{r, sample_status_box, echo=FALSE, error=TRUE}
 # Based on run satus, set colour and icon
 sample_status <- sample_df$qc_pass[1]
 if ( sample_status == 'PASS' ) {
@@ -52,80 +113,165 @@ valueBox(
 )
 ```
 
-Row {data-height=600}
-------------------------------
+## Row {data-height=170}
+
+### **Table I:** Expanded Sample Summary Table
+```{r, expanded_summary_table, echo=FALSE, error=TRUE}
+
+# Select needed columns
+df <- sample_df %>%
+  select(any_of(c('sample', 'qc_pass', 'mean_sequencing_depth', 'median_sequencing_depth',
+                  'num_aligned_reads', 'total_variants', 'num_consensus_n', 'num_snps', 'num_deletions',
+                  'num_deletion_sites', 'num_insertions', 'num_insertion_sites',
+                  'genome_completeness', 'minor_snps', 'minor_indels', 'frameshifts', 'premature_stop_codons', 'mutated_stop_codons')))
+
+# Rename columns
+df <- df %>%
+  rename(
+    "Sample" = sample,
+    "QC Pass" = qc_pass,
+    "Mean Depth" = mean_sequencing_depth,
+    "Median Depth" = median_sequencing_depth,
+    "Total Aligned Reads" = num_aligned_reads,
+    "Variant Count" = total_variants,
+    "# Masked Sites" = num_consensus_n,
+    "# SNPs" = num_snps,
+    "# Del" = num_deletions,
+    "# Del Sites" = num_deletion_sites,
+    "# Ins" = num_insertions,
+    "# Ins Sites" = num_insertion_sites,
+    "Genome Completeness" = genome_completeness,
+    "QC Pass" = qc_pass
+  )
+
+# Rename columns for minor snps, if available
+if ("minor_snps" %in% colnames(df)) {
+  df <- df %>%
+    rename(
+      "# Minor SNPs" = minor_snps,
+      "# Minor Indels" = minor_indels
+    )
+}
+
+# Rename columns for nextclade mutations, if available
+if ("frameshifts" %in% colnames(df)) {
+  df <- df %>%
+    rename(
+      "Frameshifts" = frameshifts,
+      "Premature Stop Codons" = premature_stop_codons,
+      "Mutated Stop Codons" = mutated_stop_codons
+    )
+}
+
+# Create sample information table
+sddt <- df %>%
+  datatable(rownames = FALSE,
+    options = list(
+      dom = 't',
+      paging = FALSE,
+      scrollX = FALSE,
+      scrollY = "",
+      columnDefs = list(
+        list(className = 'dt-left', targets = "_all")
+      )
+    )
+  ) %>%
+  formatStyle(
+    'Genome Completeness',
+    background = styleColorBar(range(0,1), 'lightblue', angle = -90),
+    backgroundSize = '88% 88%',
+    backgroundRepeat = 'no-repeat',
+    backgroundPosition = 'left'
+  )
+
+sddt
+```
+
+## Row
 
 ### {-}
-
 ```{r, variant_plot, echo=FALSE, error=TRUE}
 # Create table from bam file csv showing variants and subvariants
-var_f <- paste0("./all_variation_positions/", sample, "_variation.csv")
+var_f <- paste0("./variation_csvs/", sample, "_variation.csv")
 if (file.exists(var_f)) {
   variants <- read.table(var_f, header = TRUE, sep = ",")
 } else {
     variants <- data.frame(matrix(ncol = 12, nrow = 1))
     colv <- c("position", "ref_base", "percentage_nonref", "variant_type", "total_reads", "A", "T", "C", "G", "del", "ins", "distribution")
     colnames(variants) <- colv
-  }
+}
 
-  # Text info for hover
-  text_info <- paste(
-    'Position: ', variants[['position']], '<br>',
-    'Reference: ', variants[['ref_base']], '<br>',
-    'Total Reads: ', variants[['total_reads']], '<br>',
-    '  A: ', variants[['A']], '<br>',
-    '  T: ', variants[['T']], '<br>',
-    '  G: ', variants[['G']], '<br>',
-    '  C: ', variants[['C']], '<br>',
-    '  Del:', variants[['del']], '<br>',
-    '  Ins:', variants[['ins']], '<br>',
-    'Insertion Distribution: ', variants[['distribution']], '<br>',
-    sep = ''
+# Text info for hover
+text_info <- paste(
+  'Position: ', variants[['position']], '<br>',
+  'Reference: ', variants[['ref_base']], '<br>',
+  'Total Reads: ', variants[['total_reads']], '<br>',
+  '  A: ', variants[['A']], '<br>',
+  '  T: ', variants[['T']], '<br>',
+  '  G: ', variants[['G']], '<br>',
+  '  C: ', variants[['C']], '<br>',
+  '  Del:', variants[['del']], '<br>',
+  '  Ins:', variants[['ins']], '<br>',
+  'Insertion Distribution: ', variants[['distribution']], '<br>',
+  sep = ''
+)
+variants$text_info <- text_info
+
+# Plot variation table
+#  Also customdata instead of text due to https://github.com/plotly/plotly.R/issues/1859
+p <- plot_ly(variants) %>%
+  add_trace(x = variants[['position']], y = variants[['percentage_nonref']],
+      type = 'scatter', mode = 'markers',
+      color = ~factor(variant_type, levels = c("A SNP", "T SNP", "G SNP", "C SNP", "Ref", "Mixed", "Deletion", "Insertion")),
+      marker = list(sizemode = 'diameter', size = 15.0, opacity = 0.7),
+      customdata = ~text_info,
+      hovertemplate = paste(
+        '<b>Percentage</b>: %{y:.2f}<br>',
+        '%{customdata}<extra></extra>',
+        sep=''
+      )
   )
-  variants$text_info <- text_info
 
-  # Plot variation table
-  #  Also customdata instead of text due to https://github.com/plotly/plotly.R/issues/1859
-  p <- plot_ly(variants) %>%
-    add_trace(x = variants[['position']], y = variants[['percentage_nonref']],
-        type = 'scatter', mode = 'markers',
-        color = ~factor(variant_type, levels = c("A SNP", "T SNP", "G SNP", "C SNP", "Ref", "Mixed", "Deletion", "Insertion")),
-        marker = list(sizemode = 'diameter', size = 15.0, opacity = 0.7),
-        customdata = ~text_info,
-        hovertemplate = paste(
-          '<b>Percentage</b>: %{y:.2f}<br>',
-          '%{customdata}<extra></extra>',
-          sep=''
-        )
-    )
-
-  # Add final layout to plot
-  p <- p %>%
-    layout(
-      xaxis = list (title = "Position", tickformat = ".0f"),
-      yaxis = list (title = "Percent Non Reference Base", tickformat = '2.%'),
-      shapes = list(hline(min_allele_freq * 100))
-    )
+# Add final layout to plot
+p <- p %>%
+  layout(
+    xaxis = list (title = "Position", tickformat = ".0f"),
+    yaxis = list (title = "Percent Non Reference Base", tickformat = '2.%'),
+    shapes = list(hline(min_allele_freq * 100))
+  )
 p
 ```
 
 > **Figure 1.** Variant Read Counts. The sample pileup was analyzed to find positions in the genome where
 > the alternate allele percentage was greater-than or equal to 15%.
 
-### **Table 1.** Consensus Called Variants {data-width=320}
+## Row
+
+### **Table II:** Consensus Called Variants
 ```{r, variant_table, echo=FALSE, error=TRUE}
 # Create table of called variants using the vcf file turned into a tsv
 var_f <- paste0("./variant_tsvs/", sample, ".vcf.tsv")
 if (file.exists(var_f)) {
-  variants <- read.table(var_f, header = TRUE, sep = "\t")
+  variants <- read.table(var_f, header = TRUE, sep = "\t", check.names = FALSE, colClasses = "character")
   ddt <- variants %>%
     DT::datatable(rownames = FALSE,
       options = list(
         scrollX = FALSE
-    ))
+    )) %>%
+    formatRound(columns = c('Qual'), digits = 2) %>%
+    formatRound(columns = c('Alt Allele Fraction'), digits = 4) %>%
+    # Bars to show at a glance
+    formatStyle(
+      'Alt Allele Fraction',
+      background = styleColorBar(range(0,1), 'lightblue', angle = -90),
+      backgroundSize = '88% 88%',
+      backgroundRepeat = 'no-repeat',
+      backgroundPosition = 'left'
+    )
 } else {
-  variants <- data.frame(matrix(ncol = 5, nrow = 0))
-  colv <- c("Chrom", "Pos", "Ref", "Alt", "Qual")
+  # Create an empty table if file doesn't exist
+  variants <- data.frame(matrix(ncol = 7, nrow = 0))
+  colv <- c("Chrom", "Pos", "Ref", "Alt", "Qual", "Depth", "Alt Allele Fraction")
   colnames(variants) <- colv
   ddt <- variants %>%
     DT::datatable(rownames = FALSE)
@@ -136,43 +282,116 @@ ddt
 Row
 ------------------------------
 ### {-}
-```{r, stat_cov_plot, echo=FALSE, error=TRUE, fig.width=12, fig.height=3, eval=run_depth_plot}
-# Read in data and select columns
+```{r, depth_plot, echo=FALSE, error=TRUE}
 cov_f <- paste0("./base_coverages/", sample, ".per_base_coverage.bed")
 coverage <- read.table(cov_f, header = TRUE, sep = "\t")
 coverage <- select(coverage, position, depth)
+# Set depths of 0 to 1 to allow continuous visualization with log plot
+coverage$depth[coverage$depth == 0] <- 1
 
-# Create colour ranges for the depth plot
-#  For if nothing is above 20x coverage
-if (max(coverage$depth) < 20) {
-  rect_data <- data.frame(xmin=min(coverage$position),
-                          xmax=max(coverage$position),
-                          ymin=c(0),
-                          ymax=c(20),
-                          col=c("red"))
-# For if nothing is above 100x coverage
-} else if (max(coverage$depth) <= 100) {
-  rect_data <- data.frame(xmin=min(coverage$position),
-                          xmax=max(coverage$position),
-                          ymin=c(0,20),
-                          ymax=c(20,100),
-                          col=c("red","yellow"))
-} else {
-  rect_data <- data.frame(xmin=min(coverage$position),
-                          xmax=max(coverage$position),
-                          ymin=c(0,20,100),
-                          ymax=c(20,100,max(coverage$depth)),
-                          col=c("red","yellow","green"))
-}
+# Create the background shapes needed
+background_shapes <- list(
+  list(
+    type = "rect",
+    fillcolor = "red",
+    opacity = 0.2,
+    x0 = min(coverage$position),
+    x1 = max(coverage$position),
+    y0 = 1,
+    y1 = 10
+  ),
+  list(
+    type = "rect",
+    fillcolor = "yellow",
+    opacity = 0.2,
+    x0 = min(coverage$position),
+    x1 = max(coverage$position),
+    y0 = 10,
+    y1 = 30
+  ),
+  list(
+    type = "rect",
+    fillcolor = "green",
+    opacity = 0.2,
+    x0 = min(coverage$position),
+    x1 = max(coverage$position),
+    y0 = 30,
+    y1 = max(coverage$depth)
+  )
+)
 
-# Create Plot
-ggplot(coverage) +
-  geom_line(aes(x=position, y=depth)) +
-  scale_y_log10() +
-  xlab("Genome Position (nt)") +
-  ylab("Sequencing Depth") +
-  geom_rect(data=rect_data, aes(xmin=xmin,xmax=xmax,ymin=ymin,ymax=ymax,fill=col),alpha=0.1) +
-  scale_fill_identity()
+# Create plot
+depthp <- plot_ly(x = ~coverage$position, y = ~coverage$depth, type = "scatter", mode = "lines", line = list(color = "black")) %>%
+  layout(
+    yaxis = list(
+    type = "log",
+    title = "Sequencing Depth (Log Scale)",
+    tickvals = c(10, 30, 100, 1000),
+    ticktext = c(10, 30, 100, 1000)
+  ),
+  xaxis = list(
+    title = "Genomic Position (nt)",
+    tickformat = ".0f"
+  ),
+  shapes = background_shapes
+)
+
+depthp
 ```
+> **Figure 2.** Positional genomic depth. The Y-axis is log-scaled so positions with no genomic depth have been set to 1 to allow a continuous visualization. Zones have been marked using a colour scheme where: 0-10 is red corresponding to masked sites, 10-30 is yellow corresponding to sites where there is a basecall but limited depth, and 30+ is green for positions with acceptable or better depth.
 
-> **Figure 2.** Genome Coverage Plot. Sequencing depth at each position in the genome
+## Row
+
+### {-}
+```{r, qual_plot, echo=FALSE, error=TRUE}
+quality <- read.table(paste0("./base_qualities/", sample, ".baseq.stats.tsv"), sep = "\t", header = TRUE)
+custom_tickvals <- c(0,10,20,30)
+
+# Create the background shapes needed
+background_shapes <- list(
+  list(
+    type = "rect",
+    fillcolor = "red",
+    opacity = 0.2,
+    x0 = min(quality$pos),
+    x1 = max(quality$pos),
+    y0 = 0,
+    y1 = 20
+  ),
+  list(
+    type = "rect",
+    fillcolor = "yellow",
+    opacity = 0.2,
+    x0 = min(quality$pos),
+    x1 = max(quality$pos),
+    y0 = 20,
+    y1 = 30
+  ),
+  list(
+    type = "rect",
+    fillcolor = "green",
+    opacity = 0.2,
+    x0 = min(quality$pos),
+    x1 = max(quality$pos),
+    y0 = 30,
+    y1 = max(quality$rms_baseq)
+  )
+)
+
+# Plot
+qualityp <- plot_ly(quality ,x = ~quality$'pos', y = ~quality$'rms_baseq', type = "scatter", mode = "lines", line = list(color = "black")) %>%
+  layout(
+    yaxis = list(
+      tickvals = custom_tickvals,
+      ticktext = c("0", "10", "20", "30"),
+      title = "RMS Base Quality Score"),
+    xaxis = list(
+      title = "Genomic Position (nt)",
+      tickformat = ".0f"
+    ),
+    shapes = background_shapes
+  )
+
+qualityp
+```
+> **Figure 3.** Average root-mean-square read base quality score per genomic position

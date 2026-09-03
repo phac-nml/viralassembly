@@ -72,7 +72,7 @@ process CREATE_VARIANT_TSV {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        vcf_to_tsv.py: 0.2.0
+        vcf_to_tsv.py: 0.3.0
     END_VERSIONS
     """
 
@@ -84,7 +84,7 @@ process CREATE_VARIANT_TSV {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
-        vcf_to_tsv.py: 0.2.0
+        vcf_to_tsv.py: 0.3.0
     END_VERSIONS
     """
 }
@@ -134,54 +134,6 @@ process COMBINE_AMPLICON_COVERAGE {
     stub:
     """
     touch merged_amplicon_depth.csv
-    """
-}
-process CSVTK_SAMPLE_AMPLICON_DEPTH {
-    // Just to get the two columns of the amplicon depth file with no header
-    label 'process_single'
-    tag "$meta.id"
-
-    conda "${moduleDir}/env-csvtk.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/csvtk:0.29.0--h9ee0642_0' :
-        'biocontainers/csvtk:0.29.0--h9ee0642_0' }"
-
-    input:
-    tuple val(meta), path(bed)
-
-    output:
-    tuple val(meta), path("${meta.id}_ampdepth.tsv"), emit: tsv
-    path "versions.yml", emit: versions
-
-    script:
-    """
-    csvtk cut \\
-        -tT \\
-        -f amplicon_id,read_count \\
-        $bed \\
-        | csvtk replace \\
-            -tTf read_count \\
-            -p "^0\$" \\
-            -r 0.1 \\
-        | tail -n +2 \\
-        > ${meta.id}_ampdepth.tsv
-
-    # Versions #
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        csvtk: \$(csvtk version | sed 's/csvtk v//g')
-    END_VERSIONS
-    """
-
-    stub:
-    """
-    touch ${meta.id}_ampdepth.tsv
-
-    # Versions #
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        csvtk: \$(csvtk version | sed 's/csvtk v//g')
-    END_VERSIONS
     """
 }
 process CREATE_AMPLICON_COMPLETENESS {
@@ -236,39 +188,82 @@ process CREATE_ALL_SAMPLE_SUMMARY_REPORT {
 
     input:
     path rmd_base_template
-    path rmd_subpages
-    path read_variation_tsvs
-    path called_variant_tsvs
+    path rmd_amplicon_subpage
+    path rmd_negative_subpage
     path base_coverage_beds
     path merged_amplicon_depth_csv
     path merged_amplicon_comp_csv
     path qc_csv
     path versions_yml
+    val pipeline_version
+    val revision
+    val nf_version
+    val neg_ctrl_substrings
 
     output:
     path "reportDashboard.html"
 
     script:
     def amp_arg = merged_amplicon_depth_csv ? "run_amplicons = TRUE" : "run_amplicons = FALSE"
-    def min_af_arg = "min_allele_freq = ${params.min_allele_freq}"
     """
     # Setup sample files to be found by RMD
-    mkdir -p all_variation_positions
-    mkdir -p variant_tsvs
     mkdir -p base_coverages
-    mv $read_variation_tsvs all_variation_positions
-    mv $called_variant_tsvs variant_tsvs
     mv $base_coverage_beds base_coverages
 
     # Create RMD #
     Rscript \\
         -e "library(rmarkdown)" \\
         -e "library(flexdashboard)" \\
-        -e "rmarkdown::render('$rmd_base_template', params=list($amp_arg, $min_af_arg))"
+        -e "rmarkdown::render('$rmd_base_template', params=list($amp_arg, version = '$pipeline_version', revision = '$revision', nf_version = '$nf_version', neg_ctrl_substrings = '$neg_ctrl_substrings'))"
     """
 
     stub:
     """
     touch reportDashboard.html
+    """
+}
+process CREATE_SAMPLE_REPORT {
+    label 'process_single'
+    tag "$meta.id"
+
+    conda "${moduleDir}/env-custom-report.yml"
+    container "docker.io/darianhole/measeq-report:latest"
+
+    input:
+    tuple val(meta), path(qc_csv)
+    path coverage
+    path variation_csv
+    path variant_tsv
+    path base_qual
+    path rmd_sample_subpage
+
+    output:
+    tuple val(meta), path ("*.html"), emit: sample_report
+
+    script:
+    def min_af_arg = "min_allele_freq = ${params.min_allele_freq}"
+    def output_name = "${meta.id.replaceAll(/[^A-Za-z0-9.-]/, '_')}.html"
+    """
+    # Setup sample files to be found by RMD
+    mkdir -p base_coverages
+    mkdir -p variation_csvs
+    mkdir -p variant_tsvs
+    mkdir -p base_qualities
+    mv $coverage base_coverages
+    mv $variation_csv variation_csvs
+    mv $variant_tsv variant_tsvs
+    mv $base_qual base_qualities
+
+    # Create RMD #
+    Rscript \\
+        -e "library(rmarkdown)" \\
+        -e "library(flexdashboard)" \\
+        -e "rmarkdown::render('$rmd_sample_subpage', output_file='$output_name', params=list($min_af_arg, sample_df = '$qc_csv'))"
+    """
+
+    stub:
+    def output_name = "${meta.id.replaceAll(/[^A-Za-z0-9.-]/, '_')}.html"
+    """
+    touch $output_name
     """
 }

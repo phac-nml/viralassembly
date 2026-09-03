@@ -19,14 +19,12 @@ process GET_REF_STATS {
 
     output:
     path "${reference}.fai", emit: fai
-    path "refstats.txt", emit: refstats
     path "genome.bed", emit: genome_bed
     path "versions.yml", emit: versions
 
     script:
     """
     samtools faidx $reference
-    cat ${reference}.fai | awk '{print \$1 ":1-" \$2+1}' > refstats.txt
     cat ${reference}.fai | awk '{ print \$1 "	0	" \$2 }' > genome.bed
 
     # Versions #
@@ -39,7 +37,6 @@ process GET_REF_STATS {
     stub:
     """
     touch ${reference}.fai
-    touch refstats.txt
     touch genome.bed
 
     # Versions #

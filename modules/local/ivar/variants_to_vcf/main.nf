@@ -16,7 +16,6 @@ process IVAR_VARIANTS_TO_VCF {
 
     output:
     tuple val(meta), path("*.vcf"), emit: vcf
-    tuple val(meta), path("*.log"), emit: log
     path "versions.yml", emit: versions
 
     when:
@@ -30,8 +29,7 @@ process IVAR_VARIANTS_TO_VCF {
         ${tsv} \\
         ${prefix}.vcf \\
         --fasta ${fasta} \\
-        ${args} \\
-        > ${prefix}.variant_counts.log
+        ${args}
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
