@@ -11,7 +11,6 @@ include { validateParameters; paramsSummaryLog } from 'plugin/nf-schema'
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NFCORE_PIPELINE     } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
-include { GUNZIP_FASTA              } from '../../../modules/local/custom/utils'
 
 workflow PIPELINE_INITIALISATION {
 
@@ -72,13 +71,6 @@ workflow PIPELINE_INITIALISATION {
     fasta = file(params.reference, type: 'file', checkIfExists: true)
     segmented = isSegmented(fasta)
 
-    // Decompress reference if gzipped
-    if (fasta.name.endsWith('.gz')) {
-        ch_reference = GUNZIP_FASTA(fasta)
-    } else {
-        ch_reference = channel.value(fasta)
-    }
-
     // Nextclade input when virus is segmented
     if ( segmented && (params.nextclade_dataset_dir || params.nextclade_dataset_name) ) {
         log.error("The reference FASTA used is a segmented virus. Please remove the 'nextclade_dataset_dir' or 'nextclade_dataset_name' argument as the pipeline will assign the appropriate nextclade dataset to each segment.")
@@ -86,7 +78,6 @@ workflow PIPELINE_INITIALISATION {
     }
 
     emit:
-    reference = ch_reference    // channel: [ file(reference) ]
     segmented = segmented       // boolean: If virus is segmented
 
 }

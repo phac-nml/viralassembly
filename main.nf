@@ -56,7 +56,6 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_vira
 workflow PHACNML_VIRALASSEMBLY {
 
     take:
-    ch_reference
     segmented
 
     main:
@@ -69,7 +68,6 @@ workflow PHACNML_VIRALASSEMBLY {
     VIRALASSEMBLY (
         FORMAT_INPUT.out.pass,
         FORMAT_INPUT.out.empty,
-        ch_reference,
         segmented
     )
 }
@@ -99,7 +97,6 @@ workflow {
     // WORKFLOW: Run main workflow
     //
     PHACNML_VIRALASSEMBLY(
-        PIPELINE_INITIALISATION.out.reference,
         PIPELINE_INITIALISATION.out.segmented
     )
 

@@ -7,6 +7,7 @@
 include { fastaHeaderId             } from '../subworkflows/local/utils_nfcore_viralassembly_pipeline'
 
 // Utils / Custom checks / Primer Validate
+include { GUNZIP_FASTA              } from '../modules/local/custom/utils'
 include { GET_REF_STATS             } from '../modules/local/custom/utils.nf'
 include { RENAME_FASTQ              } from '../modules/local/custom/utils.nf'
 include { PRIMALBEDTOOLS_VALIDATE   } from '../modules/local/primalbedtools/validate/main.nf'
@@ -42,7 +43,6 @@ workflow VIRALASSEMBLY {
     take:
     ch_fastqs           // channel: [ val(meta), file(fastq) ]
     ch_empty_fastqs     // channel: [ val(meta), file(fastq) ]
-    ch_reference        // channel: [ file(fasta) ]
     ch_segmented        // channel: [ val(segmented) ] // Contains boolean value to identify segmented viruses
 
     main:
@@ -69,6 +69,16 @@ workflow VIRALASSEMBLY {
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     // Scheme and Reference
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
+
+    // Create reference value
+    fasta = file(params.reference, type: 'file', checkIfExists: true)
+
+    // Decompress reference if gzipped
+    if (fasta.name.endsWith('.gz')) {
+        ch_reference = GUNZIP_FASTA(fasta)
+    } else {
+        ch_reference = channel.value(fasta)
+    }
 
     // Get boolean value if virus is segmented
     segmented = ch_segmented.getVal()
