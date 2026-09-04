@@ -4,10 +4,10 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // Functions
-include { isSegmented               } from '../subworkflows/local/utils_nfcore_viralassembly_pipeline'
 include { fastaHeaderId             } from '../subworkflows/local/utils_nfcore_viralassembly_pipeline'
 
 // Utils / Custom checks / Primer Validate
+include { GUNZIP_FASTA              } from '../modules/local/custom/utils'
 include { GET_REF_STATS             } from '../modules/local/custom/utils.nf'
 include { RENAME_FASTQ              } from '../modules/local/custom/utils.nf'
 include { PRIMALBEDTOOLS_VALIDATE   } from '../modules/local/primalbedtools/validate/main.nf'
@@ -42,6 +42,7 @@ workflow VIRALASSEMBLY {
     take:
     ch_fastqs           // channel: [ val(meta), file(fastq) ]
     ch_empty_fastqs     // channel: [ val(meta), file(fastq) ]
+    ch_segmented        // channel: [ val(segmented) ] // Contains boolean value to identify segmented viruses
 
     main:
     // Optional value channel files from params
@@ -68,16 +69,21 @@ workflow VIRALASSEMBLY {
     // Scheme and Reference
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
-    // Check if the reference is a segmented virus
-    def segmented = isSegmented(params.reference)
+    // Create reference value
+    fasta = file(params.reference, type: 'file', checkIfExists: true)
 
-    // Create reference channel
-    ch_reference = params.reference
-        ? channel.value( file(params.reference, type: 'file', checkIfExists: true) )
-        : []
+    // Decompress reference if gzipped
+    if (fasta.name.endsWith('.gz')) {
+        ch_reference = GUNZIP_FASTA(fasta)
+    } else {
+        ch_reference = channel.value(fasta)
+    }
+
+    // Get boolean value if virus is segmented
+    segmented = ch_segmented.getVal()
 
     // Create amplicon channels
-    ch_primer_bed = params.primer_bed   ? channel.value(file(params.primer_bed, type: 'file', checkIfExists: true)) : []
+    ch_primer_bed = params.primer_bed ? channel.value(file(params.primer_bed, type: 'file', checkIfExists: true)) : []
     ch_amplicon_bed = channel.empty()
 
     if ( params.primer_bed ) {

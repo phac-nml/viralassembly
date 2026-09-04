@@ -5,6 +5,7 @@
             * RENAME_FASTQ      - Renames barcodeXX fastqs to their sample name
             * SPLIT_BED_BY_POOL - Splits amplicon bed based on the primer pool
             * CREATE_TILING_BED - Creates bed file of the overall tiling region
+            * GUNZIP_FASTA      - Decompresses the reference FASTA file
 */
 process GET_REF_STATS {
     label 'process_single'
@@ -142,5 +143,30 @@ process CREATE_TILING_BED {
     stub:
     """
     touch tiling_region.bed
+    """
+}
+process GUNZIP_FASTA {
+    label 'process_single'
+
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://depot.galaxyproject.org/singularity/coreutils:8.31--h14c3975_0'
+        : 'biocontainers/coreutils:8.31--h14c3975_0' }"
+
+    input:
+    path fasta_gz
+
+    output:
+    path fasta
+
+    script:
+    fasta = fasta_gz.baseName
+    """
+    gunzip -c ${fasta_gz} > ${fasta}
+    """
+
+    stub:
+    fasta = fasta_gz.baseName
+    """
+    touch $fasta
     """
 }

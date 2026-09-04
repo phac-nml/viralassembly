@@ -20,7 +20,6 @@ workflow PIPELINE_INITIALISATION {
     monochrome_logs   // boolean: Do not use coloured log outputs
     nextflow_cli_args // array: List of positional nextflow CLI args
     outdir            // string: The output directory where the results will be saved
-    reference         // path: The reference FASTA file
 
     main:
 
@@ -68,13 +67,19 @@ workflow PIPELINE_INITIALISATION {
         validateParameters()
     }
 
-    // Nextclade input when virus is segmented
-    def segmented = isSegmented(reference)
+    // Check if reference is segmented
+    fasta = file(params.reference, type: 'file', checkIfExists: true)
+    segmented = isSegmented(fasta)
 
+    // Nextclade input when virus is segmented
     if ( segmented && (params.nextclade_dataset_dir || params.nextclade_dataset_name) ) {
         log.error("The reference FASTA used is a segmented virus. Please remove the 'nextclade_dataset_dir' or 'nextclade_dataset_name' argument as the pipeline will assign the appropriate nextclade dataset to each segment.")
         System.exit(1)
     }
+
+    emit:
+    segmented = segmented       // boolean: If virus is segmented
+
 }
 
 /*
@@ -112,10 +117,18 @@ workflow PIPELINE_COMPLETION {
 
 // Check if the virus is segmented
 def isSegmented(reference) {
-    def segmented = file(reference)
-        .readLines()
-        .findAll { it.startsWith('>') }
-        .size() > 1
+    def input = reference.name.endsWith('.gz')
+        ? new java.util.zip.GZIPInputStream(reference.newInputStream())
+        : reference.newInputStream()
+
+    def segmented
+
+    input.withReader { reader ->
+        segmented = reader
+            .readLines()
+            .findAll { it.startsWith('>') }
+            .size() > 1
+    }
 
     return segmented
 }
