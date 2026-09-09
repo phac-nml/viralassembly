@@ -31,7 +31,9 @@ Outputs
 
 import argparse
 import pysam
+from collections import defaultdict
 import csv
+import subprocess
 import re
 from typing import Optional, Tuple, Generator
 
@@ -55,8 +57,34 @@ iupac_map = {
 }
 
 
+def create_depth_map(bam: str) -> dict:
+    """Create map of { chrom: {pos: depth} } based on input bam file using samtools depth
+
+    Params
+    ------
+        bam (str): Path to BAM file
+
+    Returns
+    -------
+        Dict of  {chrom: {positional: depth} }
+    """
+    depth_map = defaultdict(dict)
+    with subprocess.Popen(
+        ['samtools', 'depth', '-aa', bam],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        text=True,
+        bufsize=1
+    ) as process:
+        for line in process.stdout:
+            # chrom - pos - depth
+            pos_data = line.strip().split('\t')
+            depth_map[str(pos_data[0])][int(pos_data[1])] = int(pos_data[2])
+    return depth_map
+
+
 def yield_alt_base(cigar: str, alt: str) -> Generator:
-    """Expand CIGAR string and alt to yield alt the alt base for each reference position (handling indels)
+    """Expand CIGAR string and alt to yield alt base for each reference position (handling indels)
 
     Params
     ------
@@ -201,13 +229,17 @@ def handle_sub(vcf_header: pysam.VariantHeader, record: pysam.VariantRecord) -> 
     return output
 
 
-def handle_indel(vcf_header: pysam.VariantHeader, record: pysam.VariantRecord, min_indel_threshold: float) -> list:
+def handle_indel(vcf_header: pysam.VariantHeader, record: pysam.VariantRecord, min_indel_threshold: float,
+                 min_depth: int, depth_map: dict) -> list:
     """Process *indel* variants found by freebayes into a variant that can be applied to the final consensus sequence
 
     Params
     ------
         vcf_header (VariantHeader): Simple VCF header for consensus generation
         record (VariantRecord): Position variant record containing all needed information
+        min_indel_threshold (float): Minimum indel threshold to call an indel variant
+        min_depth (int): Minimum depth to call a variant
+        depth_map (dict): Dict containing the chrom and each positions depth to check that all deletion values are above min
 
     Returns
     -------
@@ -240,6 +272,12 @@ def handle_indel(vcf_header: pysam.VariantHeader, record: pysam.VariantRecord, m
     if len(record.ref) == len(record.alts[best_vaf_idx]):
         output = handle_sub(vcf_header, record)
     else:
+        # Check that all the indel specific positions are properly covered to allow the variant to be kept!
+        for i, base in enumerate(yield_alt_base(record.info['CIGAR'][best_vaf_idx], record.alts[best_vaf_idx]), start=record.pos):
+            if base == '-':
+                if depth_map[record.chrom][i] < min_depth:
+                    return output
+
         r = make_simple_record(vcf_header, record, record.pos, record.ref, record.alts[best_vaf_idx], [ max_vaf ])
 
         # Have to add in the Genotype for bcftools 1.20 to apply the variant
@@ -303,7 +341,9 @@ def init_parser() -> argparse.ArgumentParser:
     parser.add_argument('-n', '--no-frameshifts', action="store_true",
             help="Skip indel mutations that are not divisible by 3")
 
-    parser.add_argument('invcf', action='store', nargs=1)
+    parser.add_argument('invcf')
+
+    parser.add_argument('inbam')
 
     return parser
 
@@ -314,7 +354,7 @@ def main() -> None:
     args = parser.parse_args()
 
     # Load input VCF file and get header info
-    vcf = pysam.VariantFile(open(args.invcf[0], 'r'))
+    vcf = pysam.VariantFile(open(args.invcf))
     out_header = vcf.header
 
     # Open the filtered only output VCF file to write unmodified accepted variants along with the addition of their VAFs
@@ -329,6 +369,9 @@ def main() -> None:
 
     # Setup list of dicts for later TSV creation and reporting
     tsv_data_list = []
+
+    # Calculate depths quick in case we need them for low depth sites
+    depth_map = create_depth_map(args.inbam)
 
     # Parsing VCF records to assign final consensus variants and filter out poor variant calls for the filtered VCF
     for base_record in vcf:
@@ -351,7 +394,8 @@ def main() -> None:
         out_records = list()
         if has_indel:
             # indels need to be handled specially as we can't apply ambiguity codes to them
-            out_records = handle_indel(out_header, base_record, args.minimum_indel_threshold)
+            out_records = handle_indel(out_header, base_record, args.minimum_indel_threshold,
+                                       args.mark_depth, depth_map)
         else:
             out_records = handle_sub(out_header, base_record)
 
@@ -397,9 +441,16 @@ def main() -> None:
                     consensus_tag = "indel"
             # Otherwise data is between the upper and lower frequency so setup and apply IUPAC
             else:
-                tsv_tag = "AMBIGUOUS"
-                consensus_tag = "ambiguous"
                 iupac_base, fzset = get_base_code(out_tuple[1], args.upper_ambiguity_frequency)
+
+                # Set designation based on if the iupac base is actually an IUPAC or if the ambiguity is from DEL reads
+                #  If its from DEL reads we don't want to later call it an IUPAC variant
+                if iupac_base in ["A", "T", "C", "G"]:
+                    tsv_tag = "PASS"
+                    consensus_tag = "consensus"
+                else:
+                    tsv_tag = "AMBIGUOUS"
+                    consensus_tag = "ambiguous"
 
                 # Set genotype for bcftools with the `-I` arg to properly use
                 #  `-I` will apply an IUPAC based on the given genotype (ex. (0,1) will give an IUPAC based on the ref and alt)
@@ -417,6 +468,10 @@ def main() -> None:
                 vaf = sum([v for k, v in out_tuple[1].items() if k in fzset])
                 consensus_base = iupac_base
 
+            # If variant has been kept at low depth keep track of that
+            if low_depth:
+                tsv_tag = "LOWDEPTH"
+
 
             # Output for consensus generation and reporting
             final_record.info["ConsensusTag"] = consensus_tag
@@ -426,8 +481,6 @@ def main() -> None:
 
             # Setting up for TSV output for later reporting
             #  Format: chrom, pos, ref, alt, qual, depth, vaf, tag
-            if low_depth:
-                tsv_tag = "LOWDEPTH"
             tsv_data_list.append([
                 final_record.chrom,
                 final_record.pos,

@@ -216,7 +216,8 @@ workflow WF_ILLUMINA_CONSENSUS {
         // MODULE: Process freebayes variant calls with custom python script and bcftools norm
         //
         PROCESS_VCF(
-            FREEBAYES.out.vcf,
+            FREEBAYES.out.vcf
+                .join(ch_bam_bai, by: [0]),
             ch_reference
         )
         ch_versions = ch_versions.mix(PROCESS_VCF.out.versions)
