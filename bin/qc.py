@@ -12,9 +12,6 @@ from Bio import SeqIO, SeqRecord
 from collections import defaultdict
 from typing import Tuple, Optional
 
-# Global REGEXES
-NEXTCLADE_STOP_PATTERN = re.compile(":\\*")
-
 
 def init_parser() -> argparse.ArgumentParser:
     """Parse CL inputs to be used in script
@@ -224,7 +221,7 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
             dict: Tracking the different variant counts
                 {'total_variants': int, 'num_snps': int, 'num_deletions': int, 'num_deletion_sites': int, 'num_insertions': int, 'num_insertion_sites': int}
     """
-    # Base outputs and counts
+    # Base outputs
     variants = []
     variant_positions = []
     frameshift_variants = []
@@ -244,18 +241,17 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
             # Only wanted chrom allowed
             if record.CHROM != chrom:
                 continue
-
-            # Multiple alleles should be removed by now by all methods. Exit if not for bugfixing
-            if len(record.ALT) > 1:
-                raise ValueError(f"Multiple alleles should have been resolved previously. Check intermediate VCFs at position: {record.POS}")
             # Odd issue previously - skip over Ns in vcf
             if str(record.ALT[0]).upper() == 'N':
                 continue
             # Other odd issue, skip positions where alt is None
             if record.ALT[0] is None:
                 continue
+            # Multiple alleles not supported warning
+            if len(record.ALT) > 1:
+                print(f'WARNING: Multiple alleles not supported currently. Using only the first one for position: {record.POS}')
 
-            # Create string of variant and add to list of variants along with getting the lengths of the REF and ALT
+            # Create string of variant and add to list of variants along with getting the lengths of the ref and alt
             variant = f'{record.REF}{record.POS}{record.ALT[0]}'
             ref_len = len(record.REF)
             alt_len = len(record.ALT[0])
@@ -285,7 +281,6 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
 
                 # Insertions
                 elif ref_len < alt_len:
-                    # Again, the alt will include 1 reference position so minus 1
                     if ((alt_len-1) %3 != 0):
                         # If we have annotations check those as well
                         var_ann = record.INFO.get('ANN', '')
@@ -300,9 +295,7 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
                     variant_positions.append(_create_variantpos_dict(variant, range(record.POS, record.POS+1)))
                     var_count_dict['num_insertions'] += (alt_len - 1) # -1 for the included ref base
                     var_count_dict['num_insertion_sites'] += 1
-
                 # Multiple SNPs together
-                #  Note: Should have been resolved previously
                 elif (ref_len > 1) and (ref_len == alt_len):
                     mult_snp_range = range(record.POS, record.POS+len(record.REF))
                     for i, ref_base in enumerate(record.REF):
@@ -362,9 +355,8 @@ def check_primers(bed: str, variant_locations: list, chrom: str) -> str:
             # Only check on the right chrom for variants
             if row[0] != chrom:
                 continue
-
             # Set primer values, make sure start lower than stop for range
-            start, stop, name = int(row[1]), int(row[2]), str(row[3])
+            start, stop, name = int(row[1]), int(row[2]), row[3]
             if start > stop:
                 start, stop = stop, start
             location = range(start, stop + 1) # Plus one to make sure that we get mutations in the final location of the range
@@ -374,13 +366,13 @@ def check_primers(bed: str, variant_locations: list, chrom: str) -> str:
                 if range_contains(location, var_dict['range']):
                     primer_mutations.append(f'{var_dict["variant"]}-{name}')
 
-    if primer_mutations:
-        return ';'.join(primer_mutations)
-    return 'none'
+    if not primer_mutations:
+        return 'none'
+    return ';'.join(primer_mutations)
 
 
 def parse_metadata(metadata: str, sample: str) -> pd.DataFrame:
-    """Parse metadata file to find metadata for given sample
+    """Parse metadata file for given sample
 
     Params:
     -------
@@ -389,7 +381,7 @@ def parse_metadata(metadata: str, sample: str) -> pd.DataFrame:
 
     Returns:
     --------
-        DataFrame: Containing columns from the wanted sample or empty df
+        DataFrame: Containing columns from the wanted sample
     """
     df = pd.read_csv(metadata, sep='\t')
     validate_df_columns(df, ['sample'])
@@ -403,17 +395,49 @@ def parse_metadata(metadata: str, sample: str) -> pd.DataFrame:
         return df
 
 
+def grade_qc(completeness: float, mean_dep: float, median_dep: float, frameshift_vars: str) -> str:
+    """Determine if the sample passes internal QC metrics and assign a PASS or why it failed
+
+    Params:
+    -------
+    completeness (float): Final genome completeness
+    mean_dep (float): Mean sequencing depth
+    median_dep (float): Median sequencing depth
+    frameshift_vars (str): Any potential frameshift variants or "none" if there weren't any
+
+    Returns:
+    --------
+        str: Final QC status
+    """
+    qc_status = []
+    # Completeness
+    if completeness < 0.9:
+        if completeness < 0.5:
+            qc_status.append('INCOMPLETE_GENOME')
+        else:
+            qc_status.append('PARTIAL_GENOME')
+    # Coverage Depth
+    if (mean_dep < 20) or (median_dep < 20):
+        qc_status.append('LOW_SEQ_DEPTH')
+    # Frameshifts
+    if frameshift_vars != 'none':
+        qc_status.append('POTENTIAL_FRAMESHIFTS')
+
+    if qc_status:
+        return ';'.join(qc_status)
+    return 'PASS'
+
 def count_minor_variants(vcf_file: str, chrom: str) -> Tuple[int, int]:
     """Small function to count passing SNPs and indels in the minor VCF file.
 
     Params:
     -------
-        vcf_file (str): Path to the minor VCF file.
-        chrom (str): Chromosome to filter variants.
+      vcf_file (str): Path to the minor VCF file.
+      chrom (str): Chromosome to filter variants.
 
     Returns:
     --------
-        Tuple[int, int]: Number of passing SNPs and indels.
+      Tuple[int, int]: Number of passing SNPs and indels.
     """
     snps = 0
     indels = 0
@@ -434,21 +458,23 @@ def count_minor_variants(vcf_file: str, chrom: str) -> Tuple[int, int]:
 
     return snps, indels
 
-
-def get_nextclade_vals(nextclade_csv: str) -> Tuple[str, str, str, int]:
-    '''Parse custom nextclade CSV file to find information on potential issue sites
+def get_nextclade_vals(nextclade_csv: str) -> Tuple[str, str, str]:
+    '''
+    Purpose:
+    --------
+    Parse custom nextclade CSV file to find information on potential issue sites
 
     Parameters:
     -----------
-        nextclade_csv (str): Path to nextclade CSV file. ';' delimited
+    nextclade_csv (str): Path to nextclade CSV file. ';' delimited
 
     Returns:
     --------
-        Tuple[str, str, str, int] : frameshifts, stop codons, mutated stop codons, frameshift count
+    Tuple[str, str, str]: frameshifts, stop codons, and mutated stop codons
     '''
     # Nextclade CDS Checks
     ## To look back at for segmented viruses since it now just uses the second line
-    with open(nextclade_csv) as handle:
+    with open(nextclade_csv, 'r') as handle:
         reader = csv.DictReader(handle, delimiter=';')
         d = next(reader, None)
 
@@ -456,56 +482,14 @@ def get_nextclade_vals(nextclade_csv: str) -> Tuple[str, str, str, int]:
         aa_mutations = d['aaSubstitutions']
         frameshifts = d['qc.frameShifts.frameShifts']
         stop_codons = d['qc.stopCodons.stopCodons']
-        # Failing samples or unmatched samples have the column but as an empty string so need the fallback 0
-        total_fs = d['qc.frameShifts.totalFrameShifts'] or 0
-        ignored_fs = d['qc.frameShifts.totalFrameShiftsIgnored'] or 0
 
-        mutated_stop_codons_match = re.findall(NEXTCLADE_STOP_PATTERN, aa_mutations)
+        stop_codon_pattern = ':\\*'
+        mutated_stop_codons_match = re.findall(stop_codon_pattern, aa_mutations)
         mutated_stop_codons = '|'.join(mutated_stop_codons_match)
 
-        # Have to set these to int as dict reader is bringing the values back as strings
-        fs_count = int(total_fs) - int(ignored_fs)
-
-        return frameshifts, stop_codons, mutated_stop_codons, fs_count
+        return frameshifts, stop_codons, mutated_stop_codons
     else:
-        return '', '', '', 0
-
-
-def grade_qc(completeness: float, mean_dep: float, median_dep: float,
-             frameshift_vars: str, nc_fs_count: int) -> str:
-    """Determine if the sample passes internal QC metrics and assign a PASS or why it failed
-
-    Params:
-    -------
-        completeness (float): Final genome completeness
-        mean_dep (float): Mean sequencing depth
-        median_dep (float): Median sequencing depth
-        frameshift_vars (str): Any potential frameshift variants from VCF parsing or "none" if there weren't any
-        nc_fs_count (int): Count of frameshift variants from nextclade to normalize with
-
-    Returns:
-    --------
-        str: Final QC status
-    """
-    qc_status = []
-    # Completeness
-    if completeness < 0.9:
-        if completeness < 0.5:
-            qc_status.append('INCOMPLETE_GENOME')
-        else:
-            qc_status.append('PARTIAL_GENOME')
-    # Coverage Depth
-    if (mean_dep < 20) or (median_dep < 20):
-        qc_status.append('LOW_SEQ_DEPTH')
-    # Frameshifts
-    #  Using the nextclade count (if available) to take into account the full gene effect
-    if (frameshift_vars != 'none') and (nc_fs_count > 0):
-        qc_status.append('POTENTIAL_FRAMESHIFTS')
-
-    if qc_status:
-        return ';'.join(qc_status)
-    return 'PASS'
-
+        return '', '', ''
 
 def main() -> None:
     """Main entry to the program"""
@@ -522,8 +506,7 @@ def main() -> None:
     final_out = []
     with open(args.consensus) as handle:
         for record in SeqIO.parse(handle, "fasta"):
-            # The chrom/segment is ALWAYS after the sample name based on how the pipeline is setup to rename consensus seqs
-            #  and there are no spaces allowed in the sample name
+            # The chrom/segment is always after the sample name based on how the pipeline is setup to rename consensus seqs
             chrom = record.description.split(' ')[1]
 
             # Reads
@@ -531,8 +514,10 @@ def main() -> None:
             count_n, completeness = parse_consensus(record)
 
             # Variants
+            #  This isn't efficient as we're going to parse the file multiple times
+            #  Will maybe think of a good way to adjust this but I didn't want to restructure if for now
+            #  And its not an intensive/large file to parse
             variants, variant_positions, frameshift_variants, var_count_dict = parse_vcf(args.vcf, chrom)
-
             # Optional primer checks, same as variants parsing multiple times for now
             pcr_primer_overlap = 'NA'
             seq_primer_overlap = 'NA'
@@ -546,19 +531,17 @@ def main() -> None:
                 minor_snps, minor_indels = count_minor_variants(args.min_vcf, chrom)
 
             # Nextclade mutations (if provided)
-            nc_frameshifts, nc_stop_codons, nc_mutated_stop_codons, nc_fs_count = '', '', '', 0
             if args.add_nextclade_columns and args.nextclade_csv:
-               nc_frameshifts, nc_stop_codons, nc_mutated_stop_codons, nc_fs_count = get_nextclade_vals(args.nextclade_csv)
-
-               ## ToDo - Have to probably compare the nc_frameshifts to the basic check frameshifts at some point
+               frameshifts, stop_codons, mutated_stop_codons = get_nextclade_vals(args.nextclade_csv)
+            elif args.add_nextclade_columns and not args.nextclade_csv:
+                frameshifts, stop_codons, mutated_stop_codons = '', '', ''
 
             # Grade qc
             mean_depth = depth_dict[chrom].get('mean', 0)
             median_depth = depth_dict[chrom].get('median', 0)
-            qc_status = grade_qc(completeness, mean_depth, median_depth, frameshift_variants, nc_fs_count)
+            qc_status = grade_qc(completeness, mean_depth, median_depth, frameshift_variants)
 
             # Final Output
-            #  Main columns
             sample_data = {
                 'sample': args.sample,
                 'reference': chrom,
@@ -579,16 +562,16 @@ def main() -> None:
 
             # Conditionally add nextclade mutation data
             if args.add_nextclade_columns:
-                sample_data['nextclade_frameshifts'] = nc_frameshifts
-                sample_data['premature_stop_codons'] = nc_stop_codons
-                sample_data['mutated_stop_codons'] = nc_mutated_stop_codons
+                sample_data['frameshifts'] = frameshifts
+                sample_data['premature_stop_codons'] = stop_codons
+                sample_data['mutated_stop_codons'] = mutated_stop_codons
 
             # Conditionally add the minor variant data
             if args.min_vcf:
                 sample_data['minor_snps'] = minor_snps
                 sample_data['minor_indels'] = minor_indels
 
-            # Remaining 'busy' columns
+            # Add remaining columns
             sample_data['variants'] = variants
             sample_data['possible_frameshift_variants'] = frameshift_variants
             sample_data['sequencing_primer_variants'] = seq_primer_overlap

@@ -12,7 +12,7 @@ process PROCESS_VCF {
         'biocontainers/artic:1.11.1--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(vcf), path(bam), path(bai)
+    tuple val(meta), path(vcf)
     path reference
 
     output:
@@ -37,8 +37,7 @@ process PROCESS_VCF {
         -v ${meta.id}.variants.vcf \\
         -t ${meta.id}.consensus.tsv \\
         $frameshiftArg \\
-        $vcf \\
-        $bam
+        $vcf
 
     # Normalize variant records into canonical VCF representation
     bcftools norm \\
@@ -55,7 +54,7 @@ process PROCESS_VCF {
     "${task.process}":
         bcftools: \$(bcftools --version 2>&1 | head -n1 | sed 's/^.*bcftools //; s/ .*\$//')
         python: \$(python --version | sed 's/Python //g')
-        process_vcf: 0.3.0
+        process_vcf: 0.2.0
     END_VERSIONS
     """
 

@@ -52,7 +52,7 @@ def collect_depths(bamfile: str, ref_name: str, min_depth: int, ignore_deletions
         ref_name,
         start=0,
         stop=bam_alignment.get_reference_length(ref_name),
-        max_depth=100000,
+        max_depth=100000000,
         truncate=False,
         min_base_quality=0,
     ):
@@ -91,6 +91,7 @@ def intervals_extract(iterable):
 
 
 def go(args):
+
     # open the reference sequence and collect the sequence header and sequence length of the first record
     records = [x for x in SeqIO.parse(args.reference, "fasta")]
     intervals = []

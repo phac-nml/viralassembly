@@ -2,7 +2,7 @@
 '''Check how complete an amplicon is based bed file and consensus'''
 import argparse
 import csv
-from Bio import SeqIO
+from Bio import SeqIO, SeqRecord
 
 def init_parser() -> argparse.ArgumentParser:
     """
