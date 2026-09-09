@@ -101,7 +101,7 @@ def assess_control(row: pd.Series, threshold: float) -> str:
 
     """
     if row['genome_completeness'] >= threshold:
-        return f'Warning - Above {threshold}% genome completeness contamination threshold'
+        return f'Warning - Above {threshold}% contamination threshold'
     return 'PASS'
 
 
@@ -136,7 +136,8 @@ def main() -> None:
 
     # Do stuff
     df = pd.read_csv(args.csv)
-    validate_df_columns(df, ['sample', 'num_aligned_reads', 'num_segment_reads', 'genome_completeness', 'mean_sequencing_depth', 'median_sequencing_depth', 'qc_pass'])
+    validate_df_columns(df, ['sample', 'num_aligned_reads', 'num_segment_reads', 'genome_completeness',
+                             'mean_sequencing_depth', 'median_sequencing_depth', 'qc_pass'])
 
     # Adding in filtered out samples and give them back their metadata if available
     if args.filter_tracking:
@@ -172,7 +173,7 @@ def main() -> None:
         if any(neg_df['genome_completeness'] >= args.threshold):
             failing_samples = neg_df[neg_df['genome_completeness'] >= args.threshold]['sample'].to_list()
             run_control_status = 'WARN'
-            run_control_info = f'Samples: {";".join(failing_samples)} are above {args.threshold} contamination threshold'
+            run_control_info = f'Controls: {";".join(failing_samples)} exceed {args.threshold}% contamination threshold'
     else:
         # Add neg control columns as not available
         run_control_status = 'WARN'
