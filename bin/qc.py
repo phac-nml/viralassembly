@@ -245,9 +245,19 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
             if record.CHROM != chrom:
                 continue
 
+            # Base information
+            ref_len = len(record.REF)
+            alt_len = len(record.ALT[0])
+            alt_str = str(record.ALT[0])
+            iupac = False
+            if ("ConsensusTag" in record.INFO) and (record.INFO["ConsensusTag"] == 'ambiguous'):
+                iupac = True
+                alt_str = record.INFO["ConsensusBase"]
+
             # Multiple alleles should be removed by now by all methods. Exit if not for bugfixing
             if len(record.ALT) > 1:
-                raise ValueError(f"Multiple alleles should have been resolved previously. Check intermediate VCFs at position: {record.POS}")
+                if not iupac:
+                    raise ValueError(f"Multiple alleles should have been resolved previously. Check intermediate VCFs at position: {record.POS}")
             # Odd issue previously - skip over Ns in vcf
             if str(record.ALT[0]).upper() == 'N':
                 continue
@@ -256,10 +266,7 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
                 continue
 
             # Create string of variant and add to list of variants along with getting the lengths of the REF and ALT
-            variant = f'{record.REF}{record.POS}{record.ALT[0]}'
-            ref_len = len(record.REF)
-            alt_len = len(record.ALT[0])
-            alt_str = str(record.ALT[0])
+            variant = f'{record.REF}{record.POS}{alt_str}'
 
             # Type of mutation leads to different spots affected and tracking
             if variant not in variants:
