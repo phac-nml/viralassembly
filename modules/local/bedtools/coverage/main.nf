@@ -60,12 +60,12 @@ process BEDTOOLS_COVERAGE_AMPLICON_BED {
 
     script:
     """
-    echo -e "reference_name	start	end	amplicon_id	pool	strand	read_count	covered_bases	amplicon_length	fraction_covered" \\
+    echo -e "reference_name	start	end	amplicon_id	pool	read_count	covered_bases	amplicon_length	fraction_covered" \\
         > ${meta.id}.amplicon_coverage.bed
     bedtools coverage \\
         -a $amplicon_bed \\
         -b $bam \\
-        -F 0.85 \\
+        -F 0.90 \\
         >> ${meta.id}.amplicon_coverage.bed
 
     # Versions #

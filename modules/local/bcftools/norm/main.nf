@@ -1,7 +1,6 @@
 process BCFTOOLS_NORM {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.pass.norm.vcf.gz", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -12,19 +11,18 @@ process BCFTOOLS_NORM {
     tuple val(meta), path(preconsensus), path(pass_vcf), path(pass_vcf_tbi)
 
     output:
-    tuple val(meta), path("${meta.id}.pass.norm.vcf.gz"), path("${meta.id}.pass.norm.vcf.gz.tbi"), emit: vcf
+    tuple val(meta), path("${meta.id}.consensus.norm.vcf.gz"), path("${meta.id}.consensus.norm.vcf.gz.tbi"), emit: vcf
     path "versions.yml", emit: versions
 
     script:
     """
-    # Fixes variants that are in both the pass and fail vcf that were masked #
     bcftools norm \\
         --check-ref s \\
         -f $preconsensus \\
         $pass_vcf \\
-        > ${meta.id}.pass.norm.vcf
-    bgzip ${meta.id}.pass.norm.vcf
-    tabix ${meta.id}.pass.norm.vcf.gz
+        > ${meta.id}.consensus.norm.vcf
+    bgzip ${meta.id}.consensus.norm.vcf
+    tabix ${meta.id}.consensus.norm.vcf.gz
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml
@@ -35,8 +33,8 @@ process BCFTOOLS_NORM {
 
     stub:
     """
-    touch ${meta.id}.pass.norm.vcf.gz
-    touch ${meta.id}.pass.norm.vcf.gz.tbi
+    touch ${meta.id}.consensus.norm.vcf.gz
+    touch ${meta.id}.consensus.norm.vcf.gz.tbi
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml

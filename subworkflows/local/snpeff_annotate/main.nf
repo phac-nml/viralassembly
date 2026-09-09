@@ -1,16 +1,12 @@
 /*
     Subworkflow to annotate VCF file using SnpEFF
-        1. Checks if a database is available
-        2. If it is downloads it, otherwise attempts to make it from NCBI refseq genbank file
-        3. Annotates VCF file using downloaded or made DB
-
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { SNPEFF_DATABASE   } from '../../../modules/local/snpeff/main'
-include { SNPEFF_ANNOTATE   } from '../../../modules/local/snpeff/main'
-include { ZIP_AND_INDEX_VCF } from '../../../modules/local/artic_subcommands/main'
+
+include { SNPEFF_ANNOTATE   } from '../../../modules/local/snpeff/annotate/main'
+include { ZIP_AND_INDEX_VCF } from '../../../modules/local/artic/zip_and_index/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -19,35 +15,22 @@ include { ZIP_AND_INDEX_VCF } from '../../../modules/local/artic_subcommands/mai
 */
 workflow WF_SNPEFF_ANNOTATE {
     take:
-    ch_vcf          // channel: [ val(meta), file(vcf) ]
-    ch_reference    // channel: [ path(reference) ]
+    ch_vcf              // channel: [ val(meta), file(vcf) ]
+    ch_snpeff_db        // channel: [ val(genome), path(db) ]
+    ch_snpeff_config    // channel: [ path(config) ]
+    level               // Flag used to adjust name for minor variant vcf
 
     main:
     // Version tracking
-    ch_gff = params.gff ? file(params.gff, type: 'file', checkIfExists: true) : []
     ch_versions = channel.empty()
-
-    // Get reference id
-    ch_reference.splitFasta( record: [ id: true ] )
-        .map{ record -> record.id.toString() }
-        .first() // To turn to value channel for now
-        .set{ ch_ref_id_str }
-
-    SNPEFF_DATABASE(
-        ch_ref_id_str,
-        ch_reference,
-        ch_gff
-    )
-    ch_versions = ch_versions.mix(SNPEFF_DATABASE.out.versions)
 
     SNPEFF_ANNOTATE(
         ch_vcf,
-        ch_ref_id_str,
-        SNPEFF_DATABASE.out.db,
-        SNPEFF_DATABASE.out.config
-            .ifEmpty([])
+        ch_snpeff_db,
+        ch_snpeff_config.ifEmpty([]),
+        level
     )
-    ch_versions = ch_versions.mix(SNPEFF_DATABASE.out.versions)
+    ch_versions = ch_versions.mix(SNPEFF_ANNOTATE.out.versions)
 
     // Zip and index vcf to match pass vcf
     ZIP_AND_INDEX_VCF(
@@ -61,7 +44,7 @@ workflow WF_SNPEFF_ANNOTATE {
         .set { ch_ann_vcf }
 
     emit:
-    vcf = ch_ann_vcf
-    csv = SNPEFF_ANNOTATE.out.csv
-    versions = ch_versions
+    vcf         = ch_ann_vcf                // channel: [ val(meta), file(vcf) ]
+    csv         = SNPEFF_ANNOTATE.out.csv   // channel: [ val(meta), file(csv) ]
+    versions    = ch_versions               // channel: [ path(versions.yml) ]
 }

@@ -1,21 +1,21 @@
 // QC Modules
 //  Using artic env for the moment as it has a bunch of tools and
-//  is used in earlier steps
+//  is used in earlier steps already
 process MAKE_SAMPLE_QC_CSV {
     label 'process_single'
     tag "$meta.id"
-    publishDir "${params.outdir}/sample_csvs", pattern: "*.csv", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
-        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.11.1--pyhdfd78af_0' :
+        'biocontainers/artic:1.11.1--pyhdfd78af_0' }"
 
     input:
-    tuple val(meta), path(consensus), path(bam), path(bai), path(depth_bed), path(vcf)
+    tuple val(meta), path(consensus), path(bam), path(bai), path(depth_bed), path(vcf), path(min_vcf), path(nextclade_csv)
     path primer_bed
     path metadata
     path pcr_primers
+    val skip_nextclade
 
     output:
     tuple val(meta), path ("${meta.id}.qc.csv"), emit: csv
@@ -23,26 +23,24 @@ process MAKE_SAMPLE_QC_CSV {
 
     script:
     // Need to structure args based on what we have
-    def version = workflow.manifest.version
     def metadataArg = metadata ? "--metadata $metadata" : ""
     def seqArg = primer_bed ? "--seq_bed $primer_bed" : ""
     def pcrArg = pcr_primers ? "--pcr_bed $pcr_primers" : ""
-    def analysis = "nanopolish"
-    if ( params.variant_caller == 'medaka' ) {
-        analysis = "medaka"
-    } else if ( params.variant_caller == 'clair3' ) {
-        analysis = "clair3"
-    }
+    def minVcfArg = min_vcf ? "--min_vcf $min_vcf" : ""
+    def nextcladeColumnsArgs = skip_nextclade ? "" : "--add_nextclade_columns"
+    def nextcladeCsvArg = nextclade_csv ? "--nextclade_csv $nextclade_csv" : ""
     """
     qc.py \\
-        --analysis $analysis \\
-        --consensus $consensus \\
         --bam $bam \\
         --vcf $vcf \\
+        --consensus $consensus \\
         --depth $depth_bed \\
         $metadataArg \\
         $seqArg \\
         $pcrArg \\
+        $minVcfArg \\
+        $nextcladeColumnsArgs \\
+        $nextcladeCsvArg \\
         --sample $meta.id \\
         --irida_id $meta.irida_id
 
@@ -64,14 +62,14 @@ process MAKE_SAMPLE_QC_CSV {
     END_VERSIONS
     """
 }
+
 process FINAL_QC_CSV {
     label 'process_single'
-    publishDir "${params.outdir}", pattern: "overall.qc.csv", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
-        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.11.1--pyhdfd78af_0' :
+        'biocontainers/artic:1.11.1--pyhdfd78af_0' }"
 
     input:
     path combined_csv

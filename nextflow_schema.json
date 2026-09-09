@@ -1,10 +1,10 @@
 {
-    "$schema": "https://json-schema.org/draft-07/schema",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/phac-nml/viralassembly/main/nextflow_schema.json",
     "title": "phac-nml/viralassembly pipeline parameters",
     "description": "Assemble and QC viral reads",
     "type": "object",
-    "definitions": {
+    "$defs": {
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",
@@ -36,6 +36,12 @@
                     "pattern": "^\\S+$",
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
+                },
+                "virus_name": {
+                    "type": "string",
+                    "description": "Virus name that sets virus specific processes and nextclade runs",
+                    "$comment": "Currently, this virus name option is set to run nextclade with the predefined dataset according to the named virus.\n Additionally, it currently runs the COVID virus specific subworkflow. Future use will possibly include more predefined options.",
+                    "pattern": "(?i)^(covid|rsv_a|rsv_b|mpox|ebola|sudan|measles|dengue|yfv|hmpv|vzv|rubella|mumps|wnv)$"
                 }
             },
             "required": ["outdir"]
@@ -47,24 +53,23 @@
             "default": "",
             "fa_icon": "fas fa-sign-in-alt",
             "properties": {
-                "variant_caller": {
-                    "type": "string",
-                    "fa_icon": "fas fa-terminal",
-                    "description": "Choose which variant caller to use. Options are 'clair3', 'medaka', and 'nanopolish'",
-                    "default": "clair3",
-                    "enum": ["clair3", "medaka", "nanopolish"]
-                },
                 "reference": {
                     "type": "string",
                     "format": "file-path",
                     "exists": true,
                     "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)$",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
                     "description": "Path to reference genome fasta file",
                     "fa_icon": "fas fa-font"
+                },
+                "platform": {
+                    "type": "string",
+                    "description": "Sequencing platform used. Options are: 'illumina' or 'nanopore'",
+                    "enum": ["illumina", "nanopore"],
+                    "fa_icon": "fas fa-vector-square"
                 }
             },
-            "required": ["variant_caller", "reference"]
+            "required": ["reference", "platform"]
         },
         "amplicon_settings": {
             "title": "Amplicon Settings",
@@ -90,26 +95,61 @@
             "default": "",
             "fa_icon": "fas fa-tools",
             "properties": {
-                "clair3_model": {
+                "model": {
                     "type": "string",
                     "default": "r1041_e82_400bps_sup_v420",
-                    "pattern": "^[A-Za-z0-9_\\-\\.]*$",
+                    "enum": [
+                        "r941_prom_sup_g5014",
+                        "r941_prom_hac_g360+g422",
+                        "r941_prom_hac_g360+g422_1235",
+                        "r941_prom_hac_g238",
+                        "r1041_e82_400bps_sup_v430_bacteria_finetuned",
+                        "hifi_revio",
+                        "hifi_sequel2",
+                        "ilmn",
+                        "r1041_e82_260bps_fast_g632",
+                        "r1041_e82_260bps_hac_g632",
+                        "r1041_e82_260bps_hac_v400",
+                        "r1041_e82_260bps_hac_v410",
+                        "r1041_e82_260bps_sup_g632",
+                        "r1041_e82_260bps_sup_v400",
+                        "r1041_e82_260bps_sup_v410",
+                        "r1041_e82_400bps_fast_g615",
+                        "r1041_e82_400bps_fast_g632",
+                        "r1041_e82_400bps_hac_g615",
+                        "r1041_e82_400bps_hac_g632",
+                        "r1041_e82_400bps_hac_v400",
+                        "r1041_e82_400bps_hac_v410",
+                        "r1041_e82_400bps_hac_v420",
+                        "r1041_e82_400bps_hac_v430",
+                        "r1041_e82_400bps_hac_v500",
+                        "r1041_e82_400bps_hac_v520",
+                        "r1041_e82_400bps_sup_g615",
+                        "r1041_e82_400bps_sup_v400",
+                        "r1041_e82_400bps_sup_v410",
+                        "r1041_e82_400bps_sup_v420",
+                        "r1041_e82_400bps_sup_v430",
+                        "r1041_e82_400bps_sup_v500",
+                        "r1041_e82_400bps_sup_v520",
+                        "r104_e81_hac_g5015",
+                        "r104_e81_sup_g5015"
+                    ],
                     "description": "Model to use in clair3. See clair3 docs for more info. Be as accurate as possible for best results!"
                 },
-                "clair3_local_model": {
+                "local_model": {
                     "type": "string",
                     "format": "directory-path",
                     "pattern": "^\\S+$",
                     "exists": true,
                     "description": "Path to local clair3 model folder"
                 },
-                "clair3_no_pool_split": {
+                "no_pool_split": {
                     "type": "boolean",
                     "description": "Pass to not split amplicon pools when running clair3"
                 },
                 "min_qual_clair3": {
                     "type": "integer",
-                    "default": 8,
+                    "default": 7,
                     "description": "Minimum clair3 variant quality to PASS variant to final consensus"
                 },
                 "min_frameshift_qual": {
@@ -119,54 +159,106 @@
                 },
                 "min_allele_freq": {
                     "type": "number",
-                    "default": 0.65,
+                    "default": 0.6,
                     "description": "Minimum clair3 allele frequency to PASS variant to final consensus"
+                },
+                "min_mask_freq": {
+                    "type": "number",
+                    "default": 0.25,
+                    "description": "Minimum clair3 allele frequency to mask a variant with an N in the final consensus"
                 }
             }
         },
-        "medaka_settings": {
-            "title": "Medaka Settings (If using over clair3)",
+        "clairS-TO_settings": {
+            "title": "ClairS-TO Settings",
             "type": "object",
-            "description": "Settings pertaining to the medaka variant calling workflow if using medaka over clair3",
+            "description": "Settings pertaining to the ClairS-TO minor variant calling workflow.",
             "default": "",
             "fa_icon": "fas fa-tools",
             "properties": {
-                "medaka_model": {
+                "clairsto_model": {
                     "type": "string",
-                    "default": "r941_min_hac_g507",
-                    "pattern": "^[A-Za-z0-9_\\-\\.]*$",
-                    "description": "Model to use in medaka. See medaka docs for more info. Be as accurate as possible for best results!"
+                    "default": "ont_r10_dorado_sup_5khz",
+                    "description": "Model to use in ClairS-TO. See ClairS-TO docs for more info. Be as accurate as possible for best results!",
+                    "enum": [
+                        "ont_r10_dorado_sup_5khz",
+                        "ont_r10_dorado_sup_4khz",
+                        "ont_r10_dorado_hac_4khz",
+                        "ont_r10_guppy_sup_4khz",
+                        "ont_r10_guppy_hac_5khz"
+                    ]
                 },
-                "skip_longshot": {
+                "min_snv_af_clairS": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "Minimum clairS-TO allele frequency to PASS minor single nucleotide variants"
+                },
+                "min_indel_af_clairS": {
+                    "type": "number",
+                    "default": 0.15,
+                    "description": "Minimum clairS-TO allele frequency to PASS minor insertions and deletions"
+                },
+                "min_cov_clairS": {
+                    "type": "integer",
+                    "default": 20,
+                    "description": "Minimum clairS-TO coverage to PASS minor variants"
+                },
+                "min_qual_clairS": {
+                    "type": "integer",
+                    "default": 5,
+                    "description": "Minimum clairS-TO quality to PASS minor variants"
+                }
+            }
+        },
+        "freebayes_options": {
+            "title": "Freebayes Options",
+            "type": "object",
+            "description": "Options relating to illumina variant calling with Freebayes",
+            "default": "",
+            "properties": {
+                "min_ambiguity_threshold": {
+                    "type": "number",
+                    "description": "Minimum threshold to call a position as an IUPAC else reference allele is used",
+                    "default": 0.25,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "max_ambiguity_threshold": {
+                    "type": "number",
+                    "description": "Maximum threshold to call a position as an IUPAC otherwise the majority allele is used",
+                    "default": 0.75,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-plus-square"
+                },
+                "min_indel_threshold": {
+                    "type": "number",
+                    "description": "Minimum thresholds to keep an indel",
+                    "default": 0.6,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "min_alt_threshold_illumina": {
+                    "type": "number",
+                    "description": "Require at least this fraction of observations supporting an alt allele to evaluate position",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "min_variant_qual_freebayes": {
+                    "type": "integer",
+                    "description": "Minimum freebayes quality (probability) to filter variants",
+                    "default": 20,
+                    "minimum": 0,
+                    "fa_icon": "far fa-minus-square"
+                },
+                "use_ivar": {
                     "type": "boolean",
-                    "description": "If passed, skip running longshot with medaka pipeline",
-                    "fa_icon": "fas fa-forward"
-                }
-            }
-        },
-        "nanopolish_settings": {
-            "title": "Nanopolish Settings (If using over clair3)",
-            "type": "object",
-            "description": "Settings pertaining to the nanopolish variant calling workflow if using nanopolish over clair3. *NOTE*: nanopolish only works on R9 flowcells",
-            "default": "",
-            "fa_icon": "fas fa-tools",
-            "properties": {
-                "fast5_pass": {
-                    "type": "string",
-                    "format": "directoy-path",
-                    "pattern": "^\\S+$",
-                    "exists": true,
-                    "fa_icon": "fas fa-folder",
-                    "description": "Path to directory containing fast5 files REQUIRED for nanopolish"
-                },
-                "sequencing_summary": {
-                    "type": "string",
-                    "format": "file-path",
-                    "pattern": "^\\S+$",
-                    "exists": true,
-                    "mimetype": "text/plain",
-                    "fa_icon": "fas fa-file-alt",
-                    "description": "Path to sequencing_summary file REQUIRED for nanopolish"
+                    "description": "Use iVar as a variant caller instead of Freebayes for Illumina data. Default: False",
+                    "default": false
                 }
             }
         },
@@ -191,9 +283,18 @@
                 },
                 "max_length": {
                     "type": "integer",
-                    "default": 4000,
-                    "minimum": 100,
+                    "default": 8000,
+                    "minimum": 50,
                     "description": "Maximum read length to keep"
+                },
+                "fastp_adapter": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?$",
+                    "description": "Path to FASTA file containing adapter sequences",
+                    "fa_icon": "fas fa-font"
                 }
             }
         },
@@ -205,7 +306,7 @@
             "properties": {
                 "normalise": {
                     "type": "integer",
-                    "default": 1000,
+                    "default": 2000,
                     "minimum": 0,
                     "description": "Normalize coverage for each amplicon to this threshold",
                     "fa_icon": "fas fa-balance-scale"
@@ -216,12 +317,17 @@
                     "minimum": 0,
                     "description": "Minimum depth to call a position. Positions lower are masked with an N"
                 },
+                "minor_variants": {
+                    "type": "boolean",
+                    "description": "Enable minor variant calling with ClairS-TO"
+                },
                 "no_frameshift": {
                     "type": "boolean",
                     "description": "Filter out INDEL variants that are not divisible by 3 (likely frameshift but not necessarily)"
                 },
                 "metadata": {
                     "type": "string",
+                    "format": "file-path",
                     "fa_icon": "fas fa-file-csv",
                     "mimetype": "text/csv",
                     "pattern": "^\\S+\\.tsv$",
@@ -283,37 +389,58 @@
                     "type": "string",
                     "format": "file-path",
                     "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.gff(\\.gz)?$",
+                    "pattern": "^\\S+\\.gff3?(\\.gz)?$",
                     "description": "Path to GFF annotation file.",
                     "fa_icon": "fas fa-file-invoice"
                 }
             }
         },
-        "report_generation_options": {
-            "title": "Report generation options",
+        "nextclade_options": {
+            "title": "Virus name Nextclade options",
             "type": "object",
-            "description": "Options pertaining to final report generation",
+            "description": "Options pertaining to pulling & running nextclade",
             "default": "",
             "properties": {
-                "multiqc_report": {
+                "skip_nextclade": {
                     "type": "boolean",
-                    "fa_icon": "fas fa-file-signature",
-                    "description": "Create MultiQC report instead of custom report"
+                    "description": "If passed, skips running Nextclade",
+                    "fa_icon": "fas fa-forward"
                 },
-                "multiqc_config_overall": {
+                "nextclade_dataset_dir": {
                     "type": "string",
-                    "format": "file-path",
-                    "description": "MultiQC overall run config yaml file",
-                    "hidden": true
+                    "format": "directory-path",
+                    "mimetype": "text/plain",
+                    "description": "Path to local nextclade dataset.",
+                    "fa_icon": "fas fa-file-invoice"
                 },
-                "multiqc_config_sample": {
+                "nextclade_dataset_name": {
                     "type": "string",
-                    "format": "file-path",
-                    "description": "MultiQC sample config yaml file",
-                    "hidden": true
+                    "description": "Name of the nextclade dataset to use."
+                },
+                "nextclade_dataset_tag": {
+                    "type": "string",
+                    "description": "Tag for the nextclade dataset to use."
                 }
-            },
-            "fa_icon": "fas fa-file-code"
+            }
+        },
+        "virus_specific_options": {
+            "title": "Virus specific options",
+            "type": "object",
+            "description": "Options pertaining to running virus specific workflow options",
+            "default": "",
+            "properties": {
+                "skip_pangolin": {
+                    "type": "boolean",
+                    "description": "If passed, skips running pangolin for Covid",
+                    "fa_icon": "fas fa-forward"
+                },
+                "pango_database": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "fa_icon": "fas fa-folder-open",
+                    "description": "Path to pangolin datadir."
+                }
+            }
         },
         "generic_options": {
             "title": "Generic options",
@@ -365,40 +492,43 @@
     },
     "allOf": [
         {
-            "$ref": "#/definitions/input_output_options"
+            "$ref": "#/$defs/input_output_options"
         },
         {
-            "$ref": "#/definitions/required_settings"
+            "$ref": "#/$defs/required_settings"
         },
         {
-            "$ref": "#/definitions/amplicon_settings"
+            "$ref": "#/$defs/amplicon_settings"
         },
         {
-            "$ref": "#/definitions/clair3_settings"
+            "$ref": "#/$defs/clair3_settings"
         },
         {
-            "$ref": "#/definitions/medaka_settings"
+            "$ref": "#/$defs/clairS-TO_settings"
         },
         {
-            "$ref": "#/definitions/nanopolish_settings"
+            "$ref": "#/$defs/freebayes_options"
         },
         {
-            "$ref": "#/definitions/read_filtering_options"
+            "$ref": "#/$defs/read_filtering_options"
         },
         {
-            "$ref": "#/definitions/general_analysis_options"
+            "$ref": "#/$defs/general_analysis_options"
         },
         {
-            "$ref": "#/definitions/snpeff_options"
+            "$ref": "#/$defs/snpeff_options"
         },
         {
-            "$ref": "#/definitions/qc_options"
+            "$ref": "#/$defs/nextclade_options"
         },
         {
-            "$ref": "#/definitions/report_generation_options"
+            "$ref": "#/$defs/virus_specific_options"
         },
         {
-            "$ref": "#/definitions/generic_options"
+            "$ref": "#/$defs/qc_options"
+        },
+        {
+            "$ref": "#/$defs/generic_options"
         }
     ]
 }

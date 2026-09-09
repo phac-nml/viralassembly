@@ -6,14 +6,19 @@ import statistics
 import subprocess
 import pandas as pd
 import vcf
+import re
 
 from Bio import SeqIO, SeqRecord
-from typing import Tuple
+from collections import defaultdict
+from typing import Tuple, Optional
+
 
 def init_parser() -> argparse.ArgumentParser:
-    """
-    Specify command line arguments
-    Returns command line parser with inputs
+    """Parse CL inputs to be used in script
+
+    Returns:
+    --------
+        argparse.ArgumentParser
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -28,35 +33,14 @@ def init_parser() -> argparse.ArgumentParser:
         '--irida_id',
         required=True,
         type=str,
-        help='IRIDA ID to upload to'
-    )
-    parser.add_argument(
-        '-a',
-        '--analysis',
-        required=True,
-        type=str,
-        help='Analysis program used ["nanopolish", "medaka", "clair3"]'
-    )
-    parser.add_argument(
-        '-c',
-        '--consensus',
-        required=True,
-        type=str,
-        help='Input sample consensus sequence file'
+        help='IRIDA ID to upload metadata to'
     )
     parser.add_argument(
         '-b',
         '--bam',
         required=True,
         type=str,
-        help='Input sample bam file'
-    )
-    parser.add_argument(
-        '-d',
-        '--depth',
-        required=True,
-        type=str,
-        help='Input sample depth bed file'
+        help='Bam file used to call variants from'
     )
     parser.add_argument(
         '-v',
@@ -64,6 +48,26 @@ def init_parser() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help='Input sample passing vcf file'
+    )
+    parser.add_argument(
+        '-c',
+        '--consensus',
+        required=True,
+        type=str,
+        help='Final sample consensus sequence file'
+    )
+    parser.add_argument(
+        '-d',
+        '--depth',
+        required=True,
+        type=str,
+        help='Positional depth bed file from samtools depth'
+    )
+    parser.add_argument(
+        '--min_vcf',
+        required=False,
+        type=str,
+        help='Input sample minor vcf file'
     )
     parser.add_argument(
         '-m',
@@ -84,120 +88,139 @@ def init_parser() -> argparse.ArgumentParser:
         type=str,
         help='Input PCR bed file to test variants against'
     )
+    parser.add_argument(
+        '--add_nextclade_columns',
+        action='store_true',
+        help='Add nextclade columns to the final output only if params.skip_nextclade is not invoked'
+    )
+    parser.add_argument(
+        '--nextclade_csv',
+        required=False,
+        type=str,
+        help='Nextclade CSV file'
+    )
     return parser
 
-def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
-    """
-    Purpose
-    -------
-    Check that input CSV contains the correct columns needed. Exits program if not
 
-    Parameters
-    ----------
-    df: pd.DataFrame
-        Pandas dataframe made from the input CSV file
+def validate_df_columns(df: pd.DataFrame, needed_columns: list) -> None:
+    """Check that input CSV contains the correct columns needed. Exits program if not
+
+    Params:
+    -------
+        df (DataFrame): Dataframe made from the input CSV file
+        needed_columns (list): List of columns to confirm exist
     """
     columns = list(df.columns)
     if any(x not in columns for x in needed_columns):
-        raise ValueError('Missing {} column(s) needed for validation'.format([x for x in needed_columns if x not in columns]))
+        missing_str = ', '.join([x for x in needed_columns if x not in columns])
+        raise ValueError(f'Missing {missing_str} column(s) needed for validation'.format())
 
-def get_read_count(bam: str) -> int:
-    '''
-    Purpose:
-    --------
-    Get the number of aligned reads from given bamfile using samtools and subprocess
 
-    Parameters:
-    -----------
-    bam - str
-        Path to the primertrimmed bam file
+def get_read_count(bam: str, chrom: Optional[str] = None) -> int:
+    """Get the number of aligned reads from given bamfile and optionally the given chrom using samtools view and subprocess
+
+    Params:
+    -------
+        bam (str): Path to the bam file used to call variants
+        chrom (None | str): Optional name of the segment/chromosome to get the stats for
 
     Returns:
     --------
-    Integer number of aligned reads
-    '''
+        integer: Number of aligned reads
+    """
     cmd = ['samtools', 'view', '-c', '-F0x900', bam]
+    if chrom:
+        cmd.append(chrom)
     read_count = subprocess.run(cmd, capture_output=True, check=True, text=True).stdout.strip('\n')
     return int(read_count)
 
-def parse_depth_bed(bed: str) -> Tuple[float, float]:
-    '''
-    Purpose:
-    --------
-    Calculate the mean and median sequencing depth from samtools depth bed file
 
-    Parameters:
-    -----------
-    bed - str
-        Path to the input depth bed file from samtools depth
+def parse_depth_bed(bed: str) -> defaultdict:
+    """Calculate the mean and median sequencing depth for each chrom from samtools depth bed file
+
+    Params:
+    -------
+        bed (str): Path to the input depth bed file from samtools depth
 
     Returns:
     --------
-    Float mean sequencing depth
-    Float median sequencing depth
-    '''
-    depth = []
-    with open(bed, 'r') as handle:
+        defaultdict: Containing chrom as keys with median and mode underlying
+    """
+    depth = defaultdict(list)
+    with open(bed) as handle:
         reader = csv.DictReader(handle, delimiter='\t')
         for d in reader:
-            depth.append(int(d['depth']))
+            depth[d['chrom']].append(int(d['depth']))
 
     # Empty file return nothing
-    if depth == []:
-        return 0, 0
-    # Otherwise calc
-    mean_dep = round(statistics.mean(depth), 2)
-    median_dep = round(statistics.median(depth), 1)
-    return mean_dep, median_dep
+    depth_stats = defaultdict(dict)
+    for chrom, depth_list in depth.items():
+        if depth_list == []:
+            depth_stats[chrom]['mean'] = 0
+            depth_stats[chrom]['median'] = 0
+            continue
+        # Otherwise calc
+        mean_dep = round(statistics.mean(depth_list), 2)
+        median_dep = round(statistics.median(depth_list), 1)
+        depth_stats[chrom]['mean'] = mean_dep
+        depth_stats[chrom]['median'] = median_dep
+    return depth_stats
+
 
 def parse_consensus(fasta: SeqRecord) -> Tuple[int, float]:
-    '''
-    Purpose:
-    --------
-    Parse consensus file to get the genome completeness and N count
+    """Parse consensus file to get the genome completeness and N count
 
-    Parameters:
-    -----------
-    fasta - SeqRecord
-        Bio SeqRecord of input consensus sequence
+    Params:
+    -------
+        fasta (SeqRecord): Single consensus sequence input
 
     Returns:
     --------
-    Integer number of Ns
-    Float genome completeness calculated from the number of Ns
-    '''
+        integer: Number of Ns
+        float: Genome completeness calculated from the number of Ns and the genome length
+    """
     n_pos =  [i for i, base in enumerate(fasta.seq.lower()) if base == 'n']
     count_n = len(n_pos)
     completeness = 1 - (count_n / len(fasta.seq))
     completeness = round(completeness, 4)
     return count_n, completeness
 
+
 def _create_variantpos_dict(var: str, var_range: range) -> dict:
-    '''Create dict with keys "variant" and "range"'''
+    """Create variant position dict for tracking variants
+
+    Params:
+    -------
+        var (str): Variant
+        var_range (range): Genomic range the variant spans
+
+    Returns:
+    --------
+        dict: with keys "variant" and "range"
+    """
     return {
         'variant': var,
         'range': var_range
     }
 
-def parse_vcf(vcf_file: str) -> Tuple[str, list, str, str, dict]:
-    '''
-    Purpose:
-    --------
-    Parse input VCF file to find variants and their locations
 
-    Parameters:
-    -----------
-    vcf_file - str
-        Path to input gzipped vcf file from args
+def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
+    """Parse input VCF file to find variants and their locations
+
+    Params:
+    -------
+        vcf_file (str): Path to input gzipped vcf file
+        chrom (str): Name of chrom to select variants from
 
     Returns:
     --------
-    String of parsed variants to report
-    List of variant-range dicts
-    String of any potential frameshift variants (%3==0 check and snpeff ann check)
-    Dict of different variant counts
-        {'total_variants': int, 'num_snps': int, 'num_deletions': int, 'num_deletion_sites': int, 'num_insertions': int, 'num_insertion_sites': int}
-    '''
+        tuple: Elements parsed from the vcf file for tracking
+            str: All parsed variants to report formatted as 'RefPosAlt'
+            list: Containing variant-range dicts
+            str: Potential frameshift variants (%3==0 check and snpeff ann check)
+            dict: Tracking the different variant counts
+                {'total_variants': int, 'num_snps': int, 'num_deletions': int, 'num_deletion_sites': int, 'num_insertions': int, 'num_insertion_sites': int}
+    """
     # Base outputs
     variants = []
     variant_positions = []
@@ -215,11 +238,14 @@ def parse_vcf(vcf_file: str) -> Tuple[str, list, str, str, dict]:
     with open(vcf_file, 'rb') as handle:
         reader = vcf.Reader(handle)
         for record in reader:
+            # Only wanted chrom allowed
+            if record.CHROM != chrom:
+                continue
             # Odd issue previously - skip over Ns in vcf
             if str(record.ALT[0]).upper() == 'N':
                 continue
             # Other odd issue, skip positions where alt is None
-            if record.ALT[0] == None:
+            if record.ALT[0] is None:
                 continue
             # Multiple alleles not supported warning
             if len(record.ALT) > 1:
@@ -295,38 +321,39 @@ def parse_vcf(vcf_file: str) -> Tuple[str, list, str, str, dict]:
         return ';'.join(variants),  variant_positions, frameshift_variants, var_count_dict
     return 'none', variant_positions, frameshift_variants, var_count_dict
 
-def range_overlap(r1: range, r2: range) -> bool:
-    '''Return True if range2 overlaps range1'''
+
+def range_contains(r1: range, r2: range) -> bool:
+    """Returns True if range1 fully contains range2"""
     x1, x2 = r1.start, r1.stop
     y1, y2 = r2.start, r2.stop
     return x1 <= y2 and y1 <= x2
 
-def check_primers(bed, variant_locations: list) -> str:
-    '''
-    Purpose:
-    --------
-    Parse input bed file for any variant regions that overlap
 
-    Parameters:
-    -----------
-    bed - str
-        Path to bed file
-    variant_locations - list[dict]
-        List of variantpos dictionaries with variant and range keys
+def check_primers(bed: str, variant_locations: list, chrom: str) -> str:
+    """Parse input bed file for any variant regions that overlap
+
+    Params:
+    -------
+        bed (str): Path to primer bed file
+        variant_locations (list[dict]): Variant position dictionaries with variant and range keys
+        chrom (str): Name of the segment the variants are from
 
     Returns:
     --------
-    String of primer mutations found or string "none" if there are none
-    '''
+        str: Primer mutations found or string "none" if there were none
+    """
     if not variant_locations:
         return 'none'
 
     primer_mutations = []
-    with open(bed, 'r') as handle:
+    with open(bed) as handle:
         reader = csv.reader(handle, delimiter='\t')
         for row in reader:
             # Bed file needs at least 4 rows (chrom, start, stop, name)
             if len(row) < 4:
+                continue
+            # Only check on the right chrom for variants
+            if row[0] != chrom:
                 continue
             # Set primer values, make sure start lower than stop for range
             start, stop, name = int(row[1]), int(row[2]), row[3]
@@ -336,30 +363,26 @@ def check_primers(bed, variant_locations: list) -> str:
 
             # Check if the location range overlaps with any variant ranges
             for var_dict in variant_locations:
-                if range_overlap(location, var_dict['range']):
+                if range_contains(location, var_dict['range']):
                     primer_mutations.append(f'{var_dict["variant"]}-{name}')
 
     if not primer_mutations:
         return 'none'
     return ';'.join(primer_mutations)
 
-def parse_metadata(metadata: str, sample: str) -> pd.DataFrame:
-    '''
-    Purpose:
-    --------
-    Parse metadata file for given sample
 
-    Parameters:
-    -----------
-    metadata - str
-        Path to metadata file
-    sample - str
-        Sample name to look for
+def parse_metadata(metadata: str, sample: str) -> pd.DataFrame:
+    """Parse metadata file for given sample
+
+    Params:
+    -------
+        metadata (str): Path to metadata file
+        sample  (str): Sample name to look for
 
     Returns:
     --------
-    Dataframe containing the found sample
-    '''
+        DataFrame: Containing columns from the wanted sample
+    """
     df = pd.read_csv(metadata, sep='\t')
     validate_df_columns(df, ['sample'])
     df = df.loc[df['sample'] == sample]
@@ -368,30 +391,24 @@ def parse_metadata(metadata: str, sample: str) -> pd.DataFrame:
     elif len(df) > 1:
         raise RuntimeError(f'Sample {sample} exists more than once in the metadata file')
     else:
-        # Can probably return an empty df?
+        # Can return an empty df
         return df
 
-def grade_qc(completeness: float, mean_dep: float, median_dep: float, frameshift_vars: str) -> str:
-    '''
-    Purpose:
-    --------
-    Determine if the sample passes internal QC metrics
 
-    Parameters:
-    -----------
-    completeness - float
-        Genome completeness
-    mean_dep - float
-        Mean sequencing depth
-    median_dep - float
-        Median sequencing depth
-    frameshift_vars - str
-        String of any potential frameshift variants or "none" if there weren't any
+def grade_qc(completeness: float, mean_dep: float, median_dep: float, frameshift_vars: str) -> str:
+    """Determine if the sample passes internal QC metrics and assign a PASS or why it failed
+
+    Params:
+    -------
+    completeness (float): Final genome completeness
+    mean_dep (float): Mean sequencing depth
+    median_dep (float): Median sequencing depth
+    frameshift_vars (str): Any potential frameshift variants or "none" if there weren't any
 
     Returns:
     --------
-    String QC status
-    '''
+        str: Final QC status
+    """
     qc_status = []
     # Completeness
     if completeness < 0.9:
@@ -410,55 +427,164 @@ def grade_qc(completeness: float, mean_dep: float, median_dep: float, frameshift
         return ';'.join(qc_status)
     return 'PASS'
 
+def count_minor_variants(vcf_file: str, chrom: str) -> Tuple[int, int]:
+    """Small function to count passing SNPs and indels in the minor VCF file.
+
+    Params:
+    -------
+      vcf_file (str): Path to the minor VCF file.
+      chrom (str): Chromosome to filter variants.
+
+    Returns:
+    --------
+      Tuple[int, int]: Number of passing SNPs and indels.
+    """
+    snps = 0
+    indels = 0
+
+    with open(vcf_file, 'rb') as handle:
+        reader = vcf.Reader(handle)
+        for record in reader:
+            if record.CHROM != chrom:
+                continue
+            if record.FILTER and "PASS" not in record.FILTER:
+                continue
+            ref_len = len(record.REF)
+            alt_len = len(record.ALT[0])
+            if ref_len == 1 and alt_len == 1:
+                snps += 1
+            elif ref_len != alt_len:
+                indels += 1
+
+    return snps, indels
+
+def get_nextclade_vals(nextclade_csv: str) -> Tuple[str, str, str]:
+    '''
+    Purpose:
+    --------
+    Parse custom nextclade CSV file to find information on potential issue sites
+
+    Parameters:
+    -----------
+    nextclade_csv (str): Path to nextclade CSV file. ';' delimited
+
+    Returns:
+    --------
+    Tuple[str, str, str]: frameshifts, stop codons, and mutated stop codons
+    '''
+    # Nextclade CDS Checks
+    ## To look back at for segmented viruses since it now just uses the second line
+    with open(nextclade_csv, 'r') as handle:
+        reader = csv.DictReader(handle, delimiter=';')
+        d = next(reader, None)
+
+    if d:
+        aa_mutations = d['aaSubstitutions']
+        frameshifts = d['qc.frameShifts.frameShifts']
+        stop_codons = d['qc.stopCodons.stopCodons']
+
+        stop_codon_pattern = ':\\*'
+        mutated_stop_codons_match = re.findall(stop_codon_pattern, aa_mutations)
+        mutated_stop_codons = '|'.join(mutated_stop_codons_match)
+
+        return frameshifts, stop_codons, mutated_stop_codons
+    else:
+        return '', '', ''
+
 def main() -> None:
-    '''Run the program'''
+    """Main entry to the program"""
     # Init Parser and set arguments
     parser = init_parser()
     args = parser.parse_args()
 
-    # Do something
-    num_reads = get_read_count(args.bam)
-    mean_dep, median_dep = parse_depth_bed(args.depth)
-    consensus = SeqIO.read(args.consensus, "fasta")
-    count_n, completeness = parse_consensus(consensus)
-    variants, variant_positions, frameshift_variants, var_count_dict = parse_vcf(args.vcf)
+    # Checks that Chrom in them already and output a dict or overall setting
+    #  Depth/Reads
+    depth_dict = parse_depth_bed(args.depth)
+    total_reads = get_read_count(args.bam)
 
-    # Optional inputs
+    # Per chrom/segment information and final output setup
+    final_out = []
+    with open(args.consensus) as handle:
+        for record in SeqIO.parse(handle, "fasta"):
+            # The chrom/segment is always after the sample name based on how the pipeline is setup to rename consensus seqs
+            chrom = record.description.split(' ')[1]
+
+            # Reads
+            num_reads = get_read_count(args.bam, chrom)
+            count_n, completeness = parse_consensus(record)
+
+            # Variants
+            #  This isn't efficient as we're going to parse the file multiple times
+            #  Will maybe think of a good way to adjust this but I didn't want to restructure if for now
+            #  And its not an intensive/large file to parse
+            variants, variant_positions, frameshift_variants, var_count_dict = parse_vcf(args.vcf, chrom)
+            # Optional primer checks, same as variants parsing multiple times for now
+            pcr_primer_overlap = 'NA'
+            seq_primer_overlap = 'NA'
+            if args.seq_bed:
+                seq_primer_overlap = check_primers(args.seq_bed, variant_positions, chrom)
+            if args.pcr_bed:
+                pcr_primer_overlap = check_primers(args.pcr_bed, variant_positions, chrom)
+
+            # Minor variants (if provided)
+            if args.min_vcf:
+                minor_snps, minor_indels = count_minor_variants(args.min_vcf, chrom)
+
+            # Nextclade mutations (if provided)
+            if args.add_nextclade_columns and args.nextclade_csv:
+               frameshifts, stop_codons, mutated_stop_codons = get_nextclade_vals(args.nextclade_csv)
+            elif args.add_nextclade_columns and not args.nextclade_csv:
+                frameshifts, stop_codons, mutated_stop_codons = '', '', ''
+
+            # Grade qc
+            mean_depth = depth_dict[chrom].get('mean', 0)
+            median_depth = depth_dict[chrom].get('median', 0)
+            qc_status = grade_qc(completeness, mean_depth, median_depth, frameshift_variants)
+
+            # Final Output
+            sample_data = {
+                'sample': args.sample,
+                'reference': chrom,
+                'qc_pass': qc_status,
+                'num_aligned_reads': total_reads,
+                'num_segment_reads': num_reads,
+                'num_consensus_n': count_n,
+                'genome_completeness': completeness,
+                'mean_sequencing_depth': mean_depth,
+                'median_sequencing_depth': median_depth,
+                'total_variants': var_count_dict['total_variants'],
+                'num_snps': var_count_dict['num_snps'],
+                'num_deletions': var_count_dict['num_deletions'],
+                'num_deletion_sites': var_count_dict['num_deletion_sites'],
+                'num_insertions': var_count_dict['num_insertions'],
+                'num_insertion_sites': var_count_dict['num_insertion_sites']
+            }
+
+            # Conditionally add nextclade mutation data
+            if args.add_nextclade_columns:
+                sample_data['frameshifts'] = frameshifts
+                sample_data['premature_stop_codons'] = stop_codons
+                sample_data['mutated_stop_codons'] = mutated_stop_codons
+
+            # Conditionally add the minor variant data
+            if args.min_vcf:
+                sample_data['minor_snps'] = minor_snps
+                sample_data['minor_indels'] = minor_indels
+
+            # Add remaining columns
+            sample_data['variants'] = variants
+            sample_data['possible_frameshift_variants'] = frameshift_variants
+            sample_data['sequencing_primer_variants'] = seq_primer_overlap
+            sample_data['diagnostic_primer_variants'] = pcr_primer_overlap
+            sample_data['irida_id'] = args.irida_id
+
+            final_out.append(sample_data)
+
+
+    # Create and output final CSV
+    df = pd.DataFrame.from_dict(final_out)
     if args.metadata:
         metadata_df = parse_metadata(args.metadata, args.sample)
-    pcr_primer_overlap = 'NA'
-    seq_primer_overlap = 'NA'
-    if args.seq_bed:
-        seq_primer_overlap = check_primers(args.seq_bed, variant_positions)
-    if args.pcr_bed:
-        pcr_primer_overlap = check_primers(args.pcr_bed, variant_positions)
-
-    # Grade qc
-    qc_status = grade_qc(completeness, mean_dep, median_dep, frameshift_variants)
-
-    # Output
-    final = {
-        'sample': [args.sample],
-        'num_aligned_reads': [num_reads],
-        'num_consensus_n': [count_n],
-        'genome_completeness': [completeness],
-        'mean_sequencing_depth': [mean_dep],
-        'median_sequencing_depth': [median_dep],
-        'total_variants': [var_count_dict['total_variants']],
-        'num_snps': [var_count_dict['num_snps']],
-        'num_deletions': [var_count_dict['num_deletions']],
-        'num_deletion_sites': [var_count_dict['num_deletion_sites']],
-        'num_insertions': [var_count_dict['num_insertions']],
-        'num_insertion_sites': [var_count_dict['num_insertion_sites']],
-        'variants': [variants],
-        'possible_frameshift_variants': [frameshift_variants],
-        'sequencing_primer_variants': [seq_primer_overlap],
-        'diagnostic_primer_variants': [pcr_primer_overlap],
-        'qc_pass': [qc_status],
-        'irida_id': [args.irida_id]
-    }
-    df = pd.DataFrame.from_dict(final)
-    if args.metadata:
         df = df.merge(metadata_df, on='sample', how='left')
     df.to_csv(f'{args.sample}.qc.csv', index=False)
 

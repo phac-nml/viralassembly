@@ -2,21 +2,17 @@ process ARTIC_MINION {
     label 'process_high'
     label 'error_retry'
     tag "$meta.id"
-    publishDir "${params.outdir}/consensus", pattern: "${meta.id}.consensus.fasta", mode: "copy"
-    publishDir "${params.outdir}/bam", pattern: "${meta.id}.*bam*", mode: "copy"
-    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.pass.vcf*", mode: "copy"
-    publishDir "${params.outdir}/vcf", pattern: "${meta.id}.fail.vcf", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/artic:1.7.4--pyhdfd78af_0' :
-        'biocontainers/artic:1.7.4--pyhdfd78af_0' }"
+        'https://depot.galaxyproject.org/singularity/artic:1.11.1--pyhdfd78af_0' :
+        'biocontainers/artic:1.11.1--pyhdfd78af_0' }"
 
     input:
     tuple val(meta), path(fastq)
     path reference
     path primer_bed
-    path clair3_model_dir
+    path model
 
     output:
     tuple val(meta), path("${meta.id}.primertrimmed.rg.sorted.bam"), path("${meta.id}.primertrimmed.rg.sorted.bam.bai"), emit: bam
@@ -27,10 +23,12 @@ process ARTIC_MINION {
     path "versions.yml", emit: versions
 
     script:
-    // Clair3 model is added conditonally if it's been set
-    //  as clair3 can detect the model from the fastq header
     // Setup args list
-    def argsList = []
+    def argsList = [
+        "--model-dir ./",
+        "--model ${model}"
+    ]
+
     if ( params.normalise ) {
         argsList.add("--normalise ${params.normalise}")
     } else {
@@ -40,10 +38,6 @@ process ARTIC_MINION {
         argsList.add("--no-frameshifts")
     }
 
-    if ( clair3_model_dir ) {
-        argsList.add("--model-dir ./")
-        argsList.add("--model ${clair3_model_dir}")
-    }
     def argsConfig = argsList.join(" ")
 
     // Cmd to run

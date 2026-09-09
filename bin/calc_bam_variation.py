@@ -14,6 +14,9 @@ def init_parser() -> argparse.ArgumentParser:
     Purpose
     -------
     Parse CL inputs to be used in script
+
+    Returns
+    argparse.ArgumentParser
     '''
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -283,8 +286,6 @@ def parse_variation_from_bam(bamfile: str, ref_dict: dict, base_q: int,
         pileup_dict = ensure_all_bases_dict_from_counter(case_insensitive_pos_counter)
 
         # Add values to dictionary
-        #  chrom is second as multiqc uses first column for output and having it be the same leads to issues
-        #  if we are using multiqc that is
         pileup_dict["position"] = zero_idx_pos + 1
         pileup_dict["chrom"] = pileupcolumn.reference_name
         pileup_dict["total_reads"] = num_reads

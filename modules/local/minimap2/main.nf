@@ -1,7 +1,6 @@
 process MINIMAP2_ALIGN {
     label 'process_medium'
     tag "$meta.id"
-    publishDir "${params.outdir}/bam", pattern: "${meta.id}.sorted.bam*", mode: "copy"
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

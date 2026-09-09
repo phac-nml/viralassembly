@@ -1,6 +1,0 @@
-name: nanopolish
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - bioconda::nanopolish=0.14.0
