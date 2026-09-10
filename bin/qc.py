@@ -231,6 +231,7 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
     var_count_dict = {
         'total_variants': 0,
         'num_snps': 0,
+        'num_iupacs': 0,
         'num_deletions': 0,
         'num_deletion_sites': 0,
         'num_insertions': 0,
@@ -255,6 +256,7 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
                 alt_str = record.INFO["ConsensusBase"]
 
             # Multiple alleles should be removed by now by all methods. Exit if not for bugfixing
+            #  IUPAC do contain multiple though so that is the only exception here
             if len(record.ALT) > 1:
                 if not iupac:
                     raise ValueError(f"Multiple alleles should have been resolved previously. Check intermediate VCFs at position: {record.POS}")
@@ -323,7 +325,10 @@ def parse_vcf(vcf_file: str, chrom: str) -> Tuple[str, list, str, dict]:
                 else:
                     variants.append(variant)
                     variant_positions.append(_create_variantpos_dict(variant, range(record.POS, record.POS+1)))
-                    var_count_dict['num_snps'] += 1
+                    if iupac:
+                        var_count_dict['num_iupacs'] += 1
+                    else:
+                        var_count_dict['num_snps'] += 1
 
     # Final Summary and Return
     if frameshift_variants:
@@ -578,6 +583,7 @@ def main() -> None:
                 'median_sequencing_depth': median_depth,
                 'total_variants': var_count_dict['total_variants'],
                 'num_snps': var_count_dict['num_snps'],
+                'num_iupacs': var_count_dict['num_iupacs'],
                 'num_deletions': var_count_dict['num_deletions'],
                 'num_deletion_sites': var_count_dict['num_deletion_sites'],
                 'num_insertions': var_count_dict['num_insertions'],

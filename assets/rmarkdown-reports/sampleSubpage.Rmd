@@ -121,7 +121,7 @@ valueBox(
 # Select needed columns
 df <- sample_df %>%
   select(any_of(c('sample', 'qc_pass', 'mean_sequencing_depth', 'median_sequencing_depth',
-                  'num_aligned_reads', 'total_variants', 'num_consensus_n', 'num_snps', 'num_deletions',
+                  'num_aligned_reads', 'total_variants', 'num_consensus_n', 'num_snps', 'num_iupacs', 'num_deletions',
                   'num_deletion_sites', 'num_insertions', 'num_insertion_sites',
                   'genome_completeness', 'minor_snps', 'minor_indels', 'nextclade_frameshifts', 'premature_stop_codons', 'mutated_stop_codons')))
 
@@ -143,6 +143,14 @@ df <- df %>%
     "Genome Completeness" = genome_completeness,
     "QC Pass" = qc_pass
   )
+
+# Separate as its not an ONT output
+if ("num_iupacs" %in% colnames(df)) {
+  df <- df %>%
+    rename(
+      "# IUPACs" = num_iupacs
+    )
+}
 
 # Rename columns for minor snps, if available
 if ("minor_snps" %in% colnames(df)) {

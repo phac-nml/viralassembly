@@ -57,29 +57,45 @@ iupac_map = {
 }
 
 
-def create_depth_map(bam: str) -> dict:
+def create_depth_map(bam: str, ignore_del = False) -> dict:
     """Create map of { chrom: {pos: depth} } based on input bam file using samtools depth
 
     Params
     ------
         bam (str): Path to BAM file
+        ignore_del (bool): Set to True to ignore deletion reads in the position depth count
 
     Returns
     -------
         Dict of  {chrom: {positional: depth} }
     """
     depth_map = defaultdict(dict)
+    cmd = ['samtools', 'depth', '-aa', bam]
+    if not ignore_del:
+        cmd.append('-J')
+
     with subprocess.Popen(
-        ['samtools', 'depth', '-aa', bam],
+        cmd,
         stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
         text=True,
         bufsize=1
     ) as process:
-        for line in process.stdout:
-            # chrom - pos - depth
-            pos_data = line.strip().split('\t')
-            depth_map[str(pos_data[0])][int(pos_data[1])] = int(pos_data[2])
+        # Try/Finally loop recommended to handle potential errors and cleanup the process after
+        try:
+            for line in process.stdout:
+                # chrom - pos - depth
+                pos_data = line.strip().split('\t')
+                depth_map[str(pos_data[0])][int(pos_data[1])] = int(pos_data[2])
+        finally:
+            if process.poll() is None:
+                process.terminate()
+                process.wait()
+
+        if process.returncode != 0:
+            stderr_output = process.stderr.read().split('\n')[0] # One line to make reading it easier, can get more rerunning command locally
+            raise RuntimeError(f"Samtools subcommand exited with code {process.returncode}: {stderr_output}")
+
     return depth_map
 
 
@@ -341,6 +357,9 @@ def init_parser() -> argparse.ArgumentParser:
     parser.add_argument('-n', '--no-frameshifts', action="store_true",
             help="Skip indel mutations that are not divisible by 3")
 
+    parser.add_argument('-J', '--ignore-deletions', action='store_true', default=False,
+            help="If set, positional depth counts will ignore reads with reference deletions")
+
     parser.add_argument('invcf')
 
     parser.add_argument('inbam')
@@ -371,7 +390,7 @@ def main() -> None:
     tsv_data_list = []
 
     # Calculate depths quick in case we need them for low depth sites
-    depth_map = create_depth_map(args.inbam)
+    depth_map = create_depth_map(args.inbam, args.ignore_deletions)
 
     # Parsing VCF records to assign final consensus variants and filter out poor variant calls for the filtered VCF
     for base_record in vcf:

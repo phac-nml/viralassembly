@@ -14,6 +14,13 @@ def init_parser() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '-p',
+        '--platform',
+        required=True,
+        choices=["illumina", "nanopore"],
+        help='Platform used - nanopore or illumina'
+    )
+    parser.add_argument(
         '-c',
         '--csv',
         required=True,
@@ -128,6 +135,7 @@ def main() -> None:
         'median_sequencing_depth',
         'total_variants',
         'num_snps',
+        'num_iupacs',
         'num_deletions',
         'num_deletion_sites',
         'num_insertions',
@@ -182,6 +190,9 @@ def main() -> None:
     # Drop columns if we are not segmented
     if (df['reference'].nunique() == 1):
         df.drop(columns=['reference', 'num_segment_reads'], inplace=True)
+    # Drop iupacs, we don't assign them for nanopore data
+    if args.platform == 'nanopore':
+        df.drop(columns=['num_iupacs'])
 
     # Adding final columns and output
     df['run_status'] = run_control_status

@@ -15,10 +15,12 @@ process SAMTOOLS_DEPTH {
     path "versions.yml", emit: versions
 
     script:
+    def args = task.ext.args ?: ''
     """
     echo -e "chrom\tpos\tdepth" \\
         > ${meta.id}.depth.bed
     samtools depth \\
+        $args \\
         -aa \\
         $bam \\
         >> ${meta.id}.depth.bed
