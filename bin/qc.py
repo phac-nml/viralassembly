@@ -484,7 +484,7 @@ def get_nextclade_vals(nextclade_csv: str) -> Tuple[str, str, str, int]:
 
 
 def grade_qc(completeness: float, mean_dep: float, median_dep: float,
-             frameshift_vars: str, nc_fs_count: int) -> str:
+             fs_status: bool) -> str:
     """Determine if the sample passes internal QC metrics and assign a PASS or why it failed
 
     Params:
@@ -492,8 +492,7 @@ def grade_qc(completeness: float, mean_dep: float, median_dep: float,
         completeness (float): Final genome completeness
         mean_dep (float): Mean sequencing depth
         median_dep (float): Median sequencing depth
-        frameshift_vars (str): Any potential frameshift variants from VCF parsing or "none" if there weren't any
-        nc_fs_count (int): Count of frameshift variants from nextclade to normalize with
+        fs_status (bool): Any potential frameshift variants from VCF parsing or "none" if there weren't any
 
     Returns:
     --------
@@ -510,8 +509,7 @@ def grade_qc(completeness: float, mean_dep: float, median_dep: float,
     if (mean_dep < 20) or (median_dep < 20):
         qc_status.append('LOW_SEQ_DEPTH')
     # Frameshifts
-    #  Using the nextclade count (if available) to take into account the full gene effect
-    if (frameshift_vars != 'none') and (nc_fs_count > 0):
+    if fs_status:
         qc_status.append('POTENTIAL_FRAMESHIFTS')
 
     if qc_status:
@@ -558,16 +556,19 @@ def main() -> None:
                 minor_snps, minor_indels = count_minor_variants(args.min_vcf, chrom)
 
             # Nextclade mutations (if provided)
-            nc_frameshifts, nc_stop_codons, nc_mutated_stop_codons, nc_fs_count = '', '', '', 0
+            nc_frameshifts, nc_nonsense, nc_mutated_stop_codons, nc_fs_count = '', '', '', 0
             if args.add_nextclade_columns and args.nextclade_csv:
-               nc_frameshifts, nc_stop_codons, nc_mutated_stop_codons, nc_fs_count = get_nextclade_vals(args.nextclade_csv)
+               nc_frameshifts, nc_nonsense, nc_mutated_stop_codons, nc_fs_count = get_nextclade_vals(args.nextclade_csv)
 
-               ## ToDo - Have to probably compare the nc_frameshifts to the basic check frameshifts at some point
-
-            # Grade qc
+            # Grade QC
             mean_depth = depth_dict[chrom].get('mean', 0)
             median_depth = depth_dict[chrom].get('median', 0)
-            qc_status = grade_qc(completeness, mean_depth, median_depth, frameshift_variants, nc_fs_count)
+            #  Using the nextclade count (if available) to take into account the full gene effect
+            fs_status = ((frameshift_variants != 'none') and (nc_fs_count > 0))
+            nonsense_status = (nc_nonsense != '')
+            mutated_stop_status = (nc_mutated_stop_codons != '')
+
+            qc_status = grade_qc(completeness, mean_depth, median_depth, fs_status, nonsense_status, mutated_stop_status)
 
             # Final Output
             #  Main columns
@@ -593,7 +594,7 @@ def main() -> None:
             # Conditionally add nextclade mutation data
             if args.add_nextclade_columns:
                 sample_data['nextclade_frameshifts'] = nc_frameshifts
-                sample_data['premature_stop_codons'] = nc_stop_codons
+                sample_data['nonsense_mutations'] = nc_nonsense
                 sample_data['mutated_stop_codons'] = nc_mutated_stop_codons
 
             # Conditionally add the minor variant data
