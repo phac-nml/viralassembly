@@ -484,7 +484,7 @@ def get_nextclade_vals(nextclade_csv: str) -> Tuple[str, str, str, int]:
 
 
 def grade_qc(completeness: float, mean_dep: float, median_dep: float,
-             fs_status: bool) -> str:
+             fs_status: bool, nonsense_status: bool, mutated_stop_status: bool) -> str:
     """Determine if the sample passes internal QC metrics and assign a PASS or why it failed
 
     Params:
@@ -492,7 +492,9 @@ def grade_qc(completeness: float, mean_dep: float, median_dep: float,
         completeness (float): Final genome completeness
         mean_dep (float): Mean sequencing depth
         median_dep (float): Median sequencing depth
-        fs_status (bool): Any potential frameshift variants from VCF parsing or "none" if there weren't any
+        fs_status (bool): True if any potential frameshift variants from VCF parsing or Nextclade are found
+        nonsense_status (bool): True if any nonsensus mutations from Nextclade are found
+        mutated_stop_status (bool): True if any stop codon mutations from Nextclade are found
 
     Returns:
     --------
@@ -511,6 +513,12 @@ def grade_qc(completeness: float, mean_dep: float, median_dep: float,
     # Frameshifts
     if fs_status:
         qc_status.append('POTENTIAL_FRAMESHIFTS')
+    # Nonsense
+    if nonsense_status:
+        qc_status.append('NONSENSE_MUTATION')
+    # Stop Codon Mutations
+    if mutated_stop_status:
+        qc_status.append('STOP_CODON_MUTATION')
 
     if qc_status:
         return ';'.join(qc_status)
