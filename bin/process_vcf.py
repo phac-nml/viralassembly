@@ -92,7 +92,8 @@ def create_depth_map(bam: str, ignore_del = False) -> dict:
                 process.terminate()
                 process.wait()
 
-        if process.returncode != 0:
+        # 0 is good return code, -15 is like closing streaming or something
+        if (process.returncode != 0) or (process.returncode != -15):
             stderr_output = process.stderr.read().split('\n')[0] # One line to make reading it easier, can get more rerunning command locally
             raise RuntimeError(f"Samtools subcommand exited with code {process.returncode}: {stderr_output}")
 
