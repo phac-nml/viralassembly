@@ -83,15 +83,16 @@
                     "format": "file-path",
                     "exists": true,
                     "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.bed(pe)?$",
                     "description": "Path to 6 column (minimum) tab separated amplicon primer bed file with first column matching reference ID",
                     "fa_icon": "fas fa-font"
                 }
             }
         },
-        "clair3_settings": {
-            "title": "Clair3 Settings",
+        "nanopore_settings": {
+            "title": "Nanopore Settings: Clair3",
             "type": "object",
-            "description": "Settings pertaining to the clair3 variant calling workflow.",
+            "description": "Options relating to Nanopore variant calling with Clair3",
             "default": "",
             "fa_icon": "fas fa-tools",
             "properties": {
@@ -169,13 +170,17 @@
                 }
             }
         },
-        "clairS-TO_settings": {
-            "title": "ClairS-TO Settings",
+        "nanopore_minor_variants_settings": {
+            "title": "Minor Variant Settings: Nanopore (ClairS-TO)",
             "type": "object",
-            "description": "Settings pertaining to the ClairS-TO minor variant calling workflow.",
+            "description": "Options relating to Nanopore minor variant calling with ClairS-TO",
             "default": "",
             "fa_icon": "fas fa-tools",
             "properties": {
+                "minor_variants": {
+                    "type": "boolean",
+                    "description": "Enable minor variant calling with ClairS-TO"
+                },
                 "clairsto_model": {
                     "type": "string",
                     "default": "ont_r10_dorado_sup_5khz",
@@ -210,12 +215,17 @@
                 }
             }
         },
-        "freebayes_options": {
-            "title": "Freebayes Options",
+        "illumina_settings": {
+            "title": "Illumina Settings: Freebayes & iVar",
             "type": "object",
-            "description": "Options relating to illumina variant calling with Freebayes",
+            "description": "Options relating to Illumina variant calling with Freebayes or iVar",
             "default": "",
             "properties": {
+                "use_ivar": {
+                    "type": "boolean",
+                    "description": "Use iVar as a variant caller instead of Freebayes for Illumina data. Default: False",
+                    "default": false
+                },
                 "min_ambiguity_threshold": {
                     "type": "number",
                     "description": "Minimum threshold to call a position as an IUPAC else reference allele is used",
@@ -254,11 +264,6 @@
                     "default": 20,
                     "minimum": 0,
                     "fa_icon": "far fa-minus-square"
-                },
-                "use_ivar": {
-                    "type": "boolean",
-                    "description": "Use iVar as a variant caller instead of Freebayes for Illumina data. Default: False",
-                    "default": false
                 }
             }
         },
@@ -321,10 +326,6 @@
                     "type": "boolean",
                     "description": "Ignore deletion reads in depth calculations across the pipeline"
                 },
-                "minor_variants": {
-                    "type": "boolean",
-                    "description": "Enable minor variant calling with ClairS-TO"
-                },
                 "no_frameshift": {
                     "type": "boolean",
                     "description": "Filter out INDEL variants that are not divisible by 3 (likely frameshift but not necessarily)"
@@ -360,6 +361,7 @@
                     "format": "file-path",
                     "exists": true,
                     "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.bed(pe)?$",
                     "description": "Path to 6 column (minimum) tab separated PCR primer bed file with first column matching reference ID to report mutations in these locations",
                     "fa_icon": "fas fa-font"
                 },
@@ -505,13 +507,13 @@
             "$ref": "#/$defs/amplicon_settings"
         },
         {
-            "$ref": "#/$defs/clair3_settings"
+            "$ref": "#/$defs/nanopore_settings"
         },
         {
-            "$ref": "#/$defs/clairS-TO_settings"
+            "$ref": "#/$defs/nanopore_minor_variants_settings"
         },
         {
-            "$ref": "#/$defs/freebayes_options"
+            "$ref": "#/$defs/illumina_settings"
         },
         {
             "$ref": "#/$defs/read_filtering_options"
