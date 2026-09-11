@@ -121,9 +121,9 @@ valueBox(
 # Select needed columns
 df <- sample_df %>%
   select(any_of(c('sample', 'qc_pass', 'mean_sequencing_depth', 'median_sequencing_depth',
-                  'num_aligned_reads', 'total_variants', 'num_consensus_n', 'num_snps', 'num_deletions',
+                  'num_aligned_reads', 'total_variants', 'num_consensus_n', 'num_snps', 'num_iupacs', 'num_deletions',
                   'num_deletion_sites', 'num_insertions', 'num_insertion_sites',
-                  'genome_completeness', 'minor_snps', 'minor_indels', 'frameshifts', 'premature_stop_codons', 'mutated_stop_codons')))
+                  'genome_completeness', 'minor_snps', 'minor_indels', 'nextclade_frameshifts', 'nonsense_mutations', 'mutated_stop_codons')))
 
 # Rename columns
 df <- df %>%
@@ -144,6 +144,14 @@ df <- df %>%
     "QC Pass" = qc_pass
   )
 
+# Separate as its not an ONT output
+if ("num_iupacs" %in% colnames(df)) {
+  df <- df %>%
+    rename(
+      "# IUPACs" = num_iupacs
+    )
+}
+
 # Rename columns for minor snps, if available
 if ("minor_snps" %in% colnames(df)) {
   df <- df %>%
@@ -154,11 +162,11 @@ if ("minor_snps" %in% colnames(df)) {
 }
 
 # Rename columns for nextclade mutations, if available
-if ("frameshifts" %in% colnames(df)) {
+if ("nextclade_frameshifts" %in% colnames(df)) {
   df <- df %>%
     rename(
-      "Frameshifts" = frameshifts,
-      "Premature Stop Codons" = premature_stop_codons,
+      "Frameshifts" = nextclade_frameshifts,
+      "Nonsense Mutations" = nonsense_mutations,
       "Mutated Stop Codons" = mutated_stop_codons
     )
 }

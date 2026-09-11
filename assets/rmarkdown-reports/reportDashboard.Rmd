@@ -199,9 +199,9 @@ Row
 # Create an interactive table of all samples with the different qc statuses highlighted
 df <- summary_df %>%
   select(any_of(c('sample', 'qc_pass', 'mean_sequencing_depth', 'median_sequencing_depth',
-                  'num_aligned_reads', 'total_variants', 'num_snps', 'num_deletions',
-                  'num_deletion_sites', 'num_insertions', 'num_insertion_sites',
-                  'genome_completeness')))
+                  'num_aligned_reads', 'total_variants', 'num_snps', 'num_iupacs',
+                  'num_deletions', 'num_deletion_sites', 'num_insertions',
+                  'num_insertion_sites', 'genome_completeness')))
 
 # Rename column names
 df <- df %>%
@@ -219,6 +219,14 @@ df <- df %>%
     "Genome Completeness" = genome_completeness,
     "QC Pass" = qc_pass
   )
+
+# Separate as its not an ONT output
+if ("num_iupacs" %in% colnames(df)) {
+  df <- df %>%
+    rename(
+      "# IUPACs" = num_iupacs
+    )
+}
 
 # Add color to table
 df$completeness_int_color <- add_pass_value_int(df, 'QC Pass')
