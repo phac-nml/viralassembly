@@ -28,7 +28,7 @@ nextflow_workflow {
                 """
                 input[0] = Channel.of([ [id: 'sample2'], file("${projectDir}/test_data/nanopore/fastqs/sample2.fastq.gz") ])
                 input[1] = Channel.of([ file("${projectDir}/test_data/MN908947.3.reference.fasta") ])
-                input[2] = Channel.of([ file("${projectDir}/test_data/nanopore/MN908947.3.reference.fasta.fai") ])
+                input[2] = Channel.of([ file("${projectDir}/test_data/MN908947.3.reference.fasta.fai") ])
                 input[3] = Channel.of([ file("${projectDir}/test_data/primer.bed") ])
                 input[4] = Channel.of([ file("${projectDir}/test_data/nanopore/amplicon.bed") ])
                 """

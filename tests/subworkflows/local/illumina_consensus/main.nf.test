@@ -1,0 +1,63 @@
+nextflow_workflow {
+
+    name "Test of Illumina Consensus Subworkflow with Optional Params"
+    script "subworkflows/local/illumina_consensus/main.nf"
+    workflow "WF_ILLUMINA_CONSENSUS"
+    tag "subworkflow"
+    tag "consensus"
+    tag "illumina"
+
+    test("Illumina Consensus Workflow") {
+        tag "success"
+        when {
+            params {
+                outdir = "results"
+                platform = "illumina"
+                primer_bed = "${projectDir}/test_data/primer.bed"
+                reference = "${projectDir}/test_data/MN908947.3.reference.fasta"
+            }
+            workflow {
+                """
+                input[0] = Channel.of([
+                        [id: "sample1"],
+                        [
+                            file("${projectDir}/test_data/illumina/fastqs/SRR39441883_downsampled_50k_1.fastq.gz"),
+                            file("${projectDir}/test_data/illumina/fastqs/SRR39441883_downsampled_50k_2.fastq.gz")
+                        ]
+                    ])
+                input[1] = Channel.of([
+                        file("${projectDir}/test_data/MN908947.3.reference.fasta")
+                    ])
+                input[2] = Channel.of([
+                        file("${projectDir}/test_data/MN908947.3.reference.fasta.fai")
+                    ])
+                input[3] = Channel.of([
+                        file("${projectDir}/test_data/primer.bed")
+                    ])
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert workflow.success }
+            )
+            
+            // Channels based checks for consensus file
+            def meta = {}
+            meta = workflow.out.consensus.get(0)[0]
+            assert meta.id == "sample1"
+            assert path(workflow.out.consensus.get(0)[1]).exists()
+
+            // Files exist
+            // BAM
+            assert path("${launchDir}/results/bam/sample1.primertrimmed.rg.sorted.bam").exists()
+            assert path("${launchDir}/results/bam/sample1.primertrimmed.rg.sorted.bam.bai").exists()
+            // VCF
+            assert path("${launchDir}/results/vcf/final/sample1.consensus.norm.vcf.gz").exists()
+            assert path("${launchDir}/results/vcf/final/sample1.consensus.tsv").exists()
+
+            // Consensus check md5
+            assert path("$launchDir/results/consensus/sample1.consensus.fasta").md5 == "791318963e6ded4202971264ace92f29"
+        }
+    }
+}

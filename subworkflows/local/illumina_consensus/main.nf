@@ -44,7 +44,7 @@ workflow WF_ILLUMINA_CONSENSUS {
 
     take:
     ch_fastqs       // channel: [ val(meta), file(fastqs) ]
-    ch_reference    // channel: [ val(meta), file(reference) ]
+    ch_reference    // channel: [ file(reference) ]
     ch_fai          // channel: [ file(fai) ]
     ch_primer_bed   // channel: [ file(primer.bed) ]
 
