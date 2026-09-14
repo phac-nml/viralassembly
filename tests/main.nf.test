@@ -865,7 +865,7 @@ nextflow_pipeline {
                 "p.L176L",
                 "p.S705S"
             ].each {
-                assert vcf.text.contains(it)
+                assert vcfTsv.text.contains(it)
             }
         }
     }
