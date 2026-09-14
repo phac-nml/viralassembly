@@ -317,6 +317,10 @@
                     "minimum": 0,
                     "description": "Minimum depth to call a position. Positions lower are masked with an N"
                 },
+                "ignore_deletion_depth": {
+                    "type": "boolean",
+                    "description": "Ignore deletion reads in depth calculations across the pipeline"
+                },
                 "minor_variants": {
                     "type": "boolean",
                     "description": "Enable minor variant calling with ClairS-TO"

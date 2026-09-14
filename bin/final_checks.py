@@ -14,6 +14,13 @@ def init_parser() -> argparse.ArgumentParser:
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        '-p',
+        '--platform',
+        required=True,
+        choices=["illumina", "nanopore"],
+        help='Platform used - nanopore or illumina'
+    )
+    parser.add_argument(
         '-c',
         '--csv',
         required=True,
@@ -101,7 +108,7 @@ def assess_control(row: pd.Series, threshold: float) -> str:
 
     """
     if row['genome_completeness'] >= threshold:
-        return f'Warning - Above {threshold}% genome completeness contamination threshold'
+        return f'Warning - Above {threshold}% contamination threshold'
     return 'PASS'
 
 
@@ -128,6 +135,7 @@ def main() -> None:
         'median_sequencing_depth',
         'total_variants',
         'num_snps',
+        'num_iupacs',
         'num_deletions',
         'num_deletion_sites',
         'num_insertions',
@@ -136,7 +144,8 @@ def main() -> None:
 
     # Do stuff
     df = pd.read_csv(args.csv)
-    validate_df_columns(df, ['sample', 'num_aligned_reads', 'num_segment_reads', 'genome_completeness', 'mean_sequencing_depth', 'median_sequencing_depth', 'qc_pass'])
+    validate_df_columns(df, ['sample', 'num_aligned_reads', 'num_segment_reads', 'genome_completeness',
+                             'mean_sequencing_depth', 'median_sequencing_depth', 'qc_pass'])
 
     # Adding in filtered out samples and give them back their metadata if available
     if args.filter_tracking:
@@ -172,7 +181,7 @@ def main() -> None:
         if any(neg_df['genome_completeness'] >= args.threshold):
             failing_samples = neg_df[neg_df['genome_completeness'] >= args.threshold]['sample'].to_list()
             run_control_status = 'WARN'
-            run_control_info = f'Samples: {";".join(failing_samples)} are above {args.threshold} contamination threshold'
+            run_control_info = f'Controls: {";".join(failing_samples)} exceed {args.threshold}% contamination threshold'
     else:
         # Add neg control columns as not available
         run_control_status = 'WARN'
@@ -181,6 +190,9 @@ def main() -> None:
     # Drop columns if we are not segmented
     if (df['reference'].nunique() == 1):
         df.drop(columns=['reference', 'num_segment_reads'], inplace=True)
+    # Drop iupacs, we don't assign them for nanopore data
+    if args.platform == 'nanopore':
+        df.drop(columns=['num_iupacs'])
 
     # Adding final columns and output
     df['run_status'] = run_control_status

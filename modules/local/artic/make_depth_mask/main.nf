@@ -16,9 +16,11 @@ process ARTIC_MAKE_DEPTH_MASK{
     path "versions.yml", emit: versions
 
     script:
+    def args = task.ext.args ?: ''
     """
     artic_make_depth_mask \\
         --store-rg-depths \\
+        $args \\
         $reference \\
         $bam \\
         ${meta.id}.coverage_mask.txt
@@ -61,9 +63,11 @@ process CUSTOM_MAKE_DEPTH_MASK {
     path "versions.yml", emit: versions
 
     script:
+    def args = task.ext.args ?: ''
     """
     cs_make_depth_mask.py \\
         --depth ${params.min_depth} \\
+        $args \\
         $reference \\
         $bam \\
         ${meta.id}.coverage_mask.txt

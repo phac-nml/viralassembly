@@ -170,7 +170,7 @@ nextflow_pipeline {
                 // Variants
                 "variation_csvs/sample1_variation.csv",
                 "snpeff/sample1.csv",
-                "vcf/sample1.vcf.tsv",
+                "vcf/report_tsvs/sample1.vcf.tsv",
 
                 // Nextclade
                 "nextclade/nextstrain/sars-cov-2/wuhan-hu-1/orfs/reference.fasta",
@@ -188,11 +188,11 @@ nextflow_pipeline {
             def qc = path("$results/overall.qc.csv")
             [
                 "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
-                "reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.3,2,0,0,",
+                "reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.34,2,0,0,",
                 "reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
                 "negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,",
-                "sample1,PASS,7598,1154,0.9614,264.27,217,54,49,",
-                "sample2,PASS,7598,1154,0.9614,264.27,217,54,49,"
+                "sample1,PASS,7598,1154,0.9614,268.65,219,54,49,",
+                "sample2,PASS,7598,1154,0.9614,268.65,219,54,49,"
             ].each {
                 assert qc.text.contains(it)
             }
@@ -221,7 +221,7 @@ nextflow_pipeline {
             }
 
             // Variant Calls
-            def vcfTsv = path("$results/vcf/sample1.vcf.tsv")
+            def vcfTsv = path("$results/vcf/report_tsvs/sample1.vcf.tsv")
             [
                 "Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual",
                 "MN908947.3\t28883\tN p.G204R\tmissense_variant\tG\tC\t38.02",
@@ -314,7 +314,7 @@ nextflow_pipeline {
                 // Variants
                 "variation_csvs/sample1_variation.csv",
                 "snpeff/sample1.csv",
-                "vcf/sample1.vcf.tsv",
+                "vcf/report_tsvs/sample1.vcf.tsv",
 
                 // Pipeline Info
                 "pipeline_info",
@@ -328,11 +328,11 @@ nextflow_pipeline {
             def qc = path("$launchDir/results/overall.qc.csv")
             [
                 "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
-                "reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.22,2,0,0,",
+                "reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.25,2,0,0,",
                 "reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
                 "negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,",
-                "sample1,PASS,7594,2698,0.9097,254.11,210,56,50,",
-                "sample2,PASS,7594,2698,0.9097,254.11,210,56,50,"
+                "sample1,PASS,7594,2698,0.9097,258.38,213,56,50,",
+                "sample2,PASS,7594,2698,0.9097,258.38,213,56,50,"
             ].each {
                 assert qc.text.contains(it)
             }
@@ -366,7 +366,7 @@ nextflow_pipeline {
             assert path("$launchDir/results/snpeff/reads_100.ann.vcf").readLines().size() == 19
 
             // TSV of the VCF for reporting
-            def vcfSample1 = path("$launchDir/results/vcf/sample1.vcf.tsv")
+            def vcfSample1 = path("$launchDir/results/vcf/report_tsvs/sample1.vcf.tsv")
             [
                 "Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual",
                 "orf1ab p.T4992I",
@@ -392,7 +392,9 @@ nextflow_pipeline {
             assert iridanext.metadata.samples.reads_100.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
             assert iridanext.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.negative_ctrl.neg_control_info == "PASS"
-            assert iridanext.metadata.samples.sample1.pipeline_name == "ViralAssembly"
+            assert iridanext.metadata.samples.sample1.genome_completeness == "0.9097"
+            assert iridanext.metadata.samples.sample2.pipeline_name == "ViralAssembly"
+            assert iridanext.metadata.samples.sample1.num_deletion_sites == "6"
             assert iridanext.metadata.samples.sample2.pipeline_version == "2.0.0"
             assert iridanext.metadata.samples.sample2.qc_pass == "PASS"
         }
@@ -444,7 +446,7 @@ nextflow_pipeline {
                 // Variants
                 "vcf/clair3/ERR14941536.pass.vcf.gz",
                 "snpeff/ERR14941536.ann.vcf",
-                "vcf/ERR14941536.vcf.tsv",
+                "vcf/report_tsvs/ERR14941536.vcf.tsv",
 
                 // Pipeline Info
                 "pipeline_info",
@@ -458,9 +460,9 @@ nextflow_pipeline {
             def qc = path("$launchDir/results/overall.qc.csv")
             [
                 "sample,reference,qc_pass,num_aligned_reads,num_segment_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
-                "ERR14941536,NC_014395.1,PASS,6103,621,7,0.9959,154.49,118.0,61,61,",
-                "ERR14941536,NC_014396.1,PASS,6103,2143,43,0.9889,249.24,216.0,142,142,",
-                "ERR14941536,NC_014397.1,PASS,6103,3339,0,1.0,213.45,102.0,227,227,",
+                "ERR14941536,NC_014395.1,PASS,6103,621,7,0.9959,155.64,118.5,61,61,",
+                "ERR14941536,NC_014396.1,PASS,6103,2143,43,0.9889,251.53,218.0,142,142,",
+                "ERR14941536,NC_014397.1,PASS,6103,3339,0,1.0,215.29,103.0,227,227,",
                 "reads_25,NC_014395.1,TOO FEW SIZE SELECTED READS,0,0,1690,0.0,0.0,0.0,0,0,",
                 "reads_25,NC_014396.1,TOO FEW SIZE SELECTED READS,0,0,3885,0.0,0.0,0.0,0,0,",
                 "reads_25,NC_014397.1,TOO FEW SIZE SELECTED READS,0,0,6404,0.0,0.0,0.0,0,0,"
@@ -492,8 +494,8 @@ nextflow_pipeline {
 
             // SnpEff and VCF
             assert path("$launchDir/results/vcf/clair3/ERR14941536.fail.vcf").readLines().size() == 21
-            def vcf = path("$launchDir/results/vcf/ERR14941536.vcf.tsv")
-            assert vcf.readLines().size() == 431
+            def vcfTsv = path("$launchDir/results/vcf/report_tsvs/ERR14941536.vcf.tsv")
+            assert vcfTsv.readLines().size() == 431
             [
                 "Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual",
                 // Check for entries with each Segment
@@ -502,7 +504,7 @@ nextflow_pipeline {
                 "RVFV_sL_gp1",
                 "NC_014397.1"
             ].each {
-                assert vcf.text.contains(it)
+                assert vcfTsv.text.contains(it)
             }
         }
     }
@@ -552,7 +554,7 @@ nextflow_pipeline {
                 // Variants
                 "variation_csvs/sample1_variation.csv",
                 "snpeff/sample1.csv",
-                "vcf/sample1.vcf.tsv",
+                "vcf/report_tsvs/sample1.vcf.tsv",
 
                 // Nextclade
                 "nextclade/nextstrain/sars-cov-2/wuhan-hu-1/orfs/reference.fasta",
@@ -601,7 +603,7 @@ nextflow_pipeline {
             }
 
             // TSV of the VCF for reporting
-            def vcfTsv = path("$results/vcf/sample1.vcf.tsv")
+            def vcfTsv = path("$results/vcf/report_tsvs/sample1.vcf.tsv")
             [
                 "Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual",
                 "MN908947.3\t14408\torf1ab p.P4715L\tmissense_variant\tC\tT\t2775.19",
@@ -681,7 +683,7 @@ nextflow_pipeline {
                 // Variants
                 "variation_csvs/sample1_variation.csv",
                 "snpeff/sample1.csv",
-                "vcf/sample1.vcf.tsv",
+                "vcf/report_tsvs/sample1.vcf.tsv",
 
                 // Pipeline Info
                 "pipeline_info",
@@ -695,7 +697,7 @@ nextflow_pipeline {
             [
                 "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
                 "reads_25,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,48,29903,0.0,0.19,0,0,0,",
-                "sample1,PASS,86288,2414,0.9192,350.31,325,120,118,"
+                "sample1,PASS,86288,2414,0.9192,350.51,325,120,118,"
             ].each {
                 assert qc.text.contains(it)
             }
@@ -732,7 +734,7 @@ nextflow_pipeline {
             assert path("$launchDir/results/snpeff/reads_25.ann.vcf").readLines().size() == 21
 
             // TSV of the VCF for reporting
-            def vcfSample1 = path("$launchDir/results/vcf/sample1.vcf.tsv")
+            def vcfSample1 = path("$launchDir/results/vcf/report_tsvs/sample1.vcf.tsv")
             [
                 "Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual",
                 "MN908947.3\t3037\torf1ab p.F924F\tsynonymous_variant\tC\tT\tNone",
@@ -804,7 +806,7 @@ nextflow_pipeline {
                 "vcf/final/sample1.consensus.norm.vcf.gz",
 
                 //SnpEff
-                "vcf/sample1.vcf.tsv",
+                "vcf/report_tsvs/sample1.vcf.tsv",
 
                 // Pipeline Info
                 "pipeline_info",
@@ -818,9 +820,9 @@ nextflow_pipeline {
             def qc = path("$launchDir/results/overall.qc.csv")
             [
                 "sample,reference,qc_pass,num_aligned_reads,num_segment_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
-                "sample1,NC_014395.1,PASS,497768,91340,24,0.9858,6325.92,4750.5,39,39,",
-                "sample1,NC_014396.1,PASS,497768,104240,8,0.9979,3091.76,2348.0,87,87,",
-                "sample1,NC_014397.1,PASS,497768,237126,20,0.9969,4215.0,3457.0,114,114,",
+                "sample1,NC_014395.1,PASS,497768,91340,24,0.9858,6329.12,4750.5,39,36,",
+                "sample1,NC_014396.1,PASS,497768,104240,8,0.9979,3093.17,2348.0,87,87,",
+                "sample1,NC_014397.1,PASS,497768,237126,20,0.9969,4216.77,3459.0,114,114,",
                 "reads_25,NC_014395.1,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,50,14,1690,0.0,1.05,0.0,0,0,",
                 "reads_25,NC_014396.1,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,50,4,3885,0.0,0.1,0.0,0,0,",
                 "reads_25,NC_014397.1,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,50,18,6404,0.0,0.35,0.0,0,0,"
@@ -851,8 +853,8 @@ nextflow_pipeline {
             assert path("$launchDir/results/consensus/sample1.consensus.fasta").md5 == "bcefe51c3aaeda9afe9ecff4c06ea881"
 
             // SnpEff and VCF
-            def vcf = path("$launchDir/results/vcf/sample1.vcf.tsv")
-            assert vcf.readLines().size() == 241
+            def vcfTsv = path("$launchDir/results/vcf/report_tsvs/sample1.vcf.tsv")
+            assert vcfTsv.readLines().size() == 241
             [
                 "Chrom\tPos\tVariant\tConsequence\tRef\tAlt\tQual",
                 // Check for entries with each Segment
@@ -863,7 +865,7 @@ nextflow_pipeline {
                 "p.L176L",
                 "p.S705S"
             ].each {
-                assert vcf.text.contains(it)
+                assert vcfTsv.text.contains(it)
             }
         }
     }

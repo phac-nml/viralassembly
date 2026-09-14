@@ -11,11 +11,11 @@ def init_parser() -> argparse.ArgumentParser:
     '''
     Purpose
     -------
-    Parse CL inputs to be used in script
+        Parse CL inputs to be used in script
 
     Returns
     -------
-    argparse.ArgumentParser
+        argparse.ArgumentParser
     '''
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -52,21 +52,18 @@ def process_variants_details(var, annotated: bool, variants_analyzed=[]) -> dict
     """
     Purpose
     -------
-    Process variant and create dictionary for entry
-    Remove duplicated variants
+        Process variant and create dictionary for entry.
+        Remove duplicated variants
 
     Parameters
     ----------
-    var: vcf record
-        Genome completeness
-    annotated: bool
-        True if the data was annotated with SnpEff
-    variants_analyzed: list
-        Keep track of the variants analyzed to not repeat the same ones
+        var (vcf record): Variant record from vcf library
+        annotated (bool): True if the data was annotated with SnpEff
+        variants_analyzed (list): Keep track of the variants analyzed to not repeat the same ones
 
     Returns
     -------
-    dict of parsed variant
+        dict of parsed variant
     """
     # Check if seen before - if not add it to list and continue on
     variant_str = f'{var.CHROM}:{var.REF}{var.POS}{var.ALT[0]}' # Only first alt allele, shouldn't have more than one with the process currently
@@ -146,14 +143,12 @@ def write_outfile(outfile: str, variants: list) -> None:
     """
     Purpose
     -------
-    Write output variants to given file
+        Write output variants to given file
 
     Parameters
     ----------
-    outfile: str
-        Name of the outfile to write to
-    variants: list
-        List of variants to write to the output file
+        outfile (str): Name of the outfile to write to
+        variants (list): List of variants to write to the output file
     """
     columns = variants[0].keys()
     header = '\t'.join(columns)

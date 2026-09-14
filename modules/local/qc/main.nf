@@ -92,6 +92,7 @@ process FINAL_QC_CSV {
     final_checks.py \\
         $filterArg \\
         $metadataArg \\
+        --platform ${params.platform} \\
         --threshold $neg_control_threshold \\
         --neg_ctrl_substrings '$neg_ctrl_substrings' \\
         --csv $combined_csv \\
