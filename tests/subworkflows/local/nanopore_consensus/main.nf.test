@@ -46,5 +46,4 @@ nextflow_workflow {
             assert path("$launchDir/results/consensus/sample2.consensus.fasta").md5 == "b0357754cbb862748f58bf03bf7bd2b4"
         }
     }
-
 }

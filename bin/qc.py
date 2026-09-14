@@ -571,8 +571,12 @@ def main() -> None:
             # Grade QC
             mean_depth = depth_dict[chrom].get('mean', 0)
             median_depth = depth_dict[chrom].get('median', 0)
+
             #  Using the nextclade count (if available) to take into account the full gene effect
-            fs_status = ((frameshift_variants != 'none') and (nc_fs_count > 0))
+            if args.nextclade_csv:
+                fs_status = ((frameshift_variants != 'none') and (nc_fs_count > 0))
+            else:
+                fs_status = (frameshift_variants != 'none')
             nonsense_status = (nc_nonsense != '')
             mutated_stop_status = (nc_mutated_stop_codons != '')
 

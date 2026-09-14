@@ -119,6 +119,7 @@ def yield_alt_base(cigar: str, alt: str) -> Generator:
     for cigar_str in expanded_cigar:
         if cigar_str == 'I':
             alt_pos += 1
+            yield '+'
         elif cigar_str == 'D':
             yield '-'
         else:
@@ -220,10 +221,18 @@ def handle_sub(vcf_header: pysam.VariantHeader, record: pysam.VariantRecord) -> 
         base_frequency.append({ "A": 0.0, "C": 0.0, "G": 0.0, "T": 0.0})
 
     for alt, vaf, cigar in zip(record.alts, vafs, record.info['CIGAR']):
-        for i, base in enumerate(yield_alt_base(cigar, alt)):
+        local_var_idx = 0
+        for base in yield_alt_base(cigar, alt):
+            # Dels are at reference sites, indels not so up idx for dels
+            #  Skip both as they don't have site specific ACGT counts
+            #  and we aren't adding dels to the site VAFs
             if base == '-':
+                local_var_idx += 1
                 continue
-            base_frequency[i][base] += vaf
+            elif base == '+':
+                continue
+            base_frequency[local_var_idx][base] += vaf
+            local_var_idx += 1
 
     # Construct output records
     for i in range(0, sub_length):
@@ -290,10 +299,20 @@ def handle_indel(vcf_header: pysam.VariantHeader, record: pysam.VariantRecord, m
         output = handle_sub(vcf_header, record)
     else:
         # Check that all the indel specific positions are properly covered to allow the variant to be kept!
-        for i, base in enumerate(yield_alt_base(record.info['CIGAR'][best_vaf_idx], record.alts[best_vaf_idx]), start=record.pos):
+        #  Deletions follow normal site postions, insertions are based on the reference position before the ins
+        reference_pos = record.pos
+        for base in yield_alt_base(record.info['CIGAR'][best_vaf_idx], record.alts[best_vaf_idx]):
             if base == '-':
-                if depth_map[record.chrom][i] < min_depth:
+                if depth_map[record.chrom][reference_pos] < min_depth:
                     return output
+            elif base == '+':
+                # Have to -= 1 to get the reference position before the insertion
+                #  As we add one each time, we have to subtract one each time
+                #  Only issue is the slowdown now that we've already checked the spot
+                reference_pos -= 1
+                if depth_map[record.chrom][reference_pos] < min_depth:
+                    return output
+            reference_pos += 1
 
         r = make_simple_record(vcf_header, record, record.pos, record.ref, record.alts[best_vaf_idx], [ max_vaf ])
 

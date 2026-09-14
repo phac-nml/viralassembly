@@ -41,7 +41,7 @@ nextflow_workflow {
             assertAll(
                 { assert workflow.success }
             )
-            
+
             // Channels based checks for consensus file
             def meta = {}
             meta = workflow.out.consensus.get(0)[0]
