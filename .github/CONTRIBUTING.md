@@ -1,9 +1,9 @@
-# phac-nml/viralassembly: Contributing Guidelines
+# phac-nml/vira: Contributing Guidelines
 
 Hi there!
-Many thanks for taking an interest in improving phac-nml/viralassembly.
+Many thanks for taking an interest in improving phac-nml/vira.
 
-We try to manage the required tasks for phac-nml/viralassembly using GitHub issues, you probably came to this page when creating one.
+We try to manage the required tasks for phac-nml/vira using GitHub issues, you probably came to this page when creating one.
 Please use the pre-filled template to save time.
 
 However, don't be put off by this template - other more general issues and suggestions are welcome!
@@ -11,10 +11,10 @@ Contributions to the code are even more welcome
 
 ## Contribution workflow
 
-If you'd like to write some code for phac-nml/viralassembly, the standard workflow is as follows:
+If you'd like to write some code for phac-nml/vira, the standard workflow is as follows:
 
-1. Check that there isn't already an issue about your idea in the [phac-nml/viralassembly issues](https://github.com/phac-nml/viralassembly/issues) to avoid duplicating work. If there isn't one already, please create one so that others know you're working on this
-2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [phac-nml/viralassembly repository](https://github.com/phac-nml/viralassembly) to your GitHub account
+1. Check that there isn't already an issue about your idea in the [phac-nml/vira issues](https://github.com/phac-nml/vira/issues) to avoid duplicating work. If there isn't one already, please create one so that others know you're working on this
+2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [phac-nml/vira repository](https://github.com/phac-nml/vira) to your GitHub account
 3. Make the necessary changes / additions within your forked repository following [Pipeline conventions](#pipeline-contribution-conventions)
 4. Use `nf-core schema build` and add any new parameters to the pipeline JSON schema (requires [nf-core tools](https://github.com/nf-core/tools) >= 3.0.2).
 5. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged
@@ -55,7 +55,7 @@ These tests are run both with the latest available version of `Nextflow` and als
 
 ## Pipeline contribution conventions
 
-To make the phac-nml/viralassembly code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
+To make the phac-nml/vira code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
 
 ### Adding a new step
 
@@ -105,7 +105,7 @@ This repo includes a devcontainer configuration which will create a GitHub Codes
 
 To get started:
 
-- Open the repo in [Codespaces](https://github.com/phac-nml/viralassembly/codespaces)
+- Open the repo in [Codespaces](https://github.com/phac-nml/vira/codespaces)
 - Tools installed
   - nf-core
   - Nextflow

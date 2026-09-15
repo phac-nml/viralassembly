@@ -338,7 +338,7 @@ Tool Versions
 ### {-}
 
 ```{r pipeline-name}
-valueBox('phac-nml/viralassembly', "Pipeline Name")
+valueBox('phac-nml/vira', "Pipeline Name")
 ```
 
 ### {-}

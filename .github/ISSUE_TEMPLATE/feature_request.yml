@@ -1,5 +1,5 @@
 name: Feature request
-description: Suggest an idea for the phac-nml/viralassembly pipeline
+description: Suggest an idea for the phac-nml/vira pipeline
 labels: enhancement
 body:
   - type: textarea

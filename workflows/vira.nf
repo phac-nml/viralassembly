@@ -4,7 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 // Functions
-include { fastaHeaderId             } from '../subworkflows/local/utils_nfcore_viralassembly_pipeline'
+include { fastaHeaderId             } from '../subworkflows/local/utils_nfcore_vira_pipeline'
 
 // Utils / Custom checks / Primer Validate
 include { GUNZIP_FASTA              } from '../modules/local/custom/utils'
@@ -38,7 +38,7 @@ include { WF_CREATE_CUSTOM_REPORT   } from '../subworkflows/local/create_custom_
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-workflow VIRALASSEMBLY {
+workflow VIRA {
     take:
     ch_fastqs           // channel: [ val(meta), file(fastq) ]
     ch_empty_fastqs     // channel: [ val(meta), file(fastq) ]

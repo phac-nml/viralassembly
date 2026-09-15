@@ -1,4 +1,4 @@
-# ViralAssembly
+# VIRA
 
 A generic viral assembly and QC pipeline for reference-based analysis of viral sequencing data. The pipeline supports both Oxford Nanopore and Illumina sequencing data and can be used with amplicon or non-amplicon sequencing approaches. This pipeline can be used as a starting point for analyses on viruses without dedicated workflows already available.
 
@@ -15,7 +15,7 @@ The goals of this pipeline are:
 
 ## Index
 
-- [ViralAssembly](#viralassembly)
+- [VIRA](#vira)
   - [Index](#index)
   - [Installation](#installation)
   - [Running Commands](#running-commands)
@@ -63,7 +63,7 @@ Data can be ingested by the pipeline in two different ways:
 Basic command:
 
 ```bash
-nextflow run phac-nml/viralassembly \
+nextflow run phac-nml/vira \
     -profile <PROFILE(s)> \
     --fastq_pass </PATH/TO/fastq_pass> \
     --platform <PLATFORM> \

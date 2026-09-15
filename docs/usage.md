@@ -1,4 +1,4 @@
-# phac-nml/viralassembly: Usage
+# phac-nml/vira: Usage
 
 ## Introduction
 
@@ -26,7 +26,7 @@ For Basic NGS Sequencing data it is at minimum required to:
 
 ## Index
 
-- [phac-nml/viralassembly: Usage](#phac-nmlviralassembly-usage)
+- [phac-nml/vira: Usage](#phac-nmlvira-usage)
   - [Introduction](#introduction)
   - [Index](#index)
   - [Profiles](#profiles)
@@ -174,7 +174,7 @@ You will need to create a samplesheet with information about the samples you wou
 The typical command for running the pipeline with an [amplicon scheme](#schemes-and-reference) and a non-default Clair3 model with Docker for nanopore sequenced data is as follows:
 
 ```bash
-nextflow run phac-nml/viralassembly \
+nextflow run phac-nml/vira \
   -profile docker \
   --platform nanopore \
   --fastq_pass FASTQ_PASS/ \
@@ -191,7 +191,7 @@ This will launch the pipeline with the `docker` configuration profile and use th
 The typical command for running the pipeline without an amplicon scheme with the default clair3 model for nanopore sequenced data is as follows:
 
 ```bash
-nextflow run phac-nml/viralassembly \
+nextflow run phac-nml/vira \
   -profile singularity \
   --platform nanopore \
   --fastq_pass FASTQ_PASS/ \
@@ -208,7 +208,7 @@ This will launch the pipeline with the `singularity` configuration profile and t
 The typical command for running the pipeline with an [amplicon scheme](#schemes-and-reference) with Docker for illumina sequenced data is as follows:
 
 ```bash
-nextflow run phac-nml/viralassembly \
+nextflow run phac-nml/vira \
   -profile docker \
   --platform illumina \
   --fastq_pass FASTQ_PASS/ \
@@ -224,7 +224,7 @@ This will launch the pipeline with the `docker` configuration profile and use th
 The typical command for running the pipeline without an amplicon scheme with Docker for illumina sequenced data is as follows:
 
 ```bash
-nextflow run phac-nml/viralassembly \
+nextflow run phac-nml/vira \
   -profile docker \
   --platform illumina \
   --fastq_pass FASTQ_PASS/ \
@@ -282,7 +282,7 @@ Pipeline settings can be provided in a `yaml` or `json` file via `-params-file <
 For example, an amplicon based nanopore sequencing pipeline run specified with a params file in yaml format:
 
 ```bash
-nextflow run phac-nml/viralassembly -profile docker -params-file params.yaml
+nextflow run phac-nml/vira -profile docker -params-file params.yaml
 ```
 
 with `params.yaml` containing:
@@ -301,14 +301,14 @@ primer_bed: "PRIMER.bed"
 When you install the pipeline, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
 
 ```bash
-nextflow pull phac-nml/viralassembly
+nextflow pull phac-nml/vira
 ```
 
 ### Reproducibility
 
 It is a good idea to specify a pipeline version when running the pipeline on your data. This ensures that a specific version of the pipeline code and software are used when you run your pipeline. If you keep using the same tag, you'll be running the same version of the pipeline, even if there have been changes to the code since.
 
-First, go to the [phac-nml/viralassembly releases page](https://github.com/phac-nml/viralassembly/releases) and find the latest pipeline version - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`. Of course, you can switch to another version by changing the number after the `-r` flag.
+First, go to the [phac-nml/vira releases page](https://github.com/phac-nml/vira/releases) and find the latest pipeline version - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`. Of course, you can switch to another version by changing the number after the `-r` flag.
 
 This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. For example, in the Tool Versions page of the final report.
 

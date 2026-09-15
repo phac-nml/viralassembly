@@ -20,9 +20,9 @@ lint:
     - assets/sendmail_template.txt
     - assets/adaptivecard.json
     - assets/slackreport.json
-    - assets/nf-core-viralassembly_logo_light.png
-    - docs/images/nf-core-viralassembly_logo_light.png
-    - docs/images/nf-core-viralassembly_logo_dark.png
+    - assets/nf-core-vira_logo_light.png
+    - docs/images/nf-core-vira_logo_light.png
+    - docs/images/nf-core-vira_logo_dark.png
     - .github/workflows/awstest.yml
     - .github/workflows/awsfulltest.yml
     - assets/multiqc_config.yml
@@ -57,7 +57,7 @@ lint:
 
 template:
   org: phac-nml
-  name: viralassembly
+  name: vira
   description: Assemble and QC viral reads with a reference scheme
   author: Darian Hole
   version: 2.0.0

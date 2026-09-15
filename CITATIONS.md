@@ -1,4 +1,4 @@
-# phac-nml/viralassembly: Citations
+# phac-nml/vira: Citations
 
 ## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 
