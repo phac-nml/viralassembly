@@ -1,9 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    phac-nml/viralassembly
+    phac-nml/vira
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/phac-nml/viralassembly
+    Github : https://github.com/phac-nml/vira
 ----------------------------------------------------------------------------------------
 */
 
@@ -39,10 +39,10 @@ params.nextclade_dataset_tag  = user_set_nextclade_dataset_tag  ?
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS / WORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_viralassembly_pipeline'
+include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_vira_pipeline'
 include { FORMAT_INPUT            } from './subworkflows/local/format_input'
-include { VIRALASSEMBLY           } from './workflows/viralassembly'
-include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_viralassembly_pipeline'
+include { VIRA                    } from './workflows/vira'
+include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_vira_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -53,7 +53,7 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_vira
 //
 // WORKFLOW: Run main analysis pipeline after formatting inputs
 //
-workflow PHACNML_VIRALASSEMBLY {
+workflow PHACNML_VIRA {
 
     take:
     segmented
@@ -65,7 +65,7 @@ workflow PHACNML_VIRALASSEMBLY {
     //
     // WORKFLOW: Run pipeline
     //
-    VIRALASSEMBLY (
+    VIRA (
         FORMAT_INPUT.out.pass,
         FORMAT_INPUT.out.empty,
         segmented
@@ -96,7 +96,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    PHACNML_VIRALASSEMBLY(
+    PHACNML_VIRA(
         PIPELINE_INITIALISATION.out.segmented
     )
 

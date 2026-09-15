@@ -198,7 +198,7 @@ def main() -> None:
     df['run_status'] = run_control_status
     df['run_summary'] = run_control_info
     df = df.fillna(args.fill_str)
-    df['pipeline_name'] = 'ViralAssembly'
+    df['pipeline_name'] = 'VIRA'
     df['pipeline_version'] = args.version
     df.sort_values(by='sample', inplace=True)
     df.to_csv('overall.qc.csv', index=False)

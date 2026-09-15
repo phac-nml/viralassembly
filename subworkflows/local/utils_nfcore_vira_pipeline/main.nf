@@ -1,5 +1,5 @@
 //
-// Subworkflow with functionality specific to the phac-nml/viralassembly pipeline
+// Subworkflow with functionality specific to the phac-nml/vira pipeline
 //
 
 /*

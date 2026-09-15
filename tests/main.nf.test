@@ -1,7 +1,7 @@
 // Main Tests File
 nextflow_pipeline {
 
-    name "Full Pipeline NF-Tests for ViralAssembly"
+    name "Full Pipeline NF-Tests for VIRA"
     script "main.nf"
 
     //--- Test 1 ----------------------------------------------------------------------------
@@ -250,7 +250,7 @@ nextflow_pipeline {
             assert iridanext.metadata.samples.sample1.num_snps == "49"
             assert iridanext.metadata.samples.sample2.total_variants == "54"
             assert iridanext.metadata.samples.sample2.num_deletions == "30"
-            assert iridanext.metadata.samples.sample1.pipeline_name == "ViralAssembly"
+            assert iridanext.metadata.samples.sample1.pipeline_name == "VIRA"
             assert iridanext.metadata.samples.sample1.pipeline_version == "2.0.0"
         }
     }
@@ -393,7 +393,7 @@ nextflow_pipeline {
             assert iridanext.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.negative_ctrl.neg_control_info == "PASS"
             assert iridanext.metadata.samples.sample1.genome_completeness == "0.9097"
-            assert iridanext.metadata.samples.sample2.pipeline_name == "ViralAssembly"
+            assert iridanext.metadata.samples.sample2.pipeline_name == "VIRA"
             assert iridanext.metadata.samples.sample1.num_deletion_sites == "6"
             assert iridanext.metadata.samples.sample2.pipeline_version == "2.0.0"
             assert iridanext.metadata.samples.sample2.qc_pass == "PASS"
@@ -630,7 +630,7 @@ nextflow_pipeline {
             assert iridanext.metadata.samples.sample1.genome_completeness == "0.5277"
             assert iridanext.metadata.samples.sample1.num_snps == "2"
             assert iridanext.metadata.samples.reads_25.total_variants == "0"
-            assert iridanext.metadata.samples.sample1.pipeline_name == "ViralAssembly"
+            assert iridanext.metadata.samples.sample1.pipeline_name == "VIRA"
             assert iridanext.metadata.samples.reads_25.pipeline_version == "2.0.0"
         }
     }
@@ -761,7 +761,7 @@ nextflow_pipeline {
             assert iridanext.metadata.samples.reads_25.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
             assert iridanext.metadata.samples.sample1.num_snps == "118"
             assert iridanext.metadata.samples.reads_25.num_consensus_n == "29903"
-            assert iridanext.metadata.samples.sample1.pipeline_name == "ViralAssembly"
+            assert iridanext.metadata.samples.sample1.pipeline_name == "VIRA"
             assert iridanext.metadata.samples.reads_25.pipeline_version == "2.0.0"
         }
     }

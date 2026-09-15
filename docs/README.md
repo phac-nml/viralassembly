@@ -1,6 +1,6 @@
-# phac-nml/viralassembly: Documentation
+# phac-nml/vira: Documentation
 
-The phac-nml/viralassembly documentation is split into the following pages:
+The phac-nml/vira documentation is split into the following pages:
 
 - [Usage](./usage.md)
   - An overview of how the pipeline works, how to run it and a description of all of the different command-line flags.

@@ -1,4 +1,4 @@
-# phac-nml/viralassembly: Output
+# phac-nml/vira: Output
 
 ## Introduction
 
@@ -19,7 +19,7 @@ The directories listed below are created within the directory specified by `--ou
 
 The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes data using the following steps:
 
-- [phac-nml/viralassembly: Output](#phac-nmlviralassembly-output)
+- [phac-nml/vira: Output](#phac-nmlvira-output)
   - [Introduction](#introduction)
   - [Pipeline overview](#pipeline-overview)
     - [Reference and Primer Processing](#reference-and-primer-processing)
