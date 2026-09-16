@@ -188,7 +188,7 @@ nextflow_pipeline {
             def qc = path("$results/overall.qc.csv")
             [
                 "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
-                "reads_1,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,"
+                "reads_bad,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
                 "reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.34,2,0,0,",
                 "reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
                 "negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,",
@@ -243,7 +243,7 @@ nextflow_pipeline {
             assert iridanext.files.global*.path.contains("pipeline_info/software_versions.yml")
 
             // IRIDA metadata
-            assert iridanext.metadata.samples.reads_1.qc_pass == "TOO FEW SIZE SELECTED READS"
+            assert iridanext.metadata.samples.reads_bad.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.reads_100.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
             assert iridanext.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.negative_ctrl.qc_pass == "PASS"
@@ -330,7 +330,7 @@ nextflow_pipeline {
             def qc = path("$launchDir/results/overall.qc.csv")
             [
                 "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
-                "reads_1,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,"
+                "reads_bad,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
                 "reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.25,2,0,0,",
                 "reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
                 "negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,",
@@ -392,7 +392,7 @@ nextflow_pipeline {
             }
             assert iridanext.files.samples.sample1.any { it.path == "sample_reports/sample1.html" }
             assert iridanext.files.samples.sample2.any { it.path == "sample_reports/sample2.html" }
-            assert iridanext.metadata.samples.reads_1.qc_pass == "TOO FEW SIZE SELECTED READS"
+            assert iridanext.metadata.samples.reads_bad.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.reads_100.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
             assert iridanext.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.negative_ctrl.neg_control_info == "PASS"

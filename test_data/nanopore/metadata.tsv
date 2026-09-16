@@ -4,3 +4,4 @@ sample2	2	run	data-3
 100_reads	3	run	data-5
 25_reads	24	run	data-8
 negative-ctrl	94	run	data-79
+reads_bad	96	run	data-95
