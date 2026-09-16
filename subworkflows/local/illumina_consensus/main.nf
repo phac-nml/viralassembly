@@ -68,8 +68,8 @@ workflow WF_ILLUMINA_CONSENSUS {
     // Pass/fail reads based on count after length and quality filtering
     ch_fastqs
         .branch{ _meta, fastq ->
-            pass: fastq[0].countFastq() >= params.min_reads
-            empty: fastq[0].countFastq() < params.min_reads
+            empty: !fastq[0].exists() || fastq[0].size() < 50 || fastq[0].countFastq() < params.min_reads
+            pass: true
         }.set{ ch_filtered_fastqs }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
