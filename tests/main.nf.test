@@ -157,6 +157,7 @@ nextflow_pipeline {
                 "overall.qc.csv",
                 "reportDashboard.html",
                 "iridanext.output.json",
+                "filtered_samples.csv",
 
                 // Reference files
                 "reference/MN908947.3.reference.fasta.fai",
@@ -546,6 +547,7 @@ nextflow_pipeline {
                 "overall.qc.csv",
                 "reportDashboard.html",
                 "iridanext.output.json",
+                "filtered_samples.csv",
 
                 // Reference files
                 "reference/MN908947.3.reference.fasta.fai",

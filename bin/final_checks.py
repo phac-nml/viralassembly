@@ -23,7 +23,7 @@ def init_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         '-c',
         '--csv',
-        required=True,
+        required=False,
         type=str,
         help='Concatenated sample QC files'
     )
@@ -143,9 +143,12 @@ def main() -> None:
     ]
 
     # Do stuff
-    df = pd.read_csv(args.csv)
-    validate_df_columns(df, ['sample', 'num_aligned_reads', 'num_segment_reads', 'genome_completeness',
+    if args.csv:
+        df = pd.read_csv(args.csv)
+        validate_df_columns(df, ['sample', 'num_aligned_reads', 'num_segment_reads', 'genome_completeness',
                              'mean_sequencing_depth', 'median_sequencing_depth', 'qc_pass'])
+    else:
+        df = pd.DataFrame()
 
     # Adding in filtered out samples and give them back their metadata if available
     if args.filter_tracking:
