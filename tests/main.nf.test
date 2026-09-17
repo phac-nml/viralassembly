@@ -157,6 +157,7 @@ nextflow_pipeline {
                 "overall.qc.csv",
                 "reportDashboard.html",
                 "iridanext.output.json",
+                "filtered_samples.csv",
 
                 // Reference files
                 "reference/MN908947.3.reference.fasta.fai",
@@ -188,6 +189,7 @@ nextflow_pipeline {
             def qc = path("$results/overall.qc.csv")
             [
                 "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
+                "reads_bad,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
                 "reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.34,2,0,0,",
                 "reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
                 "negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,",
@@ -242,6 +244,7 @@ nextflow_pipeline {
             assert iridanext.files.global*.path.contains("pipeline_info/software_versions.yml")
 
             // IRIDA metadata
+            assert iridanext.metadata.samples.reads_bad.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.reads_100.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
             assert iridanext.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.negative_ctrl.qc_pass == "PASS"
@@ -328,6 +331,7 @@ nextflow_pipeline {
             def qc = path("$launchDir/results/overall.qc.csv")
             [
                 "sample,qc_pass,num_aligned_reads,num_consensus_n,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,num_snps,",
+                "reads_bad,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
                 "reads_100,INCOMPLETE_GENOME;LOW_SEQ_DEPTH,66,29903,0.0,2.25,2,0,0,",
                 "reads_25,TOO FEW SIZE SELECTED READS,0,29903,0.0,0.0,0,0,0,",
                 "negative-ctrl,PASS,0,29903,0.0,0.0,0,0,0,",
@@ -389,6 +393,7 @@ nextflow_pipeline {
             }
             assert iridanext.files.samples.sample1.any { it.path == "sample_reports/sample1.html" }
             assert iridanext.files.samples.sample2.any { it.path == "sample_reports/sample2.html" }
+            assert iridanext.metadata.samples.reads_bad.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.reads_100.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
             assert iridanext.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.negative_ctrl.neg_control_info == "PASS"
@@ -542,6 +547,7 @@ nextflow_pipeline {
                 "overall.qc.csv",
                 "reportDashboard.html",
                 "iridanext.output.json",
+                "filtered_samples.csv",
 
                 // Reference files
                 "reference/MN908947.3.reference.fasta.fai",
@@ -619,12 +625,14 @@ nextflow_pipeline {
             def iridanext = path("$results/iridanext.output.json").json
             assert iridanext.files.global*.path.contains("reportDashboard.html")
             assert iridanext.files.global*.path.contains("pipeline_info/software_versions.yml")
+            assert iridanext.files.global*.path.contains("filtered_samples.csv")
             ["reads_25", "sample1"].each { sample ->
                 assert iridanext.files.samples[sample].any { it.path == "consensus/${sample}.consensus.fasta" }
                 assert iridanext.files.samples[sample].any { it.path == "vcf/final/${sample}.consensus.norm.vcf.gz" }
             }
 
             // IRIDA metadata
+            assert iridanext.metadata.samples.reads_1.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.reads_25.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
             assert iridanext.metadata.samples.sample1.qc_pass == "PARTIAL_GENOME"
             assert iridanext.metadata.samples.sample1.genome_completeness == "0.5277"
@@ -867,6 +875,64 @@ nextflow_pipeline {
             ].each {
                 assert vcfTsv.text.contains(it)
             }
+        }
+    }
+
+    //--- Test 12 ----------------------------------------------------------------------------
+    test("Illumina Fully Filtered Workflow") {
+        tag "success"
+        tag "wgs"
+        tag "illumina"
+        tag "filtered"
+
+        when {
+            params {
+                outdir          = "results"
+                input           = "${projectDir}/test_data/illumina/illumina_filtered.csv"
+                reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
+                platform        = "illumina"
+                skip_nextclade  = true
+            }
+        }
+        then {
+            // Status
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+
+            // Expected outputs
+            def results = "$launchDir/results"
+            [
+                // Summary Reports
+                "",
+                "overall.qc.csv",
+                "iridanext.output.json",
+                "filtered_samples.csv",
+
+                // Pipeline Info
+                "pipeline_info",
+                "pipeline_info/software_versions.yml"
+            ].each {
+                assert path("$results/$it").exists()
+            }
+
+            // Final QC File
+            // Using columns up to snp count
+            def qc = path("$launchDir/results/overall.qc.csv")
+            [
+                "sample,qc_pass,irida_id,num_aligned_reads,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,",
+                "reads_1,TOO FEW SIZE SELECTED READS,reads_1,0,0,0,0,0,0,0"
+            ].each {
+                assert qc.text.contains(it)
+            }
+
+            // IRIDA Next output
+            def iridanext = path("$results/iridanext.output.json").json
+            assert iridanext.files.global*.path.contains("pipeline_info/software_versions.yml")
+            assert iridanext.files.global*.path.contains("filtered_samples.csv")
+            assert iridanext.files.global*.path.contains("overall.qc.csv")
+
+            // IRIDA metadata
+            assert iridanext.metadata.samples.reads_1.qc_pass == "TOO FEW SIZE SELECTED READS"
         }
     }
 }

@@ -310,9 +310,10 @@ workflow VIRALASSEMBLY {
         FINAL_QC_CSV(
             MAKE_SAMPLE_QC_CSV.out.csv
                 .map{ _meta, csv -> csv }
-                .collectFile(keepHeader: true, skip: 1, name: 'concat.qc.csv'),
+                .collectFile(keepHeader: true, skip: 1, name: 'concat.qc.csv')
+                .ifEmpty([]),
             ch_filter_tracking
-                .collectFile(keepHeader: true, skip: 1, name: 'filter_tracking.csv')
+                .collectFile(keepHeader: true, skip: 1, name: 'filtered_samples.csv')
                 .ifEmpty([]),
             ch_metadata,
             ch_reference,

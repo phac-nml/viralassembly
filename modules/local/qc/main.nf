@@ -81,6 +81,7 @@ process FINAL_QC_CSV {
 
     output:
     path "overall.qc.csv", emit: csv
+    path "filtered_samples.csv", emit: filtered_samples, includeInputs: true, optional: true
     path "versions.yml", emit: versions
 
     script:
@@ -88,14 +89,15 @@ process FINAL_QC_CSV {
     def version = workflow.manifest.version
     def filterArg = filter_tracking_csv ? "--filter_tracking $filter_tracking_csv" : ""
     def metadataArg = metadata ? "--metadata $metadata" : ""
+    def csvsArg = combined_csv ? "--csv $combined_csv" : ""
     """
     final_checks.py \\
         $filterArg \\
         $metadataArg \\
+        $csvsArg \\
         --platform ${params.platform} \\
         --threshold $neg_control_threshold \\
         --neg_ctrl_substrings '$neg_ctrl_substrings' \\
-        --csv $combined_csv \\
         --reference $reference \\
         --version $version
 

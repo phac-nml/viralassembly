@@ -82,8 +82,8 @@ workflow WF_NANOPORE_CONSENSUS {
     // Pass/fail reads based on count after length and quality filtering
     ch_fastqs
         .branch{ _meta, fastq ->
-            pass: fastq.countFastq() >= params.min_reads
-            empty: fastq.countFastq() < params.min_reads
+            empty: !fastq.exists() || fastq.size() < 50 || fastq.countFastq() < params.min_reads
+            pass: true
         }.set{ ch_filtered_fastqs }
 
     if ( !params.use_artic_tool ) {
