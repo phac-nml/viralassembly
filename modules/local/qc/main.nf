@@ -81,7 +81,7 @@ process FINAL_QC_CSV {
 
     output:
     path "overall.qc.csv", emit: csv
-    path "filtered_samples.csv", emit: filtered_samples, includeInputs: true
+    path "filtered_samples.csv", emit: filtered_samples, includeInputs: true, optional: true
     path "versions.yml", emit: versions
 
     script:
