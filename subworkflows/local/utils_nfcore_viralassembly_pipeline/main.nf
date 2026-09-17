@@ -7,7 +7,7 @@
     IMPORT FUNCTIONS / MODULES / SUBWORKFLOWS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { validateParameters; paramsHelp; paramsSummaryLog } from 'plugin/nf-validation'
+include { validateParameters; paramsSummaryLog } from 'plugin/nf-schema'
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NFCORE_PIPELINE     } from '../../nf-core/utils_nfcore_pipeline'
 include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
@@ -34,14 +34,6 @@ workflow PIPELINE_INITIALISATION {
     )
 
     //
-    // Help
-    //
-    if (params.help) {
-        log.info paramsHelp("nextflow run phac-nml/viralassembly -profile <profile> --input samplesheet.csv --outdir <OUTDIR> <--reference REF || --scheme SCHEME>")
-        exit 0
-    }
-
-    //
     // Check config provided to the pipeline
     //
     UTILS_NFCORE_PIPELINE (
@@ -52,12 +44,6 @@ workflow PIPELINE_INITIALISATION {
     // Check logic required for the pipeline to function properly
     //  Stuff like files for different inputs, models, etc
     //
-    // Variant Callers - Clair3 is default but we only allow these 3 (and probably will remove them later for just C3)
-    if ( ! ['medaka', 'nanopolish', 'clair3'].contains(params.variant_caller) ) {
-        log.error("Please provide an input for --variant_caller with any of [ 'clair3', 'nanopolish', 'medaka' ]")
-        System.exit(1)
-    }
-
     //-- Data Inputs
     if ( !params.input && !params.fastq_pass ) {
         log.error("Please provide input data with either: '--input input.csv' or '--fastq_pass fastq_dir/'")
@@ -65,11 +51,13 @@ workflow PIPELINE_INITIALISATION {
     } else if ( params.input && params.fastq_pass ) {
         log.error("Please provide input data with either: '--input input.csv' or '--fastq_pass fastq_dir/' but not both")
         System.exit(1)
-    } else if ( params.variant_caller == 'nanopolish' ) {
-        if ( ! params.fast5_pass || ! params.sequencing_summary ) {
-            log.error("Please pass both '--fast5_pass fast5_dir/' and '--sequencing_summary seqsum.txt' to run nanopolish")
+    }
+
+    // Multiple Nextclade Inputs
+    if (! params.skip_nextclade && (
+        (params.nextclade_dataset_dir && params.nextclade_dataset_name))) {
+            log.error("Please pass only one of the following to run nextclade: `--nextclade_dataset_name' or '--nextclade_dataset_dir'")
             System.exit(1)
-        }
     }
 
     //
@@ -78,6 +66,20 @@ workflow PIPELINE_INITIALISATION {
     if (validate_params) {
         validateParameters()
     }
+
+    // Check if reference is segmented
+    fasta = file(params.reference, type: 'file', checkIfExists: true)
+    segmented = isSegmented(fasta)
+
+    // Nextclade input when virus is segmented
+    if ( segmented && (params.nextclade_dataset_dir || params.nextclade_dataset_name) ) {
+        log.error("The reference FASTA used is a segmented virus. Please remove the 'nextclade_dataset_dir' or 'nextclade_dataset_name' argument as the pipeline will assign the appropriate nextclade dataset to each segment.")
+        System.exit(1)
+    }
+
+    emit:
+    segmented = segmented       // boolean: If virus is segmented
+
 }
 
 /*
@@ -105,4 +107,37 @@ workflow PIPELINE_COMPLETION {
     workflow.onError {
         log.error "Pipeline failed. Please refer to troubleshooting docs: https://nf-co.re/docs/usage/troubleshooting"
     }
+}
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    FUNCTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+// Check if the virus is segmented
+def isSegmented(reference) {
+    def input = reference.name.endsWith('.gz')
+        ? new java.util.zip.GZIPInputStream(reference.newInputStream())
+        : reference.newInputStream()
+
+    def segmented
+
+    input.withReader { reader ->
+        segmented = reader
+            .readLines()
+            .findAll { it.startsWith('>') }
+            .size() > 1
+    }
+
+    return segmented
+}
+
+// Get FASTA header
+def fastaHeaderId(fasta) {
+    def headers = fasta.readLines()
+        .findAll { it.startsWith('>') }
+        .collect { it.substring(1).tokenize()[0] }
+
+    return headers
 }
