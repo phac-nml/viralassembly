@@ -1,2 +1,2 @@
 sample, fastq_1, fastq_2
-reads_1,https://github.com/phac-nml/viralassembly/raw/refs/heads/dev/test_data/illumina/fastqs/SRR23802888_downsampled_1_1.fastq.gz,https://github.com/phac-nml/viralassembly/raw/refs/heads/fix/empty_file_error/test_data/illumina/fastqs/SRR23802888_downsampled_1_2.fastq.gz
+reads_1,https://github.com/phac-nml/viralassembly/raw/refs/heads/dev/test_data/illumina/fastqs/SRR23802888_downsampled_1_1.fastq.gz,https://github.com/phac-nml/viralassembly/raw/refs/heads/dev/test_data/illumina/fastqs/SRR23802888_downsampled_1_2.fastq.gz
