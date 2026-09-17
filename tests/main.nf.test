@@ -625,6 +625,7 @@ nextflow_pipeline {
             def iridanext = path("$results/iridanext.output.json").json
             assert iridanext.files.global*.path.contains("reportDashboard.html")
             assert iridanext.files.global*.path.contains("pipeline_info/software_versions.yml")
+            assert iridanext.files.global*.path.contains("filtered_samples.csv")
             ["reads_25", "sample1"].each { sample ->
                 assert iridanext.files.samples[sample].any { it.path == "consensus/${sample}.consensus.fasta" }
                 assert iridanext.files.samples[sample].any { it.path == "vcf/final/${sample}.consensus.norm.vcf.gz" }
@@ -874,6 +875,64 @@ nextflow_pipeline {
             ].each {
                 assert vcfTsv.text.contains(it)
             }
+        }
+    }
+
+    //--- Test 12 ----------------------------------------------------------------------------
+    test("Illumina Fully Filtered Workflow") {
+        tag "success"
+        tag "wgs"
+        tag "illumina"
+        tag "filtered"
+
+        when {
+            params {
+                outdir          = "results"
+                input           = "${projectDir}/test_data/illumina/illumina_filtered.csv"
+                reference       = "${projectDir}/test_data/MN908947.3.reference.fasta"
+                platform        = "illumina"
+                skip_nextclade  = true
+            }
+        }
+        then {
+            // Status
+            assert workflow.success
+            assert workflow.trace.failed().size() == 0
+
+            // Expected outputs
+            def results = "$launchDir/results"
+            [
+                // Summary Reports
+                "",
+                "overall.qc.csv",
+                "iridanext.output.json",
+                "filtered_samples.csv",
+
+                // Pipeline Info
+                "pipeline_info",
+                "pipeline_info/software_versions.yml"
+            ].each {
+                assert path("$results/$it").exists()
+            }
+
+            // Final QC File
+            // Using columns up to snp count
+            def qc = path("$launchDir/results/overall.qc.csv")
+            [
+                "sample,qc_pass,irida_id,num_aligned_reads,genome_completeness,mean_sequencing_depth,median_sequencing_depth,total_variants,",
+                "reads_1,TOO FEW SIZE SELECTED READS,reads_1,0,0,0,0,0,0,0"
+            ].each {
+                assert qc.text.contains(it)
+            }
+
+            // IRIDA Next output
+            def iridanext = path("$results/iridanext.output.json").json
+            assert iridanext.files.global*.path.contains("pipeline_info/software_versions.yml")
+            assert iridanext.files.global*.path.contains("filtered_samples.csv")
+            assert iridanext.files.global*.path.contains("overall.qc.csv")
+
+            // IRIDA metadata
+            assert iridanext.metadata.samples.reads_1.qc_pass == "TOO FEW SIZE SELECTED READS"
         }
     }
 }
