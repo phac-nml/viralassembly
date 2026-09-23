@@ -1,9 +1,3 @@
-/*
-    Module to create database to annotate VCF file using SnpEFF
-        1. Checks if a database is available
-        2. If it is downloads it, otherwise attempts to make it from NCBI refseq genbank file
-*/
-
 process SNPEFF_ANNOTATE {
     tag "$meta.id"
     label 'process_medium'
@@ -54,6 +48,7 @@ process SNPEFF_ANNOTATE {
         -csvStats ${sample_name}.csv \\
         $snpeff_db_command \\
         $config_command \\
+        -noLog \\
         -no-intergenic \\
         -no-intron \\
         -hgvs1LetterAa \\
