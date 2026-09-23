@@ -187,7 +187,7 @@ def main() -> None:
             run_control_info = f'Controls: {";".join(failing_samples)} exceed {args.threshold}% contamination threshold'
     else:
         # Add neg control columns as not available
-        run_control_status = 'WARN'
+        run_control_status = 'NO_CONTROLS'
         run_control_info = 'No negative controls found in run'
 
     # Drop columns if we are not segmented

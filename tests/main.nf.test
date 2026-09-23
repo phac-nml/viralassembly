@@ -397,6 +397,8 @@ nextflow_pipeline {
             assert iridanext.metadata.samples.reads_100.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
             assert iridanext.metadata.samples.reads_25.qc_pass == "TOO FEW SIZE SELECTED READS"
             assert iridanext.metadata.samples.negative_ctrl.neg_control_info == "PASS"
+            assert iridanext.metadata.samples.sample1.run_summary == ""
+            assert iridanext.metadata.samples.sample2.run_status == "PASS"
             assert iridanext.metadata.samples.sample1.genome_completeness == "0.9097"
             assert iridanext.metadata.samples.sample2.pipeline_name == "ViralAssembly"
             assert iridanext.metadata.samples.sample1.num_deletion_sites == "6"
@@ -766,7 +768,9 @@ nextflow_pipeline {
             // IRIDA metadata
             assert iridanext.files.samples.sample1.any { it.path == "sample_reports/sample1.html" }
             assert iridanext.metadata.samples.sample1.qc_pass == "PASS"
+            assert iridanext.metadata.samples.sample1.run_status == "NO_CONTROLS"
             assert iridanext.metadata.samples.reads_25.qc_pass == "INCOMPLETE_GENOME;LOW_SEQ_DEPTH"
+            assert iridanext.metadata.samples.reads_25.run_summary == "No negative controls found in run"
             assert iridanext.metadata.samples.sample1.num_snps == "118"
             assert iridanext.metadata.samples.reads_25.num_consensus_n == "29903"
             assert iridanext.metadata.samples.sample1.pipeline_name == "ViralAssembly"

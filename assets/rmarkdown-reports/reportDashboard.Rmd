@@ -158,6 +158,10 @@ if ( run_status == 'PASS' ) {
 } else if ( run_status == 'WARN' ) {
     sec_icon = ""
     sec_color = "warning"
+} else if ( run_status == 'NO_CONTROLS' ) {
+    run_status = "NO CONTROLS"
+    sec_icon = ""
+    sec_color = "warning"
 } else {
     sec_icon = ""
     sec_color = "danger"

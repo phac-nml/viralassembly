@@ -1,3 +1,9 @@
+/*
+    Module to create database to annotate VCF file using SnpEFF
+        1. Checks if a database is available
+        2. If it is downloads it, otherwise attempts to make it from NCBI refseq genbank file
+*/
+
 process SNPEFF_DATABASE {
     label 'process_small'
     label 'error_ignore' // If can't build we don't run snpeff
@@ -57,6 +63,7 @@ process SNPEFF_DATABASE {
         snpEff \\
             -Xmx${avail_mem}M \\
             build \\
+            -noLog \\
             -config snpeff.config \\
             -dataDir ./snpeff_db \\
             -noCheckCds \\
@@ -79,6 +86,7 @@ process SNPEFF_DATABASE {
             snpEff \\
                 -Xmx${avail_mem}M \\
                 download ${genome} \\
+                -noLog \\
                 -dataDir \${PWD}/snpeff_db
 
         # Otherwise try to make it from NCBI
@@ -99,6 +107,7 @@ process SNPEFF_DATABASE {
             snpEff \\
                 -Xmx${avail_mem}M \\
                 build \\
+                -noLog \\
                 -v \\
                 -genbank \\
                 -config snpeff.config \\
