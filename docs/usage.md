@@ -331,7 +331,7 @@ Use `--version` to see version information
 | --fastq_pass                                              | Path to directory containing `barcode##` subdirectories OR `*.fastq*` files        | Path    | null                        | See [Option for input params](#input-parameters)                                                                                                 |
 | --input                                                   | Path to samplesheet with information about the samples you would like to analyse   | Path    | null                        | See [Option for input params](#input-parameters)                                                                                                 |
 | --outdir                                                  | Directory name to output results to                                                | String  | null                        | Required                                                                                                                                         |
-| --virus_name                                              | Virus name that sets virus specific processes and nextclade runs                   | String  | null                        | See [Virus Specification](#virus-specification)                                                                                                  |
+| --virus                                                   | Virus name that sets virus specific processes and nextclade runs                   | String  | null                        | See [Virus Specification](#virus-specification)                                                                                                  |
 | **Required Parameters**                                   |                                                                                    |         |                             |                                                                                                                                                  |
 | --platform                                                | Sequencing platform                                                                | String  | null                        | Required: `nanopore` or `illumina`                                                                                                               |
 | --reference                                               | Path to a reference FASTA file to run pipeline                                     | Path    | null                        | Required: See [Schemes and Reference](#schemes-and-reference)                                                                                    |
@@ -440,33 +440,33 @@ SnpEff can also be skipped entirely by passing the `--skip_snpeff` parameter
 
 ### Virus Specification
 
-While the pipeline will run on any viral data, it also currently supports specifying a virus name to run specific analyses. Presently, it is used mostly for Nextclade dataset configuration. However, future versions of this pipeline aim to use the virus specfication as a way to set pipeline defaults and run virus specific processes.
+While the pipeline will run on any viral data, it also currently supports specifying a virus to run specific analyses. Presently, it is used mostly for Nextclade dataset configuration. However, future versions of this pipeline aim to use the virus specfication as a way to set pipeline defaults and run virus specific processes.
 
 #### Currently supported viruses
 
-The following is a list of viruses supported by the pipeline for automatic nextclade dataset configuration. The list includes the full virus name and the abbreviation to be used with the `--virus_name` argument.
+The following is a list of viruses supported by the pipeline for automatic nextclade dataset configuration. The list includes the full virus name and the abbreviation to be used with the `--virus` argument.
 
-| Virus Name                    | Abbreviation for `--virus_name` |
-| ----------------------------- | ------------------------------- |
-| SARS-CoV-2                    | covid                           |
-| Respiratory syncytial virus A | rsv_a                           |
-| Respiratory syncytial virus B | rsv_b                           |
-| Mpox                          | mpox                            |
-| Ebola                         | ebola                           |
-| Bundibugyo ebolavirus         | bsbv                            |
-| Sudan                         | sudan                           |
-| Measles                       | measles                         |
-| Dengue                        | dengue                          |
-| Yellow Fever                  | yfv                             |
-| Human metapneumovirus         | hmpv                            |
-| Varicella-Zoster              | vzv                             |
-| Rubella                       | rubella                         |
-| Mumps                         | mumps                           |
-| West Nile                     | wnv                             |
+| Virus Name                    | Abbreviation for `--virus` |
+| ----------------------------- | -------------------------- |
+| SARS-CoV-2                    | covid                      |
+| Respiratory syncytial virus A | rsv_a                      |
+| Respiratory syncytial virus B | rsv_b                      |
+| Mpox                          | mpox                       |
+| Ebola                         | ebola                      |
+| Bundibugyo ebolavirus         | bsbv                       |
+| Sudan                         | sudan                      |
+| Measles                       | measles                    |
+| Dengue                        | dengue                     |
+| Yellow Fever                  | yfv                        |
+| Human metapneumovirus         | hmpv                       |
+| Varicella-Zoster              | vzv                        |
+| Rubella                       | rubella                    |
+| Mumps                         | mumps                      |
+| West Nile                     | wnv                        |
 
 ### Virus-specific Processes
 
-As indicated above, the pipeline aims to use the `--virus_name` parameter to run virus-specific processes. This is currently in the development phase and will be added as more virus-specific processes are identified based on needs at the National Microbiology Laboratory. We currently support [Pangolin](https://github.com/cov-lineages/pangolin) as a virus-specific process when the pipeline is invoked with `--virus_name covid` as a parameter. More details and processes will be added in later versions.
+As indicated above, the pipeline aims to use the `--virus` parameter to run virus-specific processes. This is currently in the development phase and will be added as more virus-specific processes are identified based on needs at the National Microbiology Laboratory. We currently support [Pangolin](https://github.com/cov-lineages/pangolin) as a virus-specific process when the pipeline is invoked with `--virus covid` as a parameter. More details and processes will be added in later versions.
 
 ### Nextclade
 
@@ -492,13 +492,13 @@ The Nextclade dataset can also be specified explicitly in multiple ways. This is
    --nextclade_dataset_dir <PATH/TO/DATASET>
    ```
 
-3. A virus name value with the `--virus_name` parameter
+3. A virus name string with the `--virus` parameter
 
    ```bash
-   --virus_name <VIRUS_NAME>
+   --virus <VIRUS>
    ```
 
-   Specifying the `--virus_name` parameter selects the pipeline's configured default nextclade dataset for that virus. [See above for more information](#currently-supported-viruses).
+   Specifying the `--virus` parameter selects the pipeline's configured default nextclade dataset for that virus. [See above for more information](#currently-supported-viruses).
 
 #### Dataset Selection Precedence
 
@@ -508,19 +508,19 @@ The Nextclade dataset can also be specified explicitly in multiple ways. This is
 The dataset selection precedence is:
 
 1. `--nextclade_dataset_dir` or `--nextclade_dataset_name`
-2. Dataset configured through `--virus_name`
+2. Dataset configured through `--virus`
 3. Automatic dataset detection using `nextclade sort`
 
-`--virus_name` can be used together with either `--nextclade_dataset_dir` or `--nextclade_dataset_name`. In this case, the explicitly supplied nextclade dataset takes precedence only for Nextclade dataset selection, while the other virus-specific processes associated with `--virus_name` will continue to run normally.
+`--virus` can be used together with either `--nextclade_dataset_dir` or `--nextclade_dataset_name`. In this case, the explicitly supplied nextclade dataset takes precedence only for Nextclade dataset selection, while the other virus-specific processes associated with `--virus` will continue to run normally.
 
 For example:
 
 ```bash
---virus_name covid
+--virus covid
 --nextclade_dataset_name <DATASET_NAME>
 ```
 
-will use `<DATASET_NAME>` for nextclade instead of the dataset configured by `--virus_name covid`, while any other SARS-CoV-2 virus-specific processes enabled by `--virus_name` will still be performed.
+will use `<DATASET_NAME>` for nextclade instead of the dataset configured by `--virus covid`, while any other SARS-CoV-2 virus-specific processes enabled by `--virus` will still be performed.
 
 > [!TIP]
 > Nextclade can be skipped entirely by passing the `--skip_nextclade` parameter.

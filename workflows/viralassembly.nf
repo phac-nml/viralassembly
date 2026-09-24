@@ -248,7 +248,7 @@ workflow VIRALASSEMBLY {
     //  More viruses to be added later
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ //
     ch_pangolin_report = channel.empty()
-    if ( params.virus_name == 'covid' ) {
+    if ( params.virus == 'covid' ) {
         WF_VIRUS_COVID(
             ch_consensus
         )

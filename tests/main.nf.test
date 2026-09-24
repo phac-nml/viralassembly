@@ -275,7 +275,7 @@ nextflow_pipeline {
                 metadata        = "${projectDir}/test_data/nanopore/metadata.tsv"
                 gff             = "${projectDir}/test_data/MN908947.3.gff3"
                 platform        = "nanopore"
-                virus_name      = "covid"
+                virus           = "covid"
                 // To keep consistent results from downsampled input
                 min_length      = 600
                 max_length      = 1600
@@ -660,7 +660,7 @@ nextflow_pipeline {
                 primer_bed      = "${projectDir}/test_data/primer.bed"
                 gff             = "${projectDir}/test_data/MN908947.3.gff3"
                 platform        = "illumina"
-                virus_name      = "covid"
+                virus           = "covid"
                 use_ivar        = true
             }
         }

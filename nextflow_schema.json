@@ -37,10 +37,10 @@
                     "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
                     "fa_icon": "fas fa-folder-open"
                 },
-                "virus_name": {
+                "virus": {
                     "type": "string",
                     "description": "Virus name that sets virus specific processes and nextclade runs",
-                    "$comment": "Currently, this virus name option is set to run nextclade with the predefined dataset according to the named virus.\n Additionally, it currently runs the COVID virus specific subworkflow. Future use will possibly include more predefined options.",
+                    "$comment": "Currently, this virus option is set to run nextclade with the predefined dataset according to the named virus.\n Additionally, it currently runs the COVID virus specific subworkflow. Future use will possibly include more predefined options.",
                     "pattern": "(?i)^(covid|rsv_a|rsv_b|mpox|ebola|sudan|measles|dengue|yfv|hmpv|vzv|rubella|mumps|wnv)$"
                 }
             },

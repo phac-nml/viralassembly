@@ -116,7 +116,7 @@ nextflow run phac-nml/viralassembly \
   --platform illumina \
   --reference REF.fa \
   --primer_bed PRIMER.bed \
-  --virus_name VIRUS_NAME \
+  --virus VIRUS \
   --outdir ./results
 ```
 
@@ -155,7 +155,7 @@ fastq_pass: "FASTQ_PASS/"
 platfrom: "nanopore"
 reference: "REF.fa"
 primer_bed: "PRIMER.bed"
-virus_name: "VIRUS_NAME"
+virus: "VIRUS"
 gff: "REF.gff"
 metadata: "FILE.tsv"
 local_model: "PATH/TO/LOCAL_MODEL"
@@ -168,7 +168,7 @@ Example `params.yaml` for Illumina non-amplicon run:
 input: "SAMPLESHEET.csv"
 platfrom: "illumina"
 reference: "REF.fa"
-virus_name: "VIRUS_NAME"
+virus: "VIRUS"
 gff: "REF.gff"
 outdir: "./results"
 ```

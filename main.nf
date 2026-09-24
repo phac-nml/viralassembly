@@ -116,9 +116,9 @@ workflow {
 */
 
 def getVirusAttribute(attribute) {
-    if (params.viruses && params.virus_name && params.viruses.containsKey(params.virus_name)) {
-        if (params.viruses[ params.virus_name ].containsKey(attribute)) {
-            return params.viruses[ params.virus_name ][ attribute ]
+    if (params.viruses && params.virus && params.viruses.containsKey(params.virus)) {
+        if (params.viruses[ params.virus ].containsKey(attribute)) {
+            return params.viruses[ params.virus ][ attribute ]
         }
     }
     return null
