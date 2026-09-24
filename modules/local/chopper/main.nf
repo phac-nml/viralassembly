@@ -21,14 +21,15 @@ process CHOPPER {
     if ( fastq.endsWith('.gz') ) {
         cat_cmd = "zcat"
     }
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     $cat_cmd \\
         $fastq \\
     | chopper \\
         --threads $task.cpus \\
-        --quality 8 \\
-        --minlength 100 \\
-    | gzip > ${meta.id}.processed.fastq.gz
+        $args \\
+    | gzip > ${prefix}.processed.fastq.gz
 
     # Versions #
     cat <<-END_VERSIONS > versions.yml

@@ -1,30 +1,30 @@
-# viralassembly
+# ViralAssembly
 
-A generic viral assembly and QC pipeline which utilises a re-implementation of the [artic pipeline](https://github.com/artic-network/fieldbioinformatics/tree/master/artic) to separate out the individual steps allowing greater control on tool versions along with how data is run through the processes. This pipeline can be used as a starting point for analyses on viruses without dedicated workflows already available.
+A generic viral assembly and QC pipeline for reference-based analysis of viral sequencing data. The pipeline supports both Oxford Nanopore and Illumina sequencing data and can be used with amplicon or non-amplicon sequencing approaches. This pipeline can be used as a starting point for analyses on viruses without dedicated workflows already available.
 
-This pipeline is intended to be run on either Nanopore Amplicon Sequencing data or Basic Nanopore NGS Sequencing data that can utilize a reference genome for read mapping, variant calling, and other downstream analyses. It generates variant calls, consensus sequences, and quality control information based on the reference. To do this, there are three different variant callers that can be utilized which includes: `clair3`, `medaka`, and `nanopolish` (For R9.4.1 flowcells and below only). By default, `clair3` is used and highly recommended over the other two (as of December 2025). Their inclusion being for completeness with eventual removal from the workflow.
+For Nanopore sequencing, the pipeline utilises a re-implementation of the [ARTIC pipeline](https://github.com/artic-network/fieldbioinformatics/tree/master/artic) for consensus sequence generation to separate out the individual steps allowing greater control on tool versions along with how data is run through the processes. As of [`v2.0.0`](https://github.com/phac-nml/measeq/releases/tag/2.0.0), Medaka and Nanopolish have been deprecated as variant callers and the pipeline now uses Clair3 for primary variant calling with Nanopore data
+
+For Illumina sequencing, the pipeline integrates approaches from previous SARS-CoV-2 work and Measles work from the [MeaSeq pipeline](https://github.com/phac-nml/measeq). The current implementation of the pipeline uses FreeBayes as the default variant caller for Illumina data with the option to use iVar instead.
 
 The goals of this pipeline are:
 
 1. Provide a generic viral pipeline for the NML Surviellance Platform IRIDA-Next
 2. Provide detailed and useful `Run` and `Sample` level final reports
 3. Allow the pipeline to be used on other viruses with or without amplicon schemes
-   - Due to the QC steps there is unfortunately a current limitation at working with segmented viruses
-     - The pipeline will automatically exit after assembly and not generate QC and Reports for these at this time
-     - This will hopefully be fully implemented at some point in the future
+4. Support downstream analysis by adopting virus specific processes based on feedback
 
 ## Index
 
-- [Installation](#installation)
-- [Base Run Commands](#running-commands)
-  - [Nanopore - Clair3](#nanopore---clair3---default)
-  - [Nanopore - Medaka](#nanopore---medaka)
-  - [Nanopore - Nanopolish](#nanopore---nanopolish)
-- [Outputs](#outputs)
-- [Limitations](#limitations)
-- [Citations](#citations)
-- [Contributing](#contributing)
-- [Legal](#legal)
+- [ViralAssembly](#viralassembly)
+  - [Index](#index)
+  - [Installation](#installation)
+  - [Running Commands](#running-commands)
+    - [Minimal Run Command](#minimal-run-command)
+  - [Outputs](#outputs)
+  - [Limitations](#limitations)
+  - [Citations](#citations)
+  - [Contributing](#contributing)
+  - [Legal](#legal)
 
 ## Installation
 
@@ -42,108 +42,50 @@ The goals of this pipeline are:
 
 ## Running Commands
 
-Simple commands to run input data. Data can be ingested by the pipeline in three different ways:
+> [!TIP]
+> More example commands are available in the [example commands document](./docs/example_commands.md).
 
-1. Passing `--fastq_pass </PATH/TO/fastq_pass>` where `fastq_pass` is a directory containing `barcode##` subdirectories with fastq files
-   - This is the format that matches data which has been basecalled with `dorado`
-   - Samples can be renamed by passing in the [`--metadata` parameter](./docs/usage.md#metadata) with a TSV file mapping the barcode to the sample name
-2. Passing `--fastq_pass </PATH/TO/fastqs>` where `fastqs` is a directory containing named `*.fastq*` files
+Data can be ingested by the pipeline in two different ways:
+
+1. Passing `--fastq_pass </PATH/TO/fastq_pass>` where `fastq_pass` is a directory containing `barcode##` subdirectories with fastq files or containing named `*.fastq*` files
    - Sample names are based off of the file names
-3. Passing `--input <samplesheet.csv>` where `samplesheet.csv` is a CSV file with two columns
+   - Barcoded directories (`barcodexx`) can be renamed by passing in the [`--metadata` parameter](./docs/usage.md#metadata) with a TSV file mapping the barcode to the sample name
+2. Passing `--input <samplesheet.csv>` where `samplesheet.csv` is a CSV file with three columns
    1. `sample` - The name of the sample
-   2. `fastq_1` - Path to one fastq file per sample in `.fastq*` format
+   2. `fastq_1` - Path to the first (or only) FastQ file (`.fastq`, `.fq`, `.fastq.gz`, `fq.gz`)
+   3. `fastq_2` - Path to the second FastQ file for paired-end data (`.fastq`, `.fq`, `.fastq.gz`, `fq.gz`)
 
-The basic examples will show how to run the pipeline using the `--fastq_pass` input but it could be subbed in for the `--input` CSV file if wanted.
+> [!NOTE] >
+> All detailed running information is available in the [usage docs](./docs/usage.md).
 
-_All detailed running information is available in the [usage docs](./docs/usage.md)_
-
-### Nanopore - Clair3 - Default
-
-Running the pipeline with [Clair3](https://github.com/HKU-BAL/Clair3) (default and recommended variant caller) requires fastq files and a Clair3 model. When running with `--fastq_pass`, the pipeline will either:
-
-- Look for subdirectories off of the input "--fastq_pass" directory called `barcode##` to be used in the pipeline
-- Look for fastq files in the input "--fastq_pass" directory called `*.fastq*` to be used in the pipeline
-
-This pipeline utilizes the same steps as the artic fieldbioinformatics minion pipeline but with each step run using nextflow to allow Clair3 to be easily slotted in. See the [Clair3 Section](./docs/usage.md#clair3) of the usage docs for more information
+### Minimal Run Command
 
 Basic command:
 
 ```bash
-nextflow run /PATH/TO/artic-generic-nf/main.nf \
+nextflow run phac-nml/viralassembly \
     -profile <PROFILE(s)> \
     --fastq_pass </PATH/TO/fastq_pass> \
+    --platform <PLATFORM> \
     --reference <REF.fa> \
-    --clair3_model <MODEL> \
+    --outdir <OUTDIR>
     <OPTIONAL INPUTS>
 ```
 
 [Optional inputs](./docs/usage.md#all-parameters) could include:
 
 - [Amplicon scheme](./docs/usage.md#schemes-and-reference) instead of just a reference fasta file
-- Metadata
+- [Metadata](./docs/usage.md#metadata)
 - Filtering options
-- Running SnpEff for variant consequence prediction
+- GFF file for [SnpEff](./docs/usage.md#snpeff)
+- [Nextclade](./docs/usage.md#nextclade) dataset specification
+- Virus name for [virus specific options](./docs/usage.md#virus-specification)
+- Skipping of specific processes
+- Minor variant calling
 - Output reporting options
 
-The pipeline could also be run with `--input CSV` to pass in an input CSV file with the sample names and fastq pathes
-
-### Nanopore - Medaka
-
-Running the pipeline with [medaka](https://github.com/nanoporetech/medaka) for variant calling requires fastq files and a medaka model. When running the pipeline will either:
-
-- Look for subdirectories off of the input "--fastq_pass" directory called `barcode##` to be used in the pipeline
-- Look for fastq files in the input "--fastq_pass" directory called `*.fastq*` to be used in the pipeline
-
-See the [medaka section](./docs/usage.md#medaka) of the usage docs for more information
-
-Basic command:
-
-```bash
-nextflow run /PATH/TO/artic-generic-nf/main.nf \
-    -profile <PROFILE(s)> \
-    --variant_caller 'medaka' \
-    --fastq_pass </PATH/TO/fastq_pass> \
-    --medaka_model <Medaka Model> \
-    --reference <REF.fa> \
-    <OPTIONAL INPUTS>
-```
-
-[Optional inputs](./docs/usage.md#all-parameters) could include:
-
-- [Amplicon scheme](./docs/usage.md#schemes-and-reference) instead of just a reference fasta file
-- Metadata
-- Filtering options
-- Running SnpEff for variant consequence prediction
-- Output reporting options
-
-Medaka model information [can be found here](https://github.com/nanoporetech/medaka#models)
-
-### Nanopore - Nanopolish
-
-Running the pipeline with [nanopolish](https://github.com/jts/nanopolish) for variant calls requires fastq files, fast5 files, and the sequencing summary file instead of providing a model. As such, nanopolish requires that the read ids in the fastq files are linked by the sequencing summary file to their signal-level data in the fast5 files. This makes it **a lot** easier to run using barcoded directories but it can be run with individual read files
-
-See the [nanopolish section](./docs/usage.md#nanopolish) of the usage docs for more information
-
-Basic command:
-
-```bash
-nextflow run /PATH/TO/artic-generic-nf/main.nf \
-    -profile <PROFILE(s)> \
-    --variant_caller 'nanopolish' \
-    --fastq_pass </PATH/TO/fastq_pass> \
-    --fast5_pass </PATH/TO/fast5_pass> \
-    --sequencing_summary </PATH/TO/sequencing_summary.txt> \
-    --reference <REF.fa>
-    <OPTIONAL INPUTS>
-```
-
-[Optional inputs](./docs/usage.md#all-parameters) could include:
-
-- [Amplicon scheme](./docs/usage.md#schemes-and-reference) instead of just a reference fasta file
-- Metadata
-- Filtering options
-- Running SnpEff for variant consequence prediction
-- Output reporting options
+> [!TIP]
+> The pipeline could also be run with `--input CSV` to pass in an input CSV file with the sample names and fastq paths
 
 ## Outputs
 
@@ -154,18 +96,20 @@ Outputs include:
 - Consensus fasta files
 - VCF files
 - Bam files
-- HTML summary files (either custom or MultiQC)
+- Variant annotation files
+- Nextclade results
+- HTML summary files
 
-_More output information on pipeline steps and output files can be found in the [output docs](./docs/output.md)_
+> [!NOTE]
+> More output information on pipeline steps and output files can be found in the [output docs](./docs/output.md).
 
 ## Limitations
 
 Current limitations include:
 
-1. Nanopore data only at this time
-2. Currently runs for viruses using a reference genome
-   - Segmented viruses will exit before the QC section for now while looking into how to best report them
-3. SnpEff issues in running and database building/downloading
+1. Currently runs for viruses using a reference genome
+2. Reporting for segmented viruses is still being evaluated and may be improved in future versions
+3. SnpEff and database building/downloading can be finicky
    - Database building/downloading requires one of three things:
      - The reference ID is in the SnpEff database
        - This allows the database to be downloaded
@@ -173,7 +117,9 @@ Current limitations include:
        - This is used with the reference sequence to build a database
      - A well annotated NCBI genome matching the reference ID
        - This will pull the genbank file and use that to build a database
-   - Running SnpEff with singularity sometimes leads to a lock issue which is hopefully fixed
+
+> [!NOTE]
+> Ensure the suitability of your reference genome, primer scheme, Clair3 model, and nextclade dataset with the sequencing data you hope to analyse.
 
 ## Citations
 
@@ -186,7 +132,7 @@ This pipeline uses code and infrastructure developed and maintained by the [nf-c
 > Nat Biotechnol. 2020 Feb 13. doi: 10.1038/s41587-020-0439-x.
 > In addition, references of tools and data used in this pipeline are as follows:
 
-Detailed citations for utilized tools are found in [citations.md](./citations.md)
+Detailed citations for utilized tools are found in [the citations document](./citations.md)
 
 ## Contributing
 
@@ -194,7 +140,7 @@ Contributions are welcome through creating PRs or Issues
 
 ## Legal
 
-Copyright 2023 Government of Canada
+Copyright 2026 Government of Canada
 
 Licensed under the MIT License (the "License"); you may not use this work except in compliance with the License. You may obtain a copy of the License at:
 

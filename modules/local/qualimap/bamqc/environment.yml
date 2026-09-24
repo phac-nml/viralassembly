@@ -1,6 +1,0 @@
-name: qualimap_bamqc
-channels:
-  - conda-forge
-  - bioconda
-dependencies:
-  - bioconda::qualimap=2.3
